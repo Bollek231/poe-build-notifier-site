@@ -1,0 +1,45 @@
+<!doctype html><html lang="pl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="description" content="Instrukcja instalacji bota Discord PoE Build Notifier na Windows, konfiguracja YouTube API i Discord."><title>Instalacja – PoE Build Notifier</title><link rel="stylesheet" href="style.css"></head><body><header><nav class="wrap nav"><a class="brand" href="https://bollek231.github.io/poe-build-notifier-site/index.html">◆ PoE Build Notifier</a><div><a href="https://bollek231.github.io/poe-build-notifier-site/index.html">Strona główna</a><a href="https://bollek231.github.io/poe-build-notifier-site/instalacja.html">Instalacja</a><a href="https://bollek231.github.io/poe-build-notifier-site/komendy.html">Działanie i komendy</a><a href="https://bollek231.github.io/poe-build-notifier-site/privacy.html">Prywatność</a><a href="https://bollek231.github.io/poe-build-notifier-site/terms.html">Regulamin</a></div></nav></header><main class="wrap content"><span class="pill">Instrukcja po polsku</span>
+<h1>Instalacja bota krok po kroku</h1>
+<p>Bot działa na Twoim komputerze lub serwerze. <strong>GitHub Pages publikuje jedynie tę stronę, dokumentację i pliki do pobrania</strong> — nie uruchamia bota na Discordzie.</p>
+<p><a class="btn" href="https://bollek231.github.io/poe-build-notifier-site/downloads/PoE_Build_Notifier_BEZ_DANYCH.zip" download>Pobierz bota ZIP</a><a class="btn secondary" href="https://github.com/Bollek231/poe-build-notifier-site/tree/main/bot">Przeglądaj kod na GitHubie</a></p>
+<h2>1. Pobierz i rozpakuj pliki</h2>
+<p>Pobierz ZIP i wypakuj go np. do <code>D:\PoE-Bot</code>. W tym folderze powinny znaleźć się <code>main.py</code>, <code>storage.py</code>, <code>features.py</code>, <code>requirements.txt</code> i <code>.env.example</code>.</p>
+<h2>2. Przygotuj Pythona</h2>
+<p>Zainstaluj Python 3.11 lub nowszy. Otwórz CMD w folderze bota i wykonaj:</p>
+<pre><code>cd /d D:\PoE-Bot
+py -m venv .venv
+.venv\Scripts\activate
+python -m pip install -r requirements.txt</code></pre>
+<h2>3. Utwórz własnego bota Discord</h2>
+<p>W <a href="https://discord.com/developers/applications">Discord Developer Portal</a> utwórz aplikację i bota. W zakładce <strong>Bot</strong> włącz <strong>Message Content Intent</strong>. Zaproś bota na swój serwer z prawem czytania i wysyłania wiadomości, wstawiania linków i używania osadzonych komponentów. Skopiuj identyfikator kanału z trybu deweloperskiego.</p>
+<p><strong>Nie udostępniaj tokenu Discorda.</strong></p>
+<h2>4. Przygotuj klucz YouTube Data API v3</h2>
+<p>W <a href="https://console.cloud.google.com/">Google Cloud Console</a> wybierz projekt, otwórz <strong>Interfejsy API i usługi → Biblioteka</strong>, włącz <strong>YouTube Data API v3</strong>, a następnie w sekcji <strong>Dane logowania</strong> utwórz klucz API. Dla bezpieczeństwa ogranicz klucz do YouTube Data API v3. Limity sprawdzisz w konsoli Google.</p>
+<h2>5. Skonfiguruj plik .env</h2>
+<pre><code>copy .env.example .env
+notepad .env</code></pre>
+<p>Wpisz własne wartości w pliku <code>.env</code> (poniżej są wyłącznie przykłady pól, nie prawdziwe klucze):</p>
+<pre><code>DISCORD_TOKEN=TU_WLASNY_TOKEN
+DISCORD_CHANNEL_ID=TU_ID_KANALU
+YOUTUBE_API_KEY=TU_WLASNY_KLUCZ
+CHECK_INTERVAL_HOURS=2
+SEND_DELAY_SECONDS=3
+MAX_VIDEO_AGE_HOURS=24
+YOUTUBE_CACHE_DAYS=7
+DAILY_DIGEST_ENABLED=true
+DAILY_DIGEST_TIME=20:00
+TARGET_LEAGUE=3.30</code></pre>
+<div class="note"><strong>Bezpieczeństwo:</strong> nie przesyłaj na GitHuba pliku <code>.env</code>, bazy <code>.sqlite3</code>, plików JSON z kont Google ani tokenów. Repozytorium zawiera tylko przykładową konfigurację.</div>
+<h2>6. Uruchom i przetestuj</h2>
+<pre><code>python main.py</code></pre>
+<p>Na Discordzie zacznij od <code>pPrivacy</code> i <code>pAgree</code>, potem użyj <code>pHealth</code>, <code>pSettings</code> oraz <code>pLeague</code>. Zobacz <a href="https://bollek231.github.io/poe-build-notifier-site/komendy.html">pełny opis komend</a>.</p>
+<h2>Aktualizowanie istniejącej instalacji</h2>
+<p>Zatrzymaj bota przez <code>Ctrl + C</code>, zrób kopię folderu i zastąp tylko <code>main.py</code>, <code>storage.py</code>, <code>features.py</code> oraz <code>requirements.txt</code>. <strong>Zachowaj własny .env, search_config.json i poe330_seen.sqlite3.</strong> Następnie uruchom:</p>
+<pre><code>python -m pip install -r requirements.txt
+python main.py</code></pre>
+<h2>Typowe problemy</h2>
+<ul><li><strong>HTTP 429</strong> — wykorzystano limit wyszukiwań YouTube; bot pokaże reset i wstrzyma zapytania.</li>
+<li><strong>Nie reaguje na komendy</strong> — sprawdź Message Content Intent, kanał i uprawnienia „Zarządzanie serwerem”.</li>
+<li><strong>Brak strefy czasowej</strong> — uruchom <code>python -m pip install tzdata</code>.</li>
+<li><strong>Brak nowych filmów</strong> — bot filtruje filmy starsze niż 24h, inne ligi, PoE 2 i duplikaty.</li></ul>
+<p>Projekt jest niekomercyjny i nie jest powiązany z Google, YouTube, Discord ani Grinding Gear Games.</p></main><footer><div class="wrap foot"><span>© 2026 PoE Build Notifier · Nieoficjalny projekt społecznościowy</span><div><a href="https://bollek231.github.io/poe-build-notifier-site/index.html">Strona główna</a><a href="https://bollek231.github.io/poe-build-notifier-site/privacy.html">Prywatność</a><a href="https://bollek231.github.io/poe-build-notifier-site/terms.html">Regulamin</a><a href="https://www.youtube.com/t/terms">Warunki YouTube</a></div></div></footer></body></html>
