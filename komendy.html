@@ -1,0 +1,29 @@
+<!doctype html><html lang="pl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="description" content="Funkcje i komendy Discord bota PoE Build Notifier: wyszukiwanie, liga, podsumowania, limity API."><title>Działanie i komendy – PoE Build Notifier</title><link rel="stylesheet" href="style.css"></head><body><header><nav class="wrap nav"><a class="brand" href="https://bollek231.github.io/poe-build-notifier-site/index.html">◆ PoE Build Notifier</a><div><a href="https://bollek231.github.io/poe-build-notifier-site/index.html">Strona główna</a><a href="https://bollek231.github.io/poe-build-notifier-site/instalacja.html">Instalacja</a><a href="https://bollek231.github.io/poe-build-notifier-site/komendy.html">Działanie i komendy</a><a href="https://bollek231.github.io/poe-build-notifier-site/privacy.html">Prywatność</a><a href="https://bollek231.github.io/poe-build-notifier-site/terms.html">Regulamin</a></div></nav></header><main class="wrap content"><span class="pill">Funkcje bota</span><h1>Jak działa PoE Build Notifier?</h1>
+<p>Bot wykorzystuje <strong>publiczne informacje YouTube Data API v3</strong> do wyszukiwania nowych poradników Path of Exile 1 i zamieszcza odnośniki do oryginalnych filmów na Discordzie. Nie pobiera ani nie przesyła ponownie filmów.</p>
+<div class="cards"><article><span class="metric">2 h</span><h3>Skanowanie</h3><p>Automatyczne wyszukiwanie co dwie godziny; administrator może też wyszukiwać ręcznie.</p></article>
+<article><span class="metric">24 h</span><h3>Aktualność</h3><p>Filtry wieku, ligi, PoE 1 i ograniczanie duplikatów.</p></article>
+<article><span class="metric">20:00</span><h3>Podsumowanie</h3><p>Codzienny przegląd wysłanych buildów, według czasu polskiego; bez dodatkowych zapytań API.</p></article></div>
+<h2>Komendy administracyjne</h2>
+<table class="doc-table"><thead><tr><th>Komenda</th><th>Działanie</th></tr></thead><tbody>
+<tr><td><code>pPrivacy</code></td><td>Pokazuje linki do polityki prywatności i warunków.</td></tr>
+<tr><td><code>pAgree</code></td><td>Akceptuje zasady przed korzystaniem z komend administracyjnych.</td></tr>
+<tr><td><code>pRevoke</code></td><td>Cofa akceptację zasad.</td></tr>
+<tr><td><code>pSettings</code></td><td>Wyświetla aktualne ustawienia bota.</td></tr>
+<tr><td><code>pLeague</code></td><td>Pokazuje obecną ligę.</td></tr>
+<tr><td><code>pLeague 3.31</code></td><td>Zmienia ligę bez zmiany plików i restartu.</td></tr>
+<tr><td><code>pScan</code></td><td>Uruchamia ręczne skanowanie YouTube.</td></tr>
+<tr><td><code>pSearch Lightning Strike</code></td><td>Wyszukuje określony build bieżącej ligi.</td></tr>
+<tr><td><code>pLimit</code></td><td>Lokalny licznik zapytań; nie jest oficjalnym odczytem Google.</td></tr>
+<tr><td><code>pHealth</code></td><td>Status bota, wyszukiwań i podsumowania.</td></tr>
+<tr><td><code>pBuilds</code></td><td>Ostatnie buildy zachowane w lokalnej bazie.</td></tr>
+<tr><td><code>pDigest</code></td><td>Wysyła podsumowanie na żądanie.</td></tr>
+</tbody></table>
+<h2>Wiadomości o buildach</h2>
+<p>Bot podaje tytuł filmu, twórcę, datę publikacji i link do oryginalnego wideo. Jeśli w opisie znaleziono odpowiednie adresy, pod wiadomością pojawią się klikalne przyciski <strong>Path of Building</strong>, <strong>Maxroll</strong> i <strong>Mobalytics</strong>.</p>
+<h2>Limit API i powiadomienia</h2>
+<p>Po wyczerpaniu dziennego limitu wyszukiwań bot pokazuje krótki komunikat z terminem następnego resetu według czasu pacyficznego i wstrzymuje wyszukiwanie. Po resecie automatyczne skanowanie wznowi się przy kolejnym cyklu.</p>
+<h2>Prywatność i przechowywanie</h2>
+<p>Metadane YouTube w lokalnej SQLite są usuwane po <strong>7 dniach</strong>. <strong>Wiadomości Discord pozostają na kanale i bot ich automatycznie nie usuwa.</strong> Akceptacja zasad dotyczy funkcji administracyjnych, nie zmienia uprawnień kanału.</p>
+<div class="note">Klasyfikacja buildów i deduplikacja są heurystyczne, więc bot może czasami pominąć film lub uznać dwa różne warianty tego samego buildu za podobne. Długoterminowe utrzymywanie metadanych YouTube w wiadomościach Discord wymaga osobnej oceny pod kątem zasad YouTube API.</div>
+<p><a class="btn" href="https://bollek231.github.io/poe-build-notifier-site/instalacja.html">Instrukcja instalacji</a><a class="btn secondary" href="https://bollek231.github.io/poe-build-notifier-site/downloads/PoE_Build_Notifier_BEZ_DANYCH.zip" download>Pobierz kod ZIP</a></p>
+</main><footer><div class="wrap foot"><span>© 2026 PoE Build Notifier · Nieoficjalny projekt społecznościowy</span><div><a href="https://bollek231.github.io/poe-build-notifier-site/index.html">Strona główna</a><a href="https://bollek231.github.io/poe-build-notifier-site/privacy.html">Prywatność</a><a href="https://bollek231.github.io/poe-build-notifier-site/terms.html">Regulamin</a><a href="https://www.youtube.com/t/terms">Warunki YouTube</a></div></div></footer></body></html>
