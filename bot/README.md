@@ -1,4 +1,8 @@
-# PoE Build Notifier — kod źródłowy
+# PoE Build Notifier — source code / kod źródłowy
+
+**Wybierz język / Choose language:** [🇵🇱 Polski](#polski) · [🇬🇧 English](#english)
+
+## Polski
 
 Publiczna wersja niekomercyjnego bota Discord wyszukującego poradniki Path of Exile 1 przez YouTube Data API v3.
 
@@ -54,3 +58,69 @@ python -m unittest discover -s tests -v
 - [Warunki korzystania](https://bollek231.github.io/poe-build-notifier-site/terms.html)
 
 **Zastrzeżenie:** Bot wymaga uruchomienia na własnym komputerze/serwerze; GitHub Pages hostuje wyłącznie stronę, nie działającego bota. Zgodność z zasadami YouTube Data API wymaga odrębnej weryfikacji, w tym sposobu przechowywania danych w wiadomościach Discord.
+
+---
+
+## English
+
+Public source-code release of a non-commercial Discord bot that finds Path of Exile 1 build guides through YouTube Data API v3.
+
+**No real Discord tokens, API keys, private .env files, or SQLite databases are included.**
+
+### Requirements
+
+- Python 3.11 or later, Windows or Linux
+- Your own Discord bot (enable Message Content Intent)
+- Your own YouTube Data API v3 key
+- A Discord channel where the bot can read/send messages and post links and buttons
+
+### Windows installation
+
+1. Download and extract the ZIP into a directory such as `D:\PoE-Bot`.
+2. Open CMD in the directory containing `main.py` (not its parent folder).
+3. Run:
+
+```bat
+py -m venv .venv
+.venv\Scripts\activate
+python -m pip install -r requirements.txt
+copy .env.example .env
+notepad .env
+```
+
+4. Set **your own** `DISCORD_TOKEN`, `YOUTUBE_API_KEY`, and `DISCORD_CHANNEL_ID` in `.env`.
+5. Start with `python main.py`.
+
+**Warning:** do not commit a filled-in `.env`, SQLite databases, private service-account JSON files, or tokens.
+
+### Features
+
+- Scheduled YouTube searches every 2 hours; videos must be no older than 24 hours and match the current Path of Exile 1 league.
+- Duplicate filtering and a 3-second gap between posted notifications.
+- PoB, Maxroll, and Mobalytics buttons when applicable links are found in a video description.
+- Manual scanning and searching, with short messages and automatic backoff on HTTP 429 quota exhaustion.
+- Daily build digest at 8:00 PM Warsaw time without extra YouTube search requests.
+- Locally cached YouTube metadata is cleared after 7 days; **Discord messages are not deleted automatically**.
+
+### Commands
+
+`pPrivacy`, `pAgree`, `pRevoke`, `pSettings`, `pLeague`, `pLeague 3.31`, `pScan`, `pSearch Lightning Strike`, `pLimit`, `pHealth`, `pBuilds`, and `pDigest`.
+
+Administrative commands require the **Manage Server** permission and acceptance of the terms using `pAgree`.
+
+### Tests
+
+```bat
+python -m unittest discover -s tests -v
+```
+
+### More information
+
+- [Project website](https://bollek231.github.io/poe-build-notifier-site/index-en.html)
+- [Installation guide](https://bollek231.github.io/poe-build-notifier-site/instalacja-en.html)
+- [Features and commands](https://bollek231.github.io/poe-build-notifier-site/komendy-en.html)
+- [Privacy Policy](https://bollek231.github.io/poe-build-notifier-site/privacy-en.html)
+- [Terms of Use](https://bollek231.github.io/poe-build-notifier-site/terms-en.html)
+
+**Disclaimer:** This bot must run on your own machine or server. GitHub Pages hosts the documentation only. Compliance with YouTube API Services policies requires an independent review, including the handling of data retained in Discord messages.
+
