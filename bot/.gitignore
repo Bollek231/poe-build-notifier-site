@@ -1,0 +1,17 @@
+# Prywatne dane i klucze
+.env
+.env.*
+!.env.example
+*.sqlite
+*.sqlite3
+*.db
+*.pem
+*service-account*.json
+*credentials*.json
+*.key
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+.DS_Store
