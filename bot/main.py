@@ -382,6 +382,8 @@ def extract_links(description):
                 found.setdefault('Maxroll', raw)
             elif features.mobalytics_poe_url(raw):
                 found.setdefault('Mobalytics', raw)
+            elif host in ('poeplanner.com', 'www.poeplanner.com') and enhancements.sane_external_url(raw):
+                found.setdefault('PoE Planner', raw)
         except ValueError:
             continue
     return found
