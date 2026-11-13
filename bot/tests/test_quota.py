@@ -47,7 +47,7 @@ class QuotaTests(unittest.TestCase):
         # v0.5.1 may FETCH an existing post to add new link buttons.
         # It must never delete/repost the message.
         self.assertNotIn('await message.delete(',source)
-        self.assertIn('await message.edit(view=buttons_from_links(merged))',source)
+        self.assertIn('await message.edit(view=buttons_from_links(merged,vid))',source)
         self.assertNotIn('message.delete(',source)
         self.assertIn('except DailySearchQuotaExceeded:',source)
         self.assertIn('await announce_quota_pause(c, quota_reset)',source)
