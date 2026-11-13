@@ -1,12 +1,18 @@
 # PoE Build Notifier — Lista zmian / Patch Notes
 
-**Aktualna wersja / Current version:** `v0.6.2`
+**Aktualna wersja / Current version:** `v0.6.2b`
 
 [🇵🇱 Lista zmian — strona](https://bollek231.github.io/poe-build-notifier-site/changelog.html) · [🇬🇧 Patch Notes — website](https://bollek231.github.io/poe-build-notifier-site/changelog-en.html)
 
 ---
 
 ## 🇵🇱 Polski
+
+### v0.6.2b — 13 listopada 2026
+- **`pTranslateTitles`:** dodano wybór **MyMemory** (bez klucza API i rozliczeń) lub **Google Cloud Translation** (z własnym kluczem).
+- Przełączanie silnika przez `pTranslateTitles mymemory`, `pTranslateTitles google` lub `pSettings`, z zapisaniem wyboru w SQLite.
+- Lokalne wykrywanie języka źródłowego dla MyMemory, ograniczenie liczby zapytań i znaków oraz niezależne pamięci podręczne tłumaczeń.
+- Dostosowano `pVersion` do rozpoznawania wersji z końcówką literową, np. `0.6.2b`.
 
 ### v0.6.2 — 13 listopada 2026
 - **`pSetup`:** kreator wyboru gry, wersji, języka i interwału z potwierdzeniem zmian.
@@ -54,6 +60,12 @@
 ---
 
 ## 🇬🇧 English
+
+### v0.6.2b — November 13, 2026
+- **`pTranslateTitles`:** choose **MyMemory** (no API key or billing) or **Google Cloud Translation** (bring your own API key).
+- Select the provider using `pTranslateTitles mymemory`, `pTranslateTitles google`, or `pSettings`, saved in SQLite.
+- Local source-language detection for MyMemory, request/character caps and provider-specific translation caches.
+- **`pVersion`** recognizes alphabetic version suffixes such as `0.6.2b`.
 
 ### v0.6.2 — November 13, 2026
 - **`pSetup`:** interactive setup of game, patch, language and scan interval with confirmation.
