@@ -1,12 +1,19 @@
 # PoE Build Notifier — Lista zmian / Patch Notes
 
-**Aktualna wersja / Current version:** `v0.6.4`
+**Aktualna wersja / Current version:** `v0.6.4b`
 
 [🇵🇱 Lista zmian — strona](https://bollek231.github.io/poe-build-notifier-site/changelog.html) · [🇬🇧 Patch Notes — website](https://bollek231.github.io/poe-build-notifier-site/changelog-en.html)
 
 ---
 
 ## 🇵🇱 Polski
+
+### v0.6.4b — 13 listopada 2026
+- `pScan` oraz `pFarmScan`: dodano opcjonalną liczbę nowych filmów do opublikowania, np. `pScan 1`, `pScan 2`, `pFarmScan 1` lub `pFarmScan 2`.
+- Komendy bez liczby nadal wykonują pełny ręczny skan; podana liczba ogranicza liczbę zaakceptowanych filmów, a nie liczbę zapytań do YouTube API.
+- Dodano walidację zakresu **1–25** i ograniczenie również dla filmów odkładanych w kolejce podczas ciszy nocnej.
+- Podsumowanie ręcznego skanowania pokazuje także liczbę poradników dodanych do kolejki ciszy nocnej.
+
 
 ### v0.6.4 — 13 listopada 2026
 - Dodano wyszukiwanie poradników o strategiach farmienia waluty w PoE 1 i PoE 2: `pFarmScan` oraz `pFarmSearch KATEGORIA`.
@@ -75,6 +82,13 @@
 ---
 
 ## 🇬🇧 English
+
+### v0.6.4b — November 13, 2026
+- `pScan` and `pFarmScan` now accept an optional cap on newly posted videos, such as `pScan 1`, `pScan 2`, `pFarmScan 1`, or `pFarmScan 2`.
+- Commands without a number keep their full manual-scan behavior; the number limits eligible videos, not YouTube API search requests.
+- Added **1–25** count validation; the cap also applies to videos queued during quiet hours.
+- Manual scan summaries now also show how many videos were queued due to quiet hours.
+
 
 ### v0.6.4 — November 13, 2026
 - Added separate currency-farming strategy searches for PoE 1 and PoE 2: `pFarmScan` and `pFarmSearch TOPIC`.
