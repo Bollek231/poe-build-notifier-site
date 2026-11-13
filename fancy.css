@@ -98,3 +98,32 @@ body.docs-redesign .wrap{width:min(1180px,calc(100% - 48px))}
 /* Render national flags as local vector images, not platform-dependent emoji glyphs. */
 .lang-flag-image{display:block;width:25px;height:18px;object-fit:fill;border-radius:2px;border:1px solid rgba(255,255,255,.19);box-shadow:0 1px 2px rgba(0,0,0,.24);pointer-events:none}
 .fancy-home .controls .ctrl:has(.lang-flag-image),.docs-redesign .language-switch .flag:has(.lang-flag-image){display:inline-flex;align-items:center;justify-content:center}
+
+/* Compact, centered and dismissible announcement on documentation pages. */
+body.docs-redesign .site-notice{
+  position:relative;box-sizing:border-box;
+  width:min(760px,calc(100% - 32px));max-width:760px;
+  margin:20px auto 16px;padding:16px 51px 16px 20px;
+  border:1px solid var(--border);border-left:3px solid var(--gold);
+  border-radius:14px;color:var(--text);
+  background:var(--panel);box-shadow:0 12px 28px rgba(0,0,0,.10);
+  font-size:13px;line-height:1.7;z-index:2;
+  opacity:1;transform:translateY(0);
+  transition:opacity .24s ease,transform .24s ease;
+}
+body.docs-redesign.light .site-notice{background:#fffbf4}
+body.docs-redesign .content>.site-notice{width:100%;margin:0 auto 24px}
+body.docs-redesign .site-notice strong{color:var(--gold)}
+body.docs-redesign .site-notice .site-notice__hint{display:block;margin-top:7px;color:var(--muted);font-size:11px}
+body.docs-redesign .site-notice .site-notice__close{
+  position:absolute;right:11px;top:10px;width:30px;height:30px;
+  border:1px solid var(--border);border-radius:9px;
+  background:transparent;color:var(--text);cursor:pointer;
+  font-size:20px;line-height:1;display:grid;place-items:center;
+}
+body.docs-redesign .site-notice .site-notice__close:hover{border-color:var(--gold);background:rgba(210,157,82,.10)}
+body.docs-redesign .site-notice .site-notice__close:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+body.docs-redesign .site-notice.site-notice--closing{opacity:0;transform:translateY(-7px);pointer-events:none}
+body.docs-redesign .site-notice[hidden]{display:none!important}
+@media(max-width:600px){body.docs-redesign .site-notice{font-size:12px;padding:14px 47px 14px 15px;margin-top:12px}}
+@media(prefers-reduced-motion:reduce){body.docs-redesign .site-notice{transition:none!important}}
