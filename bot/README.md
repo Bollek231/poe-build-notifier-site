@@ -1,4 +1,4 @@
-# PoE Build Notifier v0.6.3 — kod źródłowy / source code
+# PoE Build Notifier v0.6.4 — kod źródłowy / source code
 
 [🇵🇱 Polski](#polski) · [🇬🇧 English](#english) · [Strona / Website](https://bollek231.github.io/poe-build-notifier-site/) · [Lista zmian / Patch Notes](../CHANGELOG.md)
 
@@ -33,7 +33,7 @@ Dwukrotnie kliknij `Start_PoE_Bot.bat` podczas pierwszego uruchomienia: tworzy `
 
 ### Instalacja na Windows
 
-1. Zainstaluj **Python 3.11 lub nowszy**. Pobierz [ZIP v0.6.3](https://bollek231.github.io/poe-build-notifier-site/downloads/PoE_Build_Notifier_v0.6.3.zip) i wypakuj wszystkie pliki bota do folderu, np. `D:\PoE-Bot`.
+1. Zainstaluj **Python 3.11 lub nowszy**. Pobierz [ZIP v0.6.4](https://bollek231.github.io/poe-build-notifier-site/downloads/PoE_Build_Notifier_v0.6.4.zip) i wypakuj wszystkie pliki bota do folderu, np. `D:\PoE-Bot`.
 2. Otwórz CMD:
 
 ```bat
@@ -75,7 +75,7 @@ Bot automatycznie skanuje YouTube (domyślnie co 2 godziny), przyjmuje tylko fil
 
 Na Railway/VPS ustaw trwały wolumin, np. `DB_PATH=/data/poe330_seen.sqlite3` i `BACKUP_DIR=/data/backups`. Nie udostępniaj swoich plików `.env`, bazy ani kopii zapasowych.
 
-[Pełna instrukcja](INSTRUKCJA_INSTALACJI_v0.6.3_PL_EN.md) · [Lista komend](https://bollek231.github.io/poe-build-notifier-site/komendy.html)
+[Pełna instrukcja](INSTRUKCJA_INSTALACJI_v0.6.4_PL_EN.md) · [Lista komend](https://bollek231.github.io/poe-build-notifier-site/komendy.html)
 
 ---
 
@@ -110,7 +110,7 @@ Double-click `Start_PoE_Bot.bat` for the initial environment setup, then `Start_
 
 ### Windows setup
 
-1. Install **Python 3.11+**. [Download v0.6.3](https://bollek231.github.io/poe-build-notifier-site/downloads/PoE_Build_Notifier_v0.6.3.zip) and extract the bot files to a directory such as `D:\PoE-Bot`.
+1. Install **Python 3.11+**. [Download v0.6.4](https://bollek231.github.io/poe-build-notifier-site/downloads/PoE_Build_Notifier_v0.6.4.zip) and extract the bot files to a directory such as `D:\PoE-Bot`.
 2. Open Command Prompt:
 
 ```bat
@@ -152,7 +152,7 @@ The default scan interval is 2 hours. Only videos published in the past 24 hours
 
 On Railway/VPS use persistent storage, for example `DB_PATH=/data/poe330_seen.sqlite3` and `BACKUP_DIR=/data/backups`. Never publish your `.env`, database or private backups.
 
-[Full setup guide](INSTRUKCJA_INSTALACJI_v0.6.3_PL_EN.md) · [Commands](https://bollek231.github.io/poe-build-notifier-site/komendy-en.html)
+[Full setup guide](INSTRUKCJA_INSTALACJI_v0.6.4_PL_EN.md) · [Commands](https://bollek231.github.io/poe-build-notifier-site/komendy-en.html)
 
 ---
 
