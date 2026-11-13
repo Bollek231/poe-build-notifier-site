@@ -1,8 +1,13 @@
-# PoE Build Notifier v0.6.4b — kod źródłowy / source code
+# PoE Build Notifier v0.6.4c — kod źródłowy / source code
 
 [🇵🇱 Polski](#polski) · [🇬🇧 English](#english) · [Strona / Website](https://bollek231.github.io/poe-build-notifier-site/) · [Lista zmian / Patch Notes](../CHANGELOG.md)
 
 ## Polski
+
+### PoE Planner w powiadomieniach (v0.6.4c)
+
+Gdy w opisie filmu YouTube znajduje się poprawny odnośnik do `https://poeplanner.com` lub `https://www.poeplanner.com`, bot może automatycznie dodać przycisk **PoE Planner** do wiadomości, także przy `pFarmScan` i `pFarmSearch`. Odnośnik przechodzi tę samą weryfikację co pozostałe przyciski; `pRefreshLinks` może go dołączyć do wcześniejszego powiadomienia, jeśli twórca dopisze link później.
+
 
 ### Limit liczby filmów w ręcznym skanowaniu (v0.6.4b)
 
@@ -38,7 +43,7 @@ Dwukrotnie kliknij `Start_PoE_Bot.bat` podczas pierwszego uruchomienia: tworzy `
 
 ### Instalacja na Windows
 
-1. Zainstaluj **Python 3.11 lub nowszy**. Pobierz [ZIP v0.6.4b](https://bollek231.github.io/poe-build-notifier-site/downloads/PoE_Build_Notifier_v0.6.4b.zip) i wypakuj wszystkie pliki bota do folderu, np. `D:\PoE-Bot`.
+1. Zainstaluj **Python 3.11 lub nowszy**. Pobierz [ZIP v0.6.4b](https://bollek231.github.io/poe-build-notifier-site/downloads/PoE_Build_Notifier_v0.6.4c.zip) i wypakuj wszystkie pliki bota do folderu, np. `D:\PoE-Bot`.
 2. Otwórz CMD:
 
 ```bat
@@ -80,11 +85,16 @@ Bot automatycznie skanuje YouTube (domyślnie co 2 godziny), przyjmuje tylko fil
 
 Na Railway/VPS ustaw trwały wolumin, np. `DB_PATH=/data/poe330_seen.sqlite3` i `BACKUP_DIR=/data/backups`. Nie udostępniaj swoich plików `.env`, bazy ani kopii zapasowych.
 
-[Pełna instrukcja](INSTRUKCJA_INSTALACJI_v0.6.4b_PL_EN.md) · [Lista komend](https://bollek231.github.io/poe-build-notifier-site/komendy.html)
+[Pełna instrukcja](INSTRUKCJA_INSTALACJI_v0.6.4c_PL_EN.md) · [Lista komend](https://bollek231.github.io/poe-build-notifier-site/komendy.html)
 
 ---
 
 ## English
+
+### PoE Planner buttons (v0.6.4c)
+
+When a YouTube video description contains a valid `https://poeplanner.com` or `https://www.poeplanner.com` link, notifications can display a **PoE Planner** button, including `pFarmScan` and `pFarmSearch` results. The URL uses the same safe-link validation as existing buttons; `pRefreshLinks` can add it to a previous post if the creator updates the description.
+
 
 ### Optional manual scan video limit (v0.6.4b)
 
@@ -120,7 +130,7 @@ Double-click `Start_PoE_Bot.bat` for the initial environment setup, then `Start_
 
 ### Windows setup
 
-1. Install **Python 3.11+**. [Download v0.6.4b](https://bollek231.github.io/poe-build-notifier-site/downloads/PoE_Build_Notifier_v0.6.4b.zip) and extract the bot files to a directory such as `D:\PoE-Bot`.
+1. Install **Python 3.11+**. [Download v0.6.4b](https://bollek231.github.io/poe-build-notifier-site/downloads/PoE_Build_Notifier_v0.6.4c.zip) and extract the bot files to a directory such as `D:\PoE-Bot`.
 2. Open Command Prompt:
 
 ```bat
@@ -162,7 +172,7 @@ The default scan interval is 2 hours. Only videos published in the past 24 hours
 
 On Railway/VPS use persistent storage, for example `DB_PATH=/data/poe330_seen.sqlite3` and `BACKUP_DIR=/data/backups`. Never publish your `.env`, database or private backups.
 
-[Full setup guide](INSTRUKCJA_INSTALACJI_v0.6.4b_PL_EN.md) · [Commands](https://bollek231.github.io/poe-build-notifier-site/komendy-en.html)
+[Full setup guide](INSTRUKCJA_INSTALACJI_v0.6.4c_PL_EN.md) · [Commands](https://bollek231.github.io/poe-build-notifier-site/komendy-en.html)
 
 ---
 
