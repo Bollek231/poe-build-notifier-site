@@ -1,15 +1,15 @@
-# PoE Build Notifier v0.5.1 — 🇵🇱 Polski / 🇬🇧 English
+# PoE Build Notifier v0.5.2 — 🇵🇱 Polski / 🇬🇧 English
 
 [🇵🇱 Polski](#polski) · [🇬🇧 English](#english) · [Lista zmian / Patch Notes](https://bollek231.github.io/poe-build-notifier-site/changelog.html)
 
 ## Polski
 
-Niekomercyjny bot Discord wyszukujący **aktualne buildy Path of Exile 1** na YouTube. Wersja **v0.5.1** rozwija v0.5.0, zachowując dotychczasowe komendy i 24-godzinny limit wieku filmów.
+Niekomercyjny bot Discord wyszukujący **aktualne buildy Path of Exile 1** na YouTube. Wersja **v0.5.2** zachowuje funkcje v0.5.1 i zmienia wygląd strony, zachowując dotychczasowe komendy i 24-godzinny limit wieku filmów.
 
 ### Instalacja / aktualizacja (Windows)
 
 1. **Zatrzymaj lokalnego bota** (`Ctrl + C`) i zrób kopię folderu `D:\PoE-Bot`.
-2. Rozpakuj ZIP v0.5.1. Do istniejącego folderu skopiuj **`main.py`, `storage.py`, `features.py`, `enhancements.py`, `services.py`, `backups.py`, `requirements.txt` i `VERSION`**.
+2. Rozpakuj ZIP v0.5.2. Do istniejącego folderu skopiuj **`main.py`, `storage.py`, `features.py`, `enhancements.py`, `services.py`, `backups.py`, `requirements.txt` i `VERSION`**.
 3. **Nie nadpisuj** swoich plików `.env`, `search_config.json`, `poe330_seen.sqlite3` ani prywatnych kopii bazy.
 4. W CMD wpisz:
 
@@ -79,12 +79,12 @@ Na hostingu typu Railway używaj trwałego woluminu: np. `DB_PATH=/data/poe330_s
 
 ## English
 
-Non-commercial Discord bot that discovers fresh **Path of Exile 1 builds** using YouTube Data API v3. **v0.5.1** adds eight improvements while retaining the previous v0.5.0 functionality.
+Non-commercial Discord bot that discovers fresh **Path of Exile 1 builds** using YouTube Data API v3. **v0.5.2** retains the v0.5.1 improvements while retaining the previous v0.5.0 functionality.
 
 ### Windows installation / update
 
 1. Stop the running bot with `Ctrl + C` and back up `D:\PoE-Bot`.
-2. Extract v0.5.1 ZIP. Copy **`main.py`, `storage.py`, `features.py`, `enhancements.py`, `services.py`, `backups.py`, `requirements.txt`, and `VERSION`** into the existing bot directory.
+2. Extract v0.5.2 ZIP. Copy **`main.py`, `storage.py`, `features.py`, `enhancements.py`, `services.py`, `backups.py`, `requirements.txt`, and `VERSION`** into the existing bot directory.
 3. **Keep your original** `.env`, `search_config.json`, `poe330_seen.sqlite3`, and any private database backups.
 4. Run:
 
@@ -143,3 +143,10 @@ For Railway/VPS, store the live database and private backups on a **persistent v
 Offline tests: `python -m unittest discover -s tests -v`.
 
 [🇵🇱 Lista zmian](https://bollek231.github.io/poe-build-notifier-site/changelog.html) · [🇬🇧 Patch Notes](https://bollek231.github.io/poe-build-notifier-site/changelog-en.html) · [GitHub source](https://github.com/Bollek231/poe-build-notifier-site/tree/main/bot)
+
+
+## Website redesign v0.5.2 / Nowy projekt strony
+
+🇵🇱 Wersja v0.5.2 dodaje nowy wygląd GitHub Pages z animowanym tłem, poświatą pod kursorem, przełącznikiem jasnego/ciemnego motywu i odświeżoną dokumentacją. Działanie bota pozostaje identyczne z v0.5.1; zmienia się numer wersji.
+
+🇬🇧 v0.5.2 introduces the GitHub Pages animated redesign, cursor glow, light/dark mode, and refreshed bilingual documentation. The bot's operational behavior is unchanged from v0.5.1; its version number has been updated.
