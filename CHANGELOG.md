@@ -1,12 +1,19 @@
 # PoE Build Notifier — Lista zmian / Patch Notes
 
-**Aktualna wersja / Current version:** `v0.6.2b`
+**Aktualna wersja / Current version:** `v0.6.3`
 
 [🇵🇱 Lista zmian — strona](https://bollek231.github.io/poe-build-notifier-site/changelog.html) · [🇬🇧 Patch Notes — website](https://bollek231.github.io/poe-build-notifier-site/changelog-en.html)
 
 ---
 
 ## 🇵🇱 Polski
+
+### v0.6.3 — 13 listopada 2026
+- Dodano desktopowy launcher Windows z uruchamianiem bota bez ręcznych komend CMD, przyciskami start/stop i podglądem logów.
+- Dodano sprawdzanie aktualizacji przy uruchomieniu, pobieranie wersji z konkretnego commita GitHuba, automatyczną instalację i restart launchera.
+- Aktualizator tworzy kopie zastępowanych plików, przywraca je po błędzie i nie nadpisuje prywatnego `.env`, bazy SQLite ani konfiguracji użytkownika.
+- Dodano skróty startowe `.bat` i `.vbs` oraz automatyczne tworzenie testowanej paczki ZIP.
+
 
 ### v0.6.2b — 13 listopada 2026
 - **`pTranslateTitles`:** dodano wybór **MyMemory** (bez klucza API i rozliczeń) lub **Google Cloud Translation** (z własnym kluczem).
@@ -60,6 +67,13 @@
 ---
 
 ## 🇬🇧 English
+
+### v0.6.3 — November 13, 2026
+- Added a Windows desktop launcher to start/stop the bot without typing CMD commands, including a log viewer.
+- Added startup update checks, immutable GitHub commit downloads, automatic installation and launcher restart.
+- The updater backs up replaced program files, rolls them back on failure, and leaves private `.env`, SQLite and user configuration untouched.
+- Added `.bat` and `.vbs` launch shortcuts and an automated, tested ZIP packaging workflow.
+
 
 ### v0.6.2b — November 13, 2026
 - **`pTranslateTitles`:** choose **MyMemory** (no API key or billing) or **Google Cloud Translation** (bring your own API key).
