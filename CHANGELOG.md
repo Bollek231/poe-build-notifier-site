@@ -1,12 +1,20 @@
 # PoE Build Notifier — Lista zmian / Patch Notes
 
-**Aktualna wersja / Current version:** `v0.6.3`
+**Aktualna wersja / Current version:** `v0.6.4`
 
 [🇵🇱 Lista zmian — strona](https://bollek231.github.io/poe-build-notifier-site/changelog.html) · [🇬🇧 Patch Notes — website](https://bollek231.github.io/poe-build-notifier-site/changelog-en.html)
 
 ---
 
 ## 🇵🇱 Polski
+
+### v0.6.4 — 13 listopada 2026
+- Dodano wyszukiwanie poradników o strategiach farmienia waluty w PoE 1 i PoE 2: `pFarmScan` oraz `pFarmSearch KATEGORIA`.
+- Dodano `pFarmTopics` (lista kategorii), `pFarmRecent` (ostatnie strategie) oraz `pFarmAuto on/off/status` (dobrowolny monitoring).
+- Rozpoznawanie kategorii m.in. Essence, Harvest, Expedition, Atlas, Delirium, Breach, Ritual, Legion, Blight, Heist, Sanctum, boss farming, crafting i trading.
+- Strategie są filtrowane według wersji gry i daty publikacji, zapisywane osobno od buildów oraz uwzględniane w ciszy nocnej.
+- Automatyczny monitoring jest domyślnie wyłączony; po włączeniu wykonuje maksymalnie jedno dodatkowe wyszukiwanie na interwał, dzieląc budżet YouTube API z buildami. Opcjonalny osobny kanał: `FARM_CHANNEL_ID`.
+
 
 ### v0.6.3 — 13 listopada 2026
 - Dodano desktopowy launcher Windows z uruchamianiem bota bez ręcznych komend CMD, przyciskami start/stop i podglądem logów.
@@ -67,6 +75,14 @@
 ---
 
 ## 🇬🇧 English
+
+### v0.6.4 — November 13, 2026
+- Added separate currency-farming strategy searches for PoE 1 and PoE 2: `pFarmScan` and `pFarmSearch TOPIC`.
+- Added `pFarmTopics` (categories), `pFarmRecent` (recent strategies), and opt-in `pFarmAuto on/off/status` monitoring.
+- Recognizes Essence, Harvest, Expedition, Atlas, Delirium, Breach, Ritual, Legion, Blight, Heist, Sanctum, boss farming, crafting and trading.
+- Strategies are filtered by game version and publish date, stored separately from build guides, and grouped during quiet hours.
+- Automatic monitoring is off by default; when enabled it performs at most one additional query per scan interval within the shared YouTube API budget. Optional dedicated channel: `FARM_CHANNEL_ID`.
+
 
 ### v0.6.3 — November 13, 2026
 - Added a Windows desktop launcher to start/stop the bot without typing CMD commands, including a log viewer.
