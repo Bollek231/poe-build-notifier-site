@@ -166,3 +166,23 @@ def parse_version(value: str) -> tuple[int,int,int,int] | None:
 def is_newer(remote: str, local: str=VERSION) -> bool:
     a,b=parse_version(remote),parse_version(local)
     return a is not None and b is not None and a>b
+
+# Optional count for manual pScan / pFarmScan: limits published videos,
+# not YouTube API search.list requests. Empty argument retains full scan.
+MAX_MANUAL_SCAN_VIDEOS = 25
+
+
+def parse_scan_limit(value: str = "") -> int | None:
+    raw = str(value).strip()
+    if not raw:
+        return None
+    if not re.fullmatch(r"[1-9][0-9]*", raw) or len(raw) > 2:
+        raise ValueError("Count must be an integer from 1 to 25")
+    number = int(raw)
+    if not 1 <= number <= MAX_MANUAL_SCAN_VIDEOS:
+        raise ValueError("Count must be an integer from 1 to 25")
+    return number
+
+
+def scan_limit_reached(accepted: int, maximum: int | None) -> bool:
+    return maximum is not None and accepted >= maximum
