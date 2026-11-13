@@ -389,14 +389,88 @@ def extract_links(description):
     return found
 
 
+EMBED_STYLES = ('expanded', 'compact')
+
+
+def notification_embed(*, title, translated, url, game, league, category,
+                       channel_title, published, thumbnail=None,
+                       content_type='build', skill=None, ascendancy=None,
+                       style='expanded', language='pl'):
+    """Create Discord-native dark-fantasy notifications; no CSS or HTML.
+
+    Both styles remain within Discord's embed field/title limits. Preserve
+    the original YouTube title when automatic translation is enabled.
+    """
+    if style not in EMBED_STYLES:
+        style = 'expanded'
+    pl = language != 'en'
+    farm = content_type == 'farm'
+    accent = discord.Color.from_rgb(237, 176, 49) if farm else discord.Color.from_rgb(170, 93, 235)
+    game_label = game_modes.game_label(game)
+    safe_title = discord.utils.escape_mentions(str(translated or title)).replace('\n', ' ').strip()[:256]
+    heading = safe_title or ('Farming strategy' if farm else 'Build guide')
+    embed = discord.Embed(title=heading, url=url, color=accent)
+    brand = '💰 FARMING STRATEGY' if farm else '⚔️ BUILD GUIDE'
+    embed.set_author(name=f'{brand}  •  {game_label.upper()}  •  {league}'[:256])
+    label = (lambda p, e: p if pl else e)
+    category = (category or label('Ogólna', 'General'))[:100]
+    author = discord.utils.escape_markdown(discord.utils.escape_mentions(str(channel_title or 'YouTube')))[:200]
+    published_at = f'<t:{int(published.timestamp())}:R>' if published else label('Nieznana', 'Unknown')
+    original = str(title or '').strip()
+    original_line = ''
+    if translated != title and original:
+        original_line = ('\n' + label('**Oryginalny tytuł:** ', '**Original title:** ') +
+                         discord.utils.escape_mentions(original[:380]))
+    if style == 'compact':
+        embed.description = (f'**{label("Kategoria", "Category")}:** {category}  •  '
+                             f'**{label("Autor", "Creator")}:** {author}\n'
+                             f'🎮 {game_label} · {league}  •  🕒 {published_at}')
+        if not farm and skill:
+            embed.description += f'\n✨ **{discord.utils.escape_mentions(str(skill)[:90])}**'
+        embed.description += original_line
+    else:
+        embed.description = (
+            f'{brand}  **•  {category}**\n'
+            + (label('Poradnik strategii zarabiania waluty', 'Currency farming guide') if farm
+               else label('Nowy poradnik buildu', 'New build guide'))
+            + original_line
+        )
+        if not farm:
+            if skill:
+                embed.add_field(name='✨ ' + label('Umiejętność', 'Skill'),
+                                value=discord.utils.escape_mentions(str(skill)[:1024]),inline=True)
+            if ascendancy:
+                embed.add_field(name='🛡️ Ascendancy',
+                                value=discord.utils.escape_mentions(str(ascendancy)[:1024]),inline=True)
+        embed.add_field(name='🎮 ' + label('Gra', 'Game'),value=game_label,inline=True)
+        embed.add_field(name='🏷️ ' + label('Liga / Wersja', 'League / Patch'),value=str(league)[:100],inline=True)
+        embed.add_field(name='🗂️ ' + label('Kategoria', 'Category'),value=category,inline=True)
+        embed.add_field(name='👤 ' + label('Twórca', 'Creator'),value=author or 'YouTube',inline=True)
+        embed.add_field(name='🕒 ' + label('Opublikowano', 'Published'),value=published_at,inline=True)
+    embed.set_footer(text=('PoE Build Notifier • YouTube • '
+                           + (label('Zyski nie są weryfikowane', 'Earnings are not verified') if farm
+                              else label('Oryginalny poradnik', 'Original guide'))))
+    if isinstance(thumbnail, str) and thumbnail.startswith('https://'):
+        embed.set_thumbnail(url=thumbnail)
+    return embed
+
+
 def buttons_from_links(links, video_id=None):
     if not links and not video_id:
         return None
     view = discord.ui.View(timeout=None)
     if video_id and community.VIDEO_ID.fullmatch(video_id):
         view.add_item(SaveBuildButton(video_id))
+        view.add_item(discord.ui.Button(label='YouTube',emoji='▶️',
+            style=discord.ButtonStyle.link,url='https://www.youtube.com/watch?v='+video_id))
+    # Discord lays out at most five components per row; excess links wrap.
+    labels={'Path of Building':'PoB','Maxroll':'Maxroll',
+            'Mobalytics':'Mobalytics','PoE Planner':'PoE Planner'}
     for label, url in links.items():
-        view.add_item(discord.ui.Button(label=label, style=discord.ButtonStyle.link, url=url))
+        if not enhancements.sane_external_url(url):
+            continue
+        view.add_item(discord.ui.Button(label=labels.get(label,label)[:80],
+            style=discord.ButtonStyle.link,url=url))
     return view
 
 
@@ -685,35 +759,14 @@ async def scan(kind='auto', custom_query=None, *, content_type='build', max_vide
                         contact_email=MYMEMORY_CONTACT_EMAIL,enabled=True,
                         max_daily=TRANSLATION_DAILY_LIMIT,
                         source_language=info.get('defaultLanguage') or info.get('defaultAudioLanguage'))
-                if content_type=='farm':
-                    embed = discord.Embed(title=translated[:256],url=url,color=discord.Color.gold())
-                    if translated!=title:
-                        embed.add_field(name='Oryginalny tytuł / Original title',value=title[:1024],inline=False)
-                    embed.add_field(name='Rodzaj / Type',value='💰 Currency farming strategy',inline=False)
-                    embed.add_field(name='Gra / Game',value=game_modes.game_label(game),inline=True)
-                    embed.add_field(name='Liga / wersja',value=league,inline=True)
-                    embed.add_field(name='Kategoria / Category',value=category,inline=True)
-                    embed.add_field(name='Twórca / Creator',value=info.get('channelTitle','Nieznany')[:1024],inline=False)
-                    embed.add_field(name='Opublikowano / Published',value=f'<t:{int(published.timestamp())}:R>',inline=False)
-                    embed.set_footer(text='Źródło: YouTube • Kategoria wywnioskowana z tytułu • Zysk niezweryfikowany')
-                else:
-                    embed = discord.Embed(title=translated[:256], url=url, color=discord.Color.dark_purple())
-                    if translated!=title:
-                        embed.add_field(name='Oryginalny tytuł / Original title',value=title[:1024],inline=False)
-                    embed.add_field(name='Gra', value=game_modes.game_label(game), inline=True)
-                    embed.add_field(name='Liga / wersja', value=league, inline=True)
-                    embed.add_field(name='Twórca na YouTube', value=info.get('channelTitle', 'Nieznany')[:1024], inline=False)
-                    embed.add_field(name='Umiejętność (oznaczenie bota)', value=skill or 'Nie rozpoznano', inline=True)
-                    embed.add_field(name='Ascendancy (oznaczenie bota)', value=asc or 'Nie rozpoznano', inline=True)
-                    embed.add_field(name='Kategoria (oznaczenie bota)', value=category, inline=True)
-                    if published:
-                        stamp = int(published.timestamp())
-                        embed.add_field(name='Opublikowano na YouTube', value=f'<t:{stamp}:F>\n<t:{stamp}:R>', inline=False)
-                    embed.add_field(name='Źródło', value='[Oryginalny film w YouTube](' + url + ')', inline=False)
-                thumb = info.get('thumbnails', {}).get('high') or info.get('thumbnails', {}).get('medium')
-                if thumb and thumb.get('url'):
-                    embed.set_thumbnail(url=thumb['url'])
-                embed.set_footer(text='Dane filmu: YouTube • Kategorie ustala bot, nie YouTube • Zasady: pPrivacy')
+                thumb = info.get('thumbnails', {}).get('high') or info.get('thumbnails', {}).get('medium') or {}
+                embed = notification_embed(
+                    title=title, translated=translated, url=url, game=game,
+                    league=league, category=category, channel_title=info.get('channelTitle','YouTube'),
+                    published=published, thumbnail=thumb.get('url'),
+                    content_type=content_type, skill=skill, ascendancy=asc,
+                    style=storage.get_setting(c,'embed_style','expanded'),
+                    language=BOT_LANGUAGE)
                 try:
                     links=extract_links(description)
                     if CHECK_EXTERNAL_LINKS:
@@ -722,7 +775,7 @@ async def scan(kind='auto', custom_query=None, *, content_type='build', max_vide
                         links={label:target for label,target in links.items() if enhancements.sane_external_url(target)}
                     if sent:
                         await asyncio.sleep(SEND_DELAY)
-                    posted_message=await channel.send(content=url, embed=localize_embed(embed), view=buttons_from_links(links,vid))
+                    posted_message=await channel.send(embed=embed, view=buttons_from_links(links,vid), allowed_mentions=discord.AllowedMentions.none())
                     if content_type=='farm':
                         farming.posted(c,vid,game,league,category,title,info.get('publishedAt'))
                     else:
@@ -1136,6 +1189,28 @@ async def search_command(ctx, *, query: str = ''):
     await report_scan(ctx, f'{label} {league} {query} build')
 
 
+@bot.command(name='EmbedStyle')
+@commands.check(allowed)
+async def embed_style_command(ctx, mode: str='status'):
+    """Persist a compact or expanded layout for new build/farming notifications."""
+    if not await require_consent(ctx):
+        return
+    mode=mode.strip().casefold()
+    if mode not in (*EMBED_STYLES,'status'):
+        await localized_reply(ctx, 'Użycie: `pEmbedStyle compact`, `pEmbedStyle expanded` lub `pEmbedStyle status`.')
+        return
+    c=db()
+    try:
+        if mode != 'status':
+            storage.set_setting(c,'embed_style',mode)
+        selected=storage.get_setting(c,'embed_style','expanded')
+    finally:
+        c.close()
+    await localized_reply(ctx,
+        ('🎨 Styl nowych powiadomień: **' + selected + '**. ' +
+         'Zmieniasz układ nowych wiadomości; wcześniejsze pozostają bez zmian.'))
+
+
 @bot.command(name='FarmScan')
 @commands.check(allowed)
 async def farm_scan_command(ctx, count: str=''):
@@ -1508,7 +1583,7 @@ class SaveBuildButton(discord.ui.DynamicItem[discord.ui.Button],
         return cls(match.group('video_id'))
 
     async def callback(self,interaction):
-        if not interaction.guild or interaction.channel_id!=CHANNEL_ID:
+        if not interaction.guild or interaction.channel_id not in (CHANNEL_ID, FARM_CHANNEL_ID):
             await interaction.response.send_message('Use the configured bot channel.',ephemeral=True)
             return
         c=db()
@@ -1555,7 +1630,7 @@ async def saved_command(ctx, action='', video_id=''):
 
 HELP_PAGES={
  'scan':('🔎 Wyszukiwanie / Discovery', '`pScan` / `pScan 1` — pełny skan / limit nowych filmów\n`pSearch Spark` — wyszukiwanie skilla\n`pGame poe2` / `pGame poe1` — wybór gry\n`pLeague` — wersja gry\n`pFarmScan` / `pFarmScan 2`, `pFarmSearch essence` — farmienie'),
- 'config':('⚙️ Konfiguracja / Settings', '`pSetup` — kreator\n`pSettings` — panel ustawień\n`pLanguage` — język bota\n`pQuietHours 23:00 08:00` — godziny ciszy\n`pPause 6h` / `pResume` — pauza\n`pFarmAuto on/off` — monitoring farmienia'),
+ 'config':('⚙️ Konfiguracja / Settings', '`pSetup` — kreator\n`pSettings` — panel ustawień\n`pLanguage` — język bota\n`pQuietHours 23:00 08:00` — godziny ciszy\n`pPause 6h` / `pResume` — pauza\n`pFarmAuto on/off` — monitoring farmienia\n`pEmbedStyle compact/expanded` — wygląd powiadomień'),
  'community':('⭐ Społeczność / Community','`pSaved` — zapisane buildy\n`pTrending` — popularność filmów\n`pFarmRecent`, `pFarmTopics` — strategie farmienia\n`pTranslateTitles on/off/mymemory/google` — tłumaczenie tytułów'),
  'admin':('🛠️ Administracja / Admin', '`pHealth`, `pLimit`, `pVersion` — stan i API\n`pBackup` — kopie danych\n`pFilters`, `pChannelRules` — reguły\n`pPrivacy` / `pAgree` — zasady')}
 
