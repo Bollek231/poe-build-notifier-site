@@ -63,6 +63,9 @@ h1 em{font-style:normal;background:linear-gradient(94deg,var(--accent),#f4c89b 5
 .float1{top:25px;right:0;transform:rotate(4deg)}
 .float2{bottom:36px;left:-13px;transform:rotate(-4deg)}
 .float3{bottom:38px;right:-3px;transform:rotate(3deg)}
+.float4{top:130px;left:-44px;transform:rotate(-5deg)}
+.float5{top:205px;right:-44px;transform:rotate(4deg)}
+.visual{min-height:480px}
 .float .on{color:#70d5a4;font-size:11px}
 .section-label{font-size:10px;letter-spacing:.23em;text-transform:uppercase;font-weight:850;color:var(--accent);margin-bottom:13px}
 section.features{padding:53px 0 66px;border-top:1px solid var(--line)}
@@ -98,6 +101,7 @@ h2{font-family:Georgia,serif;font-size:36px;font-weight:500;letter-spacing:-.035
 @keyframes spin{to{transform:rotate(360deg)}}@keyframes reverseSpin{to{transform:rotate(-360deg)}}
 @media(max-width:1050px){nav{gap:15px}.hero{grid-template-columns:1fr .8fr;gap:0}.visual{transform:scale(.83)}.float2{left:-40px}.float3{right:-25px}}
 @media(max-width:760px){.wrap{width:min(100% - 34px,520px)}.header-inner{height:auto;min-height:78px;gap:10px;flex-wrap:wrap;padding:15px 0}.logo strong{font-size:12px}.logo small{font-size:7px}nav{display:none}.controls{margin-left:auto}.hero{grid-template-columns:1fr;padding:58px 0 40px;min-height:0}.hero h1{font-size:clamp(47px,12vw,65px)}.visual{min-height:320px;transform:scale(.8)}.float1{right:-30px}.float2{left:-30px}.float3{right:-30px}.section-heading{display:block}.section-heading p{margin-top:14px}.cards,.demo-grid{grid-template-columns:1fr}.card{min-height:160px}.demo-section{padding:45px 0 60px}.footer{flex-wrap:wrap}.ctrl{width:36px;height:36px;min-width:36px}#app{background:linear-gradient(180deg,var(--bg),var(--background))}}
+@media(max-width:760px){.visual{min-height:440px}.float4{top:133px;left:-26px}.float5{top:211px;right:-26px}.float4,.float5{min-width:145px;padding:11px 13px}.float4 strong,.float5 strong{font-size:11px}}
 @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}*{animation:none!important;transition:none!important}#spotlight{display:none}}
 </style>
 <link rel="stylesheet" href="fancy.css"><link rel="stylesheet" href="unified.css"><link rel="alternate" hreflang="pl" href="https://bollek231.github.io/poe-build-notifier-site/index.html"><link rel="alternate" hreflang="en" href="https://bollek231.github.io/poe-build-notifier-site/index-en.html"></head>
@@ -141,6 +145,8 @@ h2{font-family:Georgia,serif;font-size:36px;font-weight:500;letter-spacing:-.035
         <div class="float float1"><small>YOUTUBE API</small><strong><span class="on">●</span> <span data-i="monitor">Automatyczny monitoring</span></strong></div>
         <div class="float float2"><small>LEAGUE TRACKER</small><strong>3.30 <span style="color:var(--accent)">→</span> 3.31</strong></div>
         <div class="float float3"><small>BUILD LIBRARY</small><strong>✦ PoB · Maxroll · Mobalytics</strong></div>
+        <div class="float float4"><small>TRANSLATION</small><strong><span class="on">●</span> Automatyczne tłumaczenie</strong></div>
+        <div class="float float5"><small>SAVED BUILDS</small><strong>☆ Zapisane buildy</strong></div>
       </div>
     </div>
     <section class="features" id="features"><div class="wrap">
