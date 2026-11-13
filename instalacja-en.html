@@ -23,10 +23,18 @@ DAILY_DIGEST_TIME=20:00
 TARGET_LEAGUE=3.30</code></pre>
 <div class="note"><strong>Security:</strong> never commit your actual <code>.env</code>, <code>.sqlite3</code> database, Google service-account JSON files, or secret tokens. This repository contains example settings only.</div>
 <h2>6. Start and test</h2><pre><code>python main.py</code></pre><p>On Discord, begin with <code>pPrivacy</code> and <code>pAgree</code>, then check <code>pHealth</code>, <code>pSettings</code>, and <code>pLeague</code>. See <a href="https://bollek231.github.io/poe-build-notifier-site/komendy-en.html">all available commands</a>.</p>
-<h2>Updating an existing installation</h2><p>Stop the bot with <code>Ctrl + C</code> and back up its folder. Replace <code>main.py</code>, <code>storage.py</code>, <code>features.py</code>, <code>enhancements.py</code>, <code>services.py</code>, <code>backups.py</code>, <code>VERSION</code> and <code>requirements.txt</code>. <strong>Keep your own .env, search_config.json and poe330_seen.sqlite3 files.</strong> Then run:</p>
-<pre><code>python -m pip install -r requirements.txt
+<h2>Updating an existing installation</h2>
+<p><strong>1.</strong> Stop the bot in CMD with <code>Ctrl + C</code> and back up the installation folder and <code>poe330_seen.sqlite3</code> database.</p>
+<p><strong>2.</strong> Extract the new ZIP into a separate folder. Copy all current Python modules (including <code>game_modes.py</code>, <code>localization.py</code> and <code>runtime_settings.py</code>), <code>VERSION</code> and <code>requirements.txt</code> to the existing installation. <strong>Keep your .env, SQLite database, backups and custom search_config.json.</strong></p>
+<p><strong>3.</strong> Reinstall requirements and restart:</p>
+<pre><code>cd /d D:\PoE-Bot
+.venv\Scripts\activate
+python -m pip install -r requirements.txt
 python main.py</code></pre>
-<h2>Updating an existing installation</h2><p>Stop the bot and back up its folder and SQLite database. Copy the Python modules from the current archive, including <code>game_modes.py</code>, <code>localization.py</code> and <code>runtime_settings.py</code>, along with <code>requirements.txt</code> and <code>VERSION</code>. Keep your private <code>.env</code>, custom <code>search_config.json</code> and SQLite database. Never run two instances with the same token.</p><pre><code># Optional entries in your private .env
+<p><strong>4.</strong> Check <code>pHealth</code>, <code>pVersion</code>, <code>pLanguage</code> and <code>pSettings</code> on Discord. Do not run two instances of the bot at once.</p>
+<p>For more screenshots-free, copyable instructions, see the <a href="https://github.com/Bollek231/poe-build-notifier-site/blob/main/bot/INSTRUKCJA_INSTALACJI_v0.6.1_PL_EN.md">complete installation guide (PL/EN)</a>.</p>
+<h2>Optional settings</h2>
+<pre><code># Optional entries in your private .env
 DAILY_SEARCH_BUDGET=96
 RESERVED_SEARCHES=24
 ALERT_CHANNEL_ID=0
@@ -35,7 +43,7 @@ LINK_REFRESH_INTERVAL_HOURS=6
 MAX_LINK_REFRESH_PER_RUN=10
 BACKUP_DIR=backups
 BACKUP_KEEP_DAYS=7
-VERSION_CHECK_ENABLED=true</code></pre><p><code>ALERT_CHANNEL_ID=0</code> disables Discord alerts. Set this to a private admin channel ID instead; if unset, the build channel is used. For Railway/VPS, store <code>BACKUP_DIR=/data/backups</code> and <code>DB_PATH=/data/poe330_seen.sqlite3</code> on a persistent volume. Backups contain local database and Discord IDs and must remain private.</p><p><strong>New commands:</strong> <code>pWhitelist</code>, <code>pFilters</code>, <code>pRefreshLinks</code>, <code>pBackup</code>, <code>pVersion</code>, and channel list commands. See <a href="https://bollek231.github.io/poe-build-notifier-site/komendy-en.html">Features and commands</a>.</p><h2>Troubleshooting</h2><ul>
+VERSION_CHECK_ENABLED=true</code></pre><p><code>ALERT_CHANNEL_ID=0</code> disables Discord alerts. Set this to a private admin channel ID instead; if unset, the build channel is used. For Railway/VPS, store <code>BACKUP_DIR=/data/backups</code> and <code>DB_PATH=/data/poe330_seen.sqlite3</code> on a persistent volume. Backups contain local database and Discord IDs and must remain private.</p><p><strong>Useful commands:</strong> <code>pWhitelist</code>, <code>pFilters</code>, <code>pRefreshLinks</code>, <code>pBackup</code>, <code>pVersion</code>, and channel list commands. See <a href="https://bollek231.github.io/poe-build-notifier-site/komendy-en.html">Features and commands</a>.</p><h2>Troubleshooting</h2><ul>
 <li><strong>HTTP 429:</strong> your YouTube search quota has been exhausted; the bot displays the next expected reset and pauses searches.</li>
 <li><strong>Commands do not respond:</strong> verify Message Content Intent, channel configuration, and the Manage Server permission.</li>
 <li><strong>Time zone not found:</strong> run <code>python -m pip install tzdata</code>.</li>
