@@ -1,13 +1,24 @@
 # PoE Build Notifier — Changelog / Lista zmian
 
-**Current version / Aktualna wersja:** `v0.6.0`  
-**Versioning / Wersjonowanie:** `vMAJOR.MINOR.PATCH`; starting from `v0.5.0`, each subsequent project update increments the final number (`v0.6.1`, `v0.6.2`, etc.). Every update must have a new entry here and on both GitHub Pages changelog pages.
+**Current version / Aktualna wersja:** `v0.6.1`  
+**Versioning / Wersjonowanie:** `vMAJOR.MINOR.PATCH`; starting from `v0.5.0`, each subsequent project update increments the final number (`v0.6.2`, `v0.6.3`, etc.). Every update must have a new entry here and on both GitHub Pages changelog pages.
 
 [🇵🇱 Lista zmian (GitHub Pages)](https://bollek231.github.io/poe-build-notifier-site/changelog.html) · [🇬🇧 Patch Notes (GitHub Pages)](https://bollek231.github.io/poe-build-notifier-site/changelog-en.html)
 
 ---
 
 ## 🇵🇱 Polski
+
+### v0.6.1 — 13 listopada 2026
+
+**Nowości**
+- Komenda **`pLanguage`** z interaktywnym menu wyboru polskiego lub angielskiego (także `pLanguage pl` i `pLanguage en`).
+- Tłumaczenia odpowiedzi komend, komunikatów i pól powiadomień na język angielski; oryginalne tytuły YouTube pozostają bez zmian.
+- Przebudowana **`pSettings`**: rozwijana lista ustawień, formularze Discorda i przełączanie opcji tak/nie.
+- Edycja zakresów: skanowanie 1–24 h, godzina digestu, liczba wyników, odstęp wiadomości, budżet YouTube, filtry wieku ≤24 h, odświeżanie linków, kontrole linków i sprawdzanie wersji co 1–72 h.
+- Zapis zmian w istniejącej tabeli SQLite `bot_settings`, walidacja danych, kontrola uprawnień i automatyczne zastosowanie zmian bez restartu.
+- Zachowanie pełnej obsługi PoE 1 / PoE 2 1.0, poprzednich ustawień i wiadomości Discord.
+- Nowe testy bezpieczeństwa i trwałości konfiguracji — **67 testów offline, 32 podtesty**.
 
 ### v0.6.0 — 13 listopada 2026
 
@@ -75,6 +86,17 @@
 ---
 
 ## 🇬🇧 English
+
+### v0.6.1 — November 13, 2026
+
+**New features**
+- **`pLanguage`**: interactive Polish/English dropdown, plus direct `pLanguage pl` and `pLanguage en`.
+- English-language command responses, status alerts, embed field labels and digests; original YouTube titles stay unchanged.
+- Redesigned **`pSettings`**: interactive select, Discord modal input forms, and one-click on/off toggles.
+- Safe settings for scan frequency (1–24 h), digest time, result count, posting delay, daily local YouTube budget, max video age (≤24 h), link verification/refresh, and version checks (1–72 h).
+- SQLite `bot_settings` persistence, strict validation, administrative access checks, and immediate application without a restart.
+- Full backwards compatibility with PoE 1 / PoE 2 1.0 modes, previous preferences, and existing Discord messages.
+- **67 offline tests and 32 subtests** passing.
 
 ### v0.6.0 — November 13, 2026
 
