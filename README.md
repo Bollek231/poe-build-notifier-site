@@ -1,10 +1,13 @@
-# PoE Build Notifier v0.5.1 — PL 🇵🇱 / EN 🇬🇧
+# PoE Build Notifier v0.5.2 — PL 🇵🇱 / EN 🇬🇧
 
 **Wybierz język / Choose language:** [🇵🇱 Polski](#polski) · [🇬🇧 English](#english)
 
 ## Polski
 
-**Aktualna wersja: v0.5.1. Następna aktualizacja: v0.5.2.**
+**Nowość w v0.5.2:** przeprojektowana, animowana strona GitHub Pages z efektem poświaty pod kursorem, ruchomymi cząsteczkami, przełącznikiem motywu ☀️/🌙, nowym podglądem Discorda i spójną stylistyką dokumentacji. Funkcje bota pozostały bez zmian względem v0.5.1.
+
+
+**Aktualna wersja: v0.5.2. Następna aktualizacja: v0.5.3.**
 
 
 Niekomercyjny projekt bota Discord, który wyszukuje nowe buildy Path of Exile 1 przez YouTube Data API v3 i publikuje linki do oryginalnych filmów.
@@ -18,9 +21,9 @@ Niekomercyjny projekt bota Discord, który wyszukuje nowe buildy Path of Exile 1
 - 📄 **[Warunki korzystania](https://bollek231.github.io/poe-build-notifier-site/terms.html)**
 - 📝 **[Lista zmian / Patch Notes](https://bollek231.github.io/poe-build-notifier-site/changelog.html)**
 
-## Pobierz PoE Build Notifier v0.5.1
+## Pobierz PoE Build Notifier v0.5.2
 
-- 📦 **[Pobierz paczkę ZIP z kodem](https://bollek231.github.io/poe-build-notifier-site/downloads/PoE_Build_Notifier_v0.5.1.zip)**
+- 📦 **[Pobierz paczkę ZIP z kodem](https://bollek231.github.io/poe-build-notifier-site/downloads/PoE_Build_Notifier_v0.5.2.zip)**
 - 🐍 **[Przejrzyj kod źródłowy na GitHubie](https://github.com/Bollek231/poe-build-notifier-site/tree/main/bot)**
 - 📚 **[README kodu bota](bot/README.md)**
 
@@ -76,7 +79,10 @@ Projekt nie jest związany z Google, YouTube, Discord ani Grinding Gear Games. N
 
 ## English
 
-**Current version: v0.5.1. Next update: v0.5.2.**
+**New in v0.5.2:** redesigned, animated GitHub Pages website with a cursor spotlight, drifting particles, ☀️/🌙 theme toggle, new Discord command preview, and consistent documentation styling. Bot runtime features are unchanged from v0.5.1.
+
+
+**Current version: v0.5.2. Next update: v0.5.3.**
 
 
 A non-commercial Discord bot that discovers fresh Path of Exile 1 builds using YouTube Data API v3 and posts links to the original videos.
@@ -90,9 +96,9 @@ A non-commercial Discord bot that discovers fresh Path of Exile 1 builds using Y
 - 📄 **[Terms of Use](https://bollek231.github.io/poe-build-notifier-site/terms-en.html)**
 - 📝 **[Patch Notes / Changelog](https://bollek231.github.io/poe-build-notifier-site/changelog-en.html)**
 
-### Download PoE Build Notifier v0.5.1
+### Download PoE Build Notifier v0.5.2
 
-- 📦 **[Download the source ZIP](https://bollek231.github.io/poe-build-notifier-site/downloads/PoE_Build_Notifier_v0.5.1.zip)**
+- 📦 **[Download the source ZIP](https://bollek231.github.io/poe-build-notifier-site/downloads/PoE_Build_Notifier_v0.5.2.zip)**
 - 🐍 **[Browse the source on GitHub](https://github.com/Bollek231/poe-build-notifier-site/tree/main/bot)**
 - 📚 **[Bot source README (PL/EN)](bot/README.md)**
 
