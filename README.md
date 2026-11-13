@@ -20,7 +20,7 @@ Niekomercyjny projekt bota Discord, który wyszukuje nowe buildy Path of Exile 1
 
 ## Pobierz PoE Build Notifier v0.5.0
 
-- 📦 **[Pobierz paczkę ZIP z kodem](https://bollek231.github.io/poe-build-notifier-site/downloads/PoE_Build_Notifier_BEZ_DANYCH.zip)**
+- 📦 **[Pobierz paczkę ZIP z kodem](https://bollek231.github.io/poe-build-notifier-site/downloads/PoE_Build_Notifier_v0.5.0.zip)**
 - 🐍 **[Przejrzyj kod źródłowy na GitHubie](https://github.com/Bollek231/poe-build-notifier-site/tree/main/bot)**
 - 📚 **[README kodu bota](bot/README.md)**
 
@@ -83,7 +83,7 @@ A non-commercial Discord bot that discovers fresh Path of Exile 1 builds using Y
 
 ### Download PoE Build Notifier v0.5.0
 
-- 📦 **[Download the source ZIP](https://bollek231.github.io/poe-build-notifier-site/downloads/PoE_Build_Notifier_BEZ_DANYCH.zip)**
+- 📦 **[Download the source ZIP](https://bollek231.github.io/poe-build-notifier-site/downloads/PoE_Build_Notifier_v0.5.0.zip)**
 - 🐍 **[Browse the source on GitHub](https://github.com/Bollek231/poe-build-notifier-site/tree/main/bot)**
 - 📚 **[Bot source README (PL/EN)](bot/README.md)**
 
