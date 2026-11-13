@@ -37,6 +37,7 @@ SETTINGS: tuple[Setting, ...] = (
     Setting('version_check_enabled','bool',None,None,'Powiadomienia o wersji','Update notifications','Włącz lub wyłącz','On or off'),
     Setting('version_check_hours','int',1,72,'Sprawdzanie GitHub (h)','GitHub version check (h)','1–72 godzin','1–72 hours'),
     Setting('link_refresh_limit','int',1,50,'Filmy na odświeżenie','Posts per link refresh','1–50','1–50'),
+    Setting('translation_provider','choice',None,None,'Silnik tłumaczeń','Translation provider','mymemory lub google','mymemory or google'),
 )
 SPECS = {item.key: item for item in SETTINGS}
 
@@ -51,6 +52,10 @@ def parse_value(key: str, raw: str | int | float | bool):
     """Parse and strictly validate one value, raising ValueError on failure."""
     spec=SPECS.get(key)
     if spec is None: raise ValueError('Setting not editable')
+    if spec.kind=='choice':
+        word=str(raw).strip().lower()
+        if word not in ('mymemory','google'):raise ValueError('Choose mymemory or google')
+        return word
     if spec.kind=='bool':
         if isinstance(raw,bool): return raw
         word=str(raw).strip().lower()
