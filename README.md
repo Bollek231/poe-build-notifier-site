@@ -1,4 +1,4 @@
-# PoE Build Notifier · v0.6.4c
+# PoE Build Notifier · v0.6.4d
 
 **Discord bot for Path of Exile 1 & Path of Exile 2 · 🇵🇱 Polski / 🇬🇧 English**
 
@@ -7,6 +7,17 @@
 ---
 
 ## Polski
+
+### Nowy wygląd powiadomień Discord (v0.6.4d)
+
+Nowe powiadomienia dla buildów mają fioletowy akcent, a dla strategii farmienia złoty. Uproszczono pola i stopki, zachowano miniaturę filmu oraz przyciski do dostępnych poradników. Przyciski **Zapisz**, **YouTube**, **PoB**, **Maxroll**, **Mobalytics** i **PoE Planner** są dodawane zależnie od dostępności sprawdzonych linków. Link YouTube otwiera się również po kliknięciu tytułu powiadomienia. Wcześniejsze powiadomienia nie są przerabiane.
+
+- `pEmbedStyle expanded` — pełny, estetyczny układ (domyślny).
+- `pEmbedStyle compact` — krótsze powiadomienia, mniej pól.
+- `pEmbedStyle status` — sprawdza zapamiętany styl.
+
+Styl jest zapisywany w istniejącej bazie SQLite. Discord nie obsługuje CSS w embedach: są to natywne układy, nie graficzne ramki ze statycznej wizualizacji.
+
 
 ### PoE Planner w powiadomieniach (v0.6.4c)
 
@@ -69,7 +80,7 @@ W folderze bota uruchom `Start_PoE_Bot.bat` (pierwszy raz tworzy `.venv` i insta
 
 ### Instalacja na Windows — krok po kroku
 
-**1. Pobierz pliki.** Zainstaluj [Python 3.11 lub nowszy](https://www.python.org/downloads/) i pobierz **[PoE Build Notifier v0.6.4b (ZIP)](https://bollek231.github.io/poe-build-notifier-site/downloads/PoE_Build_Notifier_v0.6.4c.zip)**. Wypakuj pliki tak, aby w folderze `D:\PoE-Bot` znajdowały się m.in. `main.py` i `requirements.txt`.
+**1. Pobierz pliki.** Zainstaluj [Python 3.11 lub nowszy](https://www.python.org/downloads/) i pobierz **[PoE Build Notifier v0.6.4b (ZIP)](https://bollek231.github.io/poe-build-notifier-site/downloads/PoE_Build_Notifier_v0.6.4d.zip)**. Wypakuj pliki tak, aby w folderze `D:\PoE-Bot` znajdowały się m.in. `main.py` i `requirements.txt`.
 
 **2. Przygotuj środowisko Pythona.** Otwórz **Wiersz polecenia (CMD)** i wykonaj po kolei:
 
@@ -113,7 +124,7 @@ Na skonfigurowanym kanale Discorda użyj `pPrivacy`, `pAgree` i `pHealth`. Wybra
 
 **Aktualizacja istniejącego bota:** zatrzymaj go (`Ctrl + C`), wykonaj kopię folderu i pliku SQLite, a następnie podmień pliki Pythona, `VERSION` i `requirements.txt` z aktualnego ZIP-a. **Nie nadpisuj** własnego `.env`, `search_config.json`, bazy `.sqlite3` ani kopii zapasowych. Po aktualizacji uruchom ponownie `python -m pip install -r requirements.txt` i `python main.py`.
 
-[Pełny poradnik instalacji (PL/EN)](bot/INSTRUKCJA_INSTALACJI_v0.6.4c_PL_EN.md) · [Instalacja na GitHub Pages](https://bollek231.github.io/poe-build-notifier-site/instalacja.html) · [Kod źródłowy](bot/) · [Lista zmian](CHANGELOG.md)
+[Pełny poradnik instalacji (PL/EN)](bot/INSTRUKCJA_INSTALACJI_v0.6.4d_PL_EN.md) · [Instalacja na GitHub Pages](https://bollek231.github.io/poe-build-notifier-site/instalacja.html) · [Kod źródłowy](bot/) · [Lista zmian](CHANGELOG.md)
 
 ### Dokumentacja
 
@@ -122,6 +133,17 @@ Na skonfigurowanym kanale Discorda użyj `pPrivacy`, `pAgree` i `pHealth`. Wybra
 ---
 
 ## English
+
+### Redesigned Discord notifications (v0.6.4d)
+
+New build notifications use purple accents; currency farming notifications use gold. Both layouts have cleaner fields/footers and YouTube thumbnails, with available validated **Save**, **YouTube**, **PoB**, **Maxroll**, **Mobalytics** and **PoE Planner** buttons. The notification title also links to YouTube. Existing posts are not redesigned.
+
+- `pEmbedStyle expanded` — detailed default layout.
+- `pEmbedStyle compact` — shorter, information-dense layout.
+- `pEmbedStyle status` — show the current selection.
+
+Styles are saved in the existing SQLite database. Discord embeds do not support arbitrary CSS or the decorative borders from the static mockup.
+
 
 ### PoE Planner buttons (v0.6.4c)
 
@@ -184,7 +206,7 @@ Run `Start_PoE_Bot.bat` once from the bot folder to create `.venv` and install d
 
 ### Windows installation — step by step
 
-**1. Download the bot.** Install [Python 3.11+](https://www.python.org/downloads/) and **[download PoE Build Notifier v0.6.4bb (ZIP)](https://bollek231.github.io/poe-build-notifier-site/downloads/PoE_Build_Notifier_v0.6.4c.zip)**. Extract the bot files so that `D:\PoE-Bot` contains `main.py` and `requirements.txt`.
+**1. Download the bot.** Install [Python 3.11+](https://www.python.org/downloads/) and **[download PoE Build Notifier v0.6.4bb (ZIP)](https://bollek231.github.io/poe-build-notifier-site/downloads/PoE_Build_Notifier_v0.6.4d.zip)**. Extract the bot files so that `D:\PoE-Bot` contains `main.py` and `requirements.txt`.
 
 **2. Set up Python.** Open **Windows Command Prompt (CMD)** and run:
 
@@ -228,7 +250,7 @@ On the configured Discord channel run `pPrivacy`, `pAgree` and `pHealth`. Use `p
 
 **Upgrading an existing bot:** stop it (`Ctrl + C`), back up the folder and SQLite database, then replace the Python modules, `VERSION`, and `requirements.txt` from the newest ZIP. **Keep** your private `.env`, custom `search_config.json`, `.sqlite3` database and backups. Run `python -m pip install -r requirements.txt`, then `python main.py`.
 
-[Complete installation guide (PL/EN)](bot/INSTRUKCJA_INSTALACJI_v0.6.4c_PL_EN.md) · [Installation on GitHub Pages](https://bollek231.github.io/poe-build-notifier-site/instalacja-en.html) · [Source code](bot/) · [Patch Notes](CHANGELOG.md)
+[Complete installation guide (PL/EN)](bot/INSTRUKCJA_INSTALACJI_v0.6.4d_PL_EN.md) · [Installation on GitHub Pages](https://bollek231.github.io/poe-build-notifier-site/instalacja-en.html) · [Source code](bot/) · [Patch Notes](CHANGELOG.md)
 
 ### Documentation
 
