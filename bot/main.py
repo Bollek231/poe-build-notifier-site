@@ -24,7 +24,7 @@ import runtime_settings
 import localization
 import community
 import translation_providers
-import farming
+from features import farming
 
 load_dotenv()
 logging.basicConfig(level=logging.INFO, format='%(asctime)s %(levelname)s %(message)s')
