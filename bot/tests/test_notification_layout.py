@@ -97,7 +97,8 @@ class NotificationLayoutTests(unittest.TestCase):
         for label in ("⭐ Save / Zapisz", "YouTube", "PoB", "Maxroll", "Mobalytics", "PoE Planner"):
             self.assertIn(label, labels)
         self.assertEqual(len(view.children), 6)
-        self.assertTrue(any(b.url==VIDEO_URL for b in view.children if b.label=="YouTube"))
+        self.assertTrue(any(getattr(b, "url", None)==VIDEO_URL
+                            for b in view.children if getattr(b, "label", None)=="YouTube"))
 
     def test_invalid_external_url_is_not_button(self):
         view = main.buttons_from_links({"PoE Planner":"https://poeplanner.com.evil.test/x"},VIDEO_ID)
