@@ -19,6 +19,8 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
+      - name: Install bot dependencies
+        run: python -m pip install -r bot/requirements.txt
       - name: Syntax and unit tests
         run: |
           python -m compileall -q bot
