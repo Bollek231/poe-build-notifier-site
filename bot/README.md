@@ -4,6 +4,15 @@
 
 ## Polski
 
+### Strategie farmienia waluty (v0.6.4)
+
+- `pFarmScan`: jednorazowy skan najnowszych strategii farmienia waluty (maks. 3 zapytania).
+- `pFarmSearch essence`: wyszukiwanie określonej kategorii, np. `harvest`, `expedition`, `atlas`, `crafting` lub `trading`. Wszystkie kategorie: `pFarmTopics`.
+- `pFarmRecent`: ostatnie znalezione strategie dla aktualnie wybranej gry i wersji.
+- `pFarmAuto on` / `pFarmAuto off`: opcjonalne wyszukiwanie co interwał automatycznego skanu buildów (maksymalnie jedno dodatkowe wyszukiwanie, wspólny limit YouTube). Domyślnie wyłączone.
+- Domyślnie wyniki trafiają na ten sam kanał Discord. Aby użyć osobnego kanału, ustaw prywatnie `FARM_CHANNEL_ID` w `.env` i zrestartuj bota. Filtry wersji gry i wieku filmów pozostają aktywne. Strategie z godzin ciszy trafiają do osobnego podsumowania.
+
+
 Bot Discord do wyszukiwania nowych buildów **Path of Exile 1 i Path of Exile 2** na YouTube. Przykładowe pliki konfiguracyjne nie zawierają prawdziwych tokenów.
 
 ### Funkcje bota
@@ -71,6 +80,15 @@ Na Railway/VPS ustaw trwały wolumin, np. `DB_PATH=/data/poe330_seen.sqlite3` i 
 ---
 
 ## English
+
+### Currency farming strategy discovery (v0.6.4)
+
+- `pFarmScan`: run up to three queries for fresh currency farming guides.
+- `pFarmSearch essence`: search a category such as `harvest`, `expedition`, `atlas`, `crafting` or `trading`; `pFarmTopics` lists all options.
+- `pFarmRecent`: view recently discovered strategies for the active game and patch.
+- `pFarmAuto on` / `pFarmAuto off`: opt in/out of up to one extra YouTube search each scheduled interval, using the shared API quota. Off by default.
+- Optionally direct strategy posts to another channel by setting `FARM_CHANNEL_ID` in private `.env` and restarting. Patch/age filters and quiet-hours digests remain active.
+
 
 A Discord bot for fresh **Path of Exile 1 and Path of Exile 2** YouTube build guides. The public sample configuration contains no real credentials.
 
