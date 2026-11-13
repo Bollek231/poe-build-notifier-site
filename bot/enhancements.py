@@ -143,7 +143,7 @@ def sane_external_url(url: str, known_urls: dict | None = None) -> bool:
         if p.scheme != 'https' or p.username or p.password or p.port not in (None,443) or not p.hostname:
             return False
         host=p.hostname.casefold().rstrip('.')
-        if host not in {'pobb.in','www.pobb.in','pastebin.com','www.pastebin.com','poe.ninja','www.poe.ninja','pathofbuilding.community','www.pathofbuilding.community','maxroll.gg','www.maxroll.gg','mobalytics.gg','www.mobalytics.gg'} and not host.endswith('.pathofbuilding.community'):
+        if host not in {'pobb.in','www.pobb.in','pastebin.com','www.pastebin.com','poe.ninja','www.poe.ninja','pathofbuilding.community','www.pathofbuilding.community','maxroll.gg','www.maxroll.gg','mobalytics.gg','www.mobalytics.gg','poeplanner.com','www.poeplanner.com'} and not host.endswith('.pathofbuilding.community'):
             return False
         if len(url)>1800 or any(ord(c)<32 for c in url):return False
         try:
