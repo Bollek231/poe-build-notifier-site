@@ -23,6 +23,7 @@ import game_modes
 import runtime_settings
 import localization
 import community
+import translation_providers
 
 load_dotenv()
 logging.basicConfig(level=logging.INFO, format='%(asctime)s %(levelname)s %(message)s')
@@ -57,6 +58,10 @@ POLICY_VERSION = '2026-11-12-v2'
 VERSION = enhancements.VERSION
 TRANSLATION_API_KEY = os.getenv('TRANSLATION_API_KEY','').strip()
 TRANSLATION_DAILY_LIMIT = max(1,min(100,int(os.getenv('TRANSLATION_DAILY_LIMIT','30'))))
+MYMEMORY_CONTACT_EMAIL = os.getenv('MYMEMORY_CONTACT_EMAIL','').strip()
+TRANSLATION_PROVIDER = os.getenv('TRANSLATION_PROVIDER', 'google' if TRANSLATION_API_KEY else 'mymemory').strip().lower()
+if TRANSLATION_PROVIDER not in translation_providers.PROVIDERS:
+    TRANSLATION_PROVIDER = 'mymemory'
 BOT_LANGUAGE = "pl"  # Single configured Discord server / announcement channel
 ALERT_CHANNEL_ID = int(os.getenv('ALERT_CHANNEL_ID', str(CHANNEL_ID)))
 CHECK_EXTERNAL_LINKS = os.getenv('CHECK_EXTERNAL_LINKS', 'true').lower() in ('true','1','yes','on')
@@ -167,6 +172,8 @@ def db():
     storage.initialize(c)  # Migrates an existing SQLite DB without dropping rows.
     community.init(c)
     community.cleanup(c,CACHE_RETENTION_DAYS)
+    translation_providers.init(c)
+    translation_providers.cleanup(c,CACHE_RETENTION_DAYS)
     storage.cleanup(c, CACHE_RETENTION_DAYS)
     return c
 
@@ -185,6 +192,7 @@ SETTING_DEFAULTS = {
     'links_check_enabled': CHECK_EXTERNAL_LINKS,
     'version_check_enabled': VERSION_CHECK_ENABLED,
     'version_check_hours': VERSION_CHECK_INTERVAL_HOURS,
+    'translation_provider': TRANSLATION_PROVIDER,
     'link_refresh_limit': MAX_LINK_REFRESH_PER_RUN,
 }
 
@@ -640,9 +648,13 @@ async def scan(kind='auto', custom_query=None):
                 url = f'https://www.youtube.com/watch?v={vid}'
                 translate_enabled=storage.get_setting(c,'translate_titles','false')=='true'
                 translated=title
-                if translate_enabled and TRANSLATION_API_KEY:
-                    translated=await community.translate_to_english(link_session,c,title,TRANSLATION_API_KEY,
-                        enabled=True,max_daily=TRANSLATION_DAILY_LIMIT)
+                if translate_enabled:
+                    provider=runtime_settings.snapshot(c,SETTING_DEFAULTS)['translation_provider']
+                    translated=await translation_providers.translate_to_english(
+                        link_session,c,title,provider=provider,google_api_key=TRANSLATION_API_KEY,
+                        contact_email=MYMEMORY_CONTACT_EMAIL,enabled=True,
+                        max_daily=TRANSLATION_DAILY_LIMIT,
+                        source_language=info.get('defaultLanguage') or info.get('defaultAudioLanguage'))
                 embed = discord.Embed(title=translated[:256], url=url, color=discord.Color.dark_purple())
                 if translated!=title:
                     embed.add_field(name='Oryginalny tytuł / Original title',value=title[:1024],inline=False)
@@ -1398,7 +1410,7 @@ async def saved_command(ctx, action='', video_id=''):
 HELP_PAGES={
  'scan':('🔎 Wyszukiwanie / Discovery', '`pScan` — ręczny skan\n`pSearch Spark` — wyszukiwanie skilla\n`pGame poe2` / `pGame poe1` — wybór gry\n`pLeague` — wersja gry'),
  'config':('⚙️ Konfiguracja / Settings', '`pSetup` — kreator\n`pSettings` — panel ustawień\n`pLanguage` — język bota\n`pQuietHours 23:00 08:00` — godziny ciszy\n`pPause 6h` / `pResume` — pauza'),
- 'community':('⭐ Społeczność / Community','`pSaved` — zapisane buildy\n`pTrending` — popularność filmów\n`pTranslateTitles on/off` — tłumaczenie tytułów'),
+ 'community':('⭐ Społeczność / Community','`pSaved` — zapisane buildy\n`pTrending` — popularność filmów\n`pTranslateTitles on/off/mymemory/google` — tłumaczenie tytułów'),
  'admin':('🛠️ Administracja / Admin', '`pHealth`, `pLimit`, `pVersion` — stan i API\n`pBackup` — kopie danych\n`pFilters`, `pChannelRules` — reguły\n`pPrivacy` / `pAgree` — zasady')}
 
 
@@ -1577,26 +1589,54 @@ async def resume_command(ctx):
 
 @bot.command(name='TranslateTitles')
 @commands.check(allowed)
-async def translate_titles_command(ctx,mode='status'):
+async def translate_titles_command(ctx,mode='status',provider_name=''):
     if not await require_consent(ctx):return
+    mode=mode.strip().lower()
+    provider_name=provider_name.strip().lower()
     c=db()
     try:
-        if mode=='on':
-            if not TRANSLATION_API_KEY:
-                reply='⚠️ Najpierw skonfiguruj prywatny `TRANSLATION_API_KEY` dla Google Cloud Translation API v2.'
+        values=runtime_settings.snapshot(c,SETTING_DEFAULTS)
+        provider=values['translation_provider']
+        if mode in ('mymemory','google'):
+            provider_name=mode
+            mode='provider'
+            auto_enable=True
+        else:auto_enable=False
+        if mode=='provider':
+            if provider_name not in translation_providers.PROVIDERS:
+                reply='Użycie: `pTranslateTitles provider mymemory` lub `pTranslateTitles provider google`.'
+            elif provider_name=='google' and not TRANSLATION_API_KEY:
+                reply='⚠️ Najpierw dodaj prywatny `TRANSLATION_API_KEY` w `.env`, potem wybierz Google.'
+            else:
+                runtime_settings.update_setting(c,SETTING_DEFAULTS,'translation_provider',provider_name)
+                if auto_enable:storage.set_setting(c,'translate_titles','true')
+                reply=('✅ Dostawca tłumaczeń: **MyMemory** (bez klucza API).'
+                       if provider_name=='mymemory' else
+                       '✅ Dostawca tłumaczeń: **Google Cloud Translation**.')
+                if auto_enable:reply+=' Tłumaczenie włączone.'
+        elif mode=='on':
+            if provider=='google' and not TRANSLATION_API_KEY:
+                reply='⚠️ Google wymaga `TRANSLATION_API_KEY`. Możesz wybrać bezpłatne `pTranslateTitles mymemory`.'
             else:
                 storage.set_setting(c,'translate_titles','true')
-                reply='✅ Tłumaczenie tytułów na angielski włączone (oryginał pozostanie w wiadomości).'
+                reply=f'✅ Włączono tłumaczenie tytułów na angielski przez **{provider}**.'
         elif mode=='off':
             storage.set_setting(c,'translate_titles','false')
             reply='✅ Tłumaczenie tytułów wyłączone.'
         elif mode=='status':
             enabled=storage.get_setting(c,'translate_titles','false')=='true'
-            reply=f'🌐 Tłumaczenie: **{"włączone" if enabled else "wyłączone"}**. Klucz usługi: **{"skonfigurowany" if TRANSLATION_API_KEY else "brak"}**. Limit: **{TRANSLATION_DAILY_LIMIT}/24h**.'
-        else:reply='Użycie: `pTranslateTitles on`, `pTranslateTitles off`, `pTranslateTitles status`.'
+            service='MyMemory (bez klucza API)' if provider=='mymemory' else 'Google Cloud Translation'
+            ready=provider=='mymemory' or bool(TRANSLATION_API_KEY)
+            reply=(f'🌐 Tłumaczenie: **{"włączone" if enabled else "wyłączone"}**. '
+                   f'Dostawca: **{service}**. Konfiguracja: **{"gotowa" if ready else "brakuje klucza Google"}**. '
+                   f'Limit bota: **{TRANSLATION_DAILY_LIMIT} zapytań/24h**. '
+                   'Zmiana: `pTranslateTitles mymemory` / `pTranslateTitles google` '
+                   'lub `pTranslateTitles provider mymemory|google`.')
+        else:
+            reply=('Użycie: `pTranslateTitles on/off/status`, `pTranslateTitles mymemory`, '
+                   '`pTranslateTitles google`, `pTranslateTitles provider mymemory|google`.')
     finally:c.close()
     await localized_reply(ctx,reply)
-
 
 async def fetch_video_views(session,ids):
     """One videos.list request per 50 IDs; never execute a new search.list."""
