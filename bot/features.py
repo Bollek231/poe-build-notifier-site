@@ -57,6 +57,6 @@ def mobalytics_poe_url(raw: str) -> bool:
         parsed = urlparse(raw)
         host = (parsed.hostname or '').lower()
         path = parsed.path.lower()
-        return parsed.scheme in ('https', 'http') and host in ('mobalytics.gg','www.mobalytics.gg') and (path == '/poe' or path.startswith('/poe/'))
+        return parsed.scheme in ('https', 'http') and host in ('mobalytics.gg','www.mobalytics.gg') and (path == '/poe' or path.startswith('/poe/') or path == '/poe-2' or path.startswith('/poe-2/') or path == '/poe2' or path.startswith('/poe2/'))
     except ValueError:
         return False
