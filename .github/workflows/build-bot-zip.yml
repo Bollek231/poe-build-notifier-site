@@ -1,0 +1,48 @@
+name: Build downloadable bot ZIP
+on:
+  push:
+    branches: [main]
+    paths:
+      - "bot/**"
+      - "VERSION"
+      - ".github/workflows/build-bot-zip.yml"
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  package:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Syntax and unit tests
+        run: |
+          python -m compileall -q bot
+          if [ -d bot/tests ]; then PYTHONPATH=bot python -m unittest discover -s bot/tests -v; fi
+      - name: Create versioned ZIP
+        run: |
+          python - <<'PY'
+          import pathlib, zipfile
+          root = pathlib.Path("bot")
+          version = (root / "VERSION").read_text().strip()
+          destination = pathlib.Path("downloads") / f"PoE_Build_Notifier_v{version}.zip"
+          destination.parent.mkdir(exist_ok=True)
+          with zipfile.ZipFile(destination, "w", compression=zipfile.ZIP_DEFLATED) as z:
+              for file in sorted(root.iterdir()):
+                  if file.is_file() and file.name not in (".env",) and file.suffix not in (".sqlite3", ".db", ".pyc"):
+                      z.write(file, file.name)
+          print(destination)
+          PY
+      - name: Commit release package
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add downloads/
+          if ! git diff --cached --quiet; then
+            git commit -m "build: publish current bot ZIP [skip ci]"
+            git push
+          fi
