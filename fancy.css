@@ -144,3 +144,15 @@ body.docs-redesign>header{background:rgba(10,14,24,.91)}
 body.docs-redesign.light>header{background:rgba(250,245,235,.93)}
 html{scroll-padding-top:95px}
 @media(max-width:760px){html{scroll-padding-top:85px}}
+
+/* Feature showcase: 3 + 2 centered on desktop, stacked on phones */
+.fancy-home .features .cards{grid-template-columns:repeat(6,minmax(0,1fr))}
+.fancy-home .features .cards>.card{grid-column:span 2}
+.fancy-home .features .cards>.card:nth-child(4){grid-column:2/span 2}
+.fancy-home .features .cards>.card:nth-child(5){grid-column:4/span 2}
+@media(max-width:760px){
+  .fancy-home .features .cards{grid-template-columns:1fr}
+  .fancy-home .features .cards>.card,
+  .fancy-home .features .cards>.card:nth-child(4),
+  .fancy-home .features .cards>.card:nth-child(5){grid-column:auto}
+}
