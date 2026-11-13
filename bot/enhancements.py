@@ -1,4 +1,4 @@
-"""Independent helpers for v0.5.2. No credentials, network calls or Discord imports."""
+"""Independent helpers for v0.6.0. No credentials, network calls or Discord imports."""
 from __future__ import annotations
 
 import ipaddress
@@ -9,11 +9,11 @@ from pathlib import Path
 from urllib.parse import urlparse
 from zoneinfo import ZoneInfo
 
-VERSION = '0.5.2'
+VERSION = '0.6.0'
 PACIFIC = ZoneInfo('America/Los_Angeles')
 POLAND = ZoneInfo('Europe/Warsaw')
 CHANNEL_ID_RE = re.compile(r'UC[A-Za-z0-9_-]{22}\Z')
-VALID_CLASS = ('Marauder','Duelist','Ranger','Shadow','Witch','Templar','Scion')
+VALID_CLASS = ('Marauder','Duelist','Ranger','Shadow','Witch','Templar','Scion','Warrior','Sorceress','Mercenary','Monk','Huntress','Druid')
 ASC_TO_CLASS = {
     'Slayer':'Duelist','Gladiator':'Duelist','Champion':'Duelist',
     'Juggernaut':'Marauder','Berserker':'Marauder','Chieftain':'Marauder',
@@ -22,6 +22,15 @@ ASC_TO_CLASS = {
     'Necromancer':'Witch','Occultist':'Witch','Elementalist':'Witch',
     'Inquisitor':'Templar','Hierophant':'Templar','Guardian':'Templar',
     'Ascendant':'Scion',
+    # Path of Exile 2 ascendancies.
+    'Titan':'Warrior','Warbringer':'Warrior','Smith of Kitava':'Warrior',
+    'Stormweaver':'Sorceress','Chronomancer':'Sorceress','Disciple of Varashta':'Sorceress',
+    'Gemling Legionnaire':'Mercenary','Witchhunter':'Mercenary','Tactician':'Mercenary',
+    'Invoker':'Monk','Acolyte of Chayula':'Monk','Martial Artist':'Monk',
+    'Blood Mage':'Witch','Infernalist':'Witch','Lich':'Witch','Abyssal Lich':'Witch',
+    'Amazon':'Huntress','Spirit Walker':'Huntress','Ritualist':'Huntress',
+    'Shaman':'Druid','Oracle':'Druid','Knight':'Duelist','Master-at-Arms':'Duelist',
+    'Infiltrator':'Shadow',
 }
 ALLOWED_FILTERS = ('skill','ascendancy','class','mode','stage')
 
