@@ -22,6 +22,7 @@ import backups
 import game_modes
 import runtime_settings
 import localization
+import community
 
 load_dotenv()
 logging.basicConfig(level=logging.INFO, format='%(asctime)s %(levelname)s %(message)s')
@@ -54,6 +55,8 @@ CACHE_RETENTION_DAYS = max(1, min(29, int(os.getenv('YOUTUBE_CACHE_DAYS', '7')))
 # No new personal data fields are added to the consent policy.
 POLICY_VERSION = '2026-11-12-v2'
 VERSION = enhancements.VERSION
+TRANSLATION_API_KEY = os.getenv('TRANSLATION_API_KEY','').strip()
+TRANSLATION_DAILY_LIMIT = max(1,min(100,int(os.getenv('TRANSLATION_DAILY_LIMIT','30'))))
 BOT_LANGUAGE = "pl"  # Single configured Discord server / announcement channel
 ALERT_CHANNEL_ID = int(os.getenv('ALERT_CHANNEL_ID', str(CHANNEL_ID)))
 CHECK_EXTERNAL_LINKS = os.getenv('CHECK_EXTERNAL_LINKS', 'true').lower() in ('true','1','yes','on')
@@ -162,6 +165,8 @@ def db():
     c = sqlite3.connect(DB_PATH)
     c.row_factory = sqlite3.Row
     storage.initialize(c)  # Migrates an existing SQLite DB without dropping rows.
+    community.init(c)
+    community.cleanup(c,CACHE_RETENTION_DAYS)
     storage.cleanup(c, CACHE_RETENTION_DAYS)
     return c
 
@@ -370,10 +375,12 @@ def extract_links(description):
     return found
 
 
-def buttons_from_links(links):
-    if not links:
+def buttons_from_links(links, video_id=None):
+    if not links and not video_id:
         return None
     view = discord.ui.View(timeout=None)
+    if video_id and community.VIDEO_ID.fullmatch(video_id):
+        view.add_item(SaveBuildButton(video_id))
     for label, url in links.items():
         view.add_item(discord.ui.Button(label=label, style=discord.ButtonStyle.link, url=url))
     return view
@@ -494,6 +501,12 @@ async def notify_error(message):
 async def scan(kind='auto', custom_query=None):
     if scan_lock.locked():
         return None
+    if kind=='auto':
+        probe=db()
+        try:
+            if community.pause_until(probe):
+                return {'sent':0,'searched':0,'warning':'Skanowanie automatyczne wstrzymane.'}
+        finally:probe.close()
     async with scan_lock:
         _health['last_start'] = utc_now().isoformat()
         c = db()
@@ -618,8 +631,21 @@ async def scan(kind='auto', custom_query=None):
                                info.get('publishedAt'), utc_now().isoformat()))
                     c.commit()
                     continue
+                # Quiet hours do not spend additional API units. Only metadata of
+                # accepted fresh videos is queued; a single digest is sent later.
+                qstart,qend=community.get_quiet(c)
+                if community.is_quiet(utc_now(),qstart,qend):
+                    community.queue_video(c,vid,game,league,title,info.get('publishedAt',''))
+                    continue
                 url = f'https://www.youtube.com/watch?v={vid}'
-                embed = discord.Embed(title=title[:256], url=url, color=discord.Color.dark_purple())
+                translate_enabled=storage.get_setting(c,'translate_titles','false')=='true'
+                translated=title
+                if translate_enabled and TRANSLATION_API_KEY:
+                    translated=await community.translate_to_english(link_session,c,title,TRANSLATION_API_KEY,
+                        enabled=True,max_daily=TRANSLATION_DAILY_LIMIT)
+                embed = discord.Embed(title=translated[:256], url=url, color=discord.Color.dark_purple())
+                if translated!=title:
+                    embed.add_field(name='Oryginalny tytuł / Original title',value=title[:1024],inline=False)
                 embed.add_field(name='Gra', value=game_modes.game_label(game), inline=True)
                 embed.add_field(name='Liga / wersja', value=league, inline=True)
                 embed.add_field(name='Twórca na YouTube', value=info.get('channelTitle', 'Nieznany')[:1024], inline=False)
@@ -642,7 +668,7 @@ async def scan(kind='auto', custom_query=None):
                         links={label:target for label,target in links.items() if enhancements.sane_external_url(target)}
                     if sent:
                         await asyncio.sleep(SEND_DELAY)
-                    posted_message=await channel.send(content=url, embed=localize_embed(embed), view=buttons_from_links(links))
+                    posted_message=await channel.send(content=url, embed=localize_embed(embed), view=buttons_from_links(links,vid))
                     c.execute('INSERT OR IGNORE INTO videos VALUES(?,?,?,?,?)',
                               (vid, title, url, info.get('publishedAt'), utc_now().isoformat()))
                     c.execute('INSERT OR IGNORE INTO builds(fingerprint,canonical_title,first_video_id,created_at,league) VALUES(?,?,?,?,?)',
@@ -738,6 +764,11 @@ async def send_digest(*, manual=False):
 
 @tasks.loop(minutes=1)
 async def automatic_digest():
+    c_quiet=db()
+    try:
+        quiet_start,quiet_end=community.get_quiet(c_quiet)
+        if community.is_quiet(utc_now(),quiet_start,quiet_end):return
+    finally:c_quiet.close()
     if not DAILY_DIGEST_ENABLED or scan_lock.locked():
         # Wait for the current scan so the digest includes newly posted builds.
         return
@@ -815,7 +846,7 @@ async def refresh_post_links(*, manual=False):
                     try:
                         destination=bot.get_channel(int(row['channel_id'])) or await bot.fetch_channel(int(row['channel_id']))
                         message=await destination.fetch_message(int(row['message_id']))
-                        await message.edit(view=buttons_from_links(merged))
+                        await message.edit(view=buttons_from_links(merged,vid))
                         storage.update_post_links(c,vid,merged)
                         updated+=1
                         await asyncio.sleep(min(SEND_DELAY,3))
@@ -922,6 +953,7 @@ async def on_ready():
         await alert_admin('connection_restored','✅ **PoE Bot: połączenie z Discordem odzyskane.**',cooldown_minutes=10)
     if not getattr(bot, '_privacy_view_registered', False):
         bot.add_view(ConsentView())
+        bot.add_dynamic_items(SaveBuildButton)
         bot._privacy_view_registered = True
     if not automatic_scan.is_running():
         automatic_scan.start()
@@ -933,6 +965,8 @@ async def on_ready():
         automatic_backup.start()
     if not automatic_version_check.is_running():
         automatic_version_check.start()
+    if not automatic_quiet_flush.is_running():
+        automatic_quiet_flush.start()
 
 
 def allowed(ctx):
@@ -1300,6 +1334,359 @@ async def settings_command(ctx):
     view=SettingsView(ctx.author.id,ctx.guild.id)
     message=await localized_reply(ctx,embed=settings_embed(values),view=view)
     view.message=message
+
+
+
+# Community features — v0.6.2. Command permissions are explicit per feature.
+class SaveBuildButton(discord.ui.DynamicItem[discord.ui.Button],
+                      template=r'save:(?P<video_id>[A-Za-z0-9_-]{11})'):
+    def __init__(self, video_id):
+        self.video_id=video_id
+        super().__init__(discord.ui.Button(label='⭐ Save / Zapisz',
+            style=discord.ButtonStyle.secondary,custom_id='save:'+video_id))
+
+    @classmethod
+    async def from_custom_id(cls, interaction, item, match):
+        return cls(match.group('video_id'))
+
+    async def callback(self,interaction):
+        if not interaction.guild or interaction.channel_id!=CHANNEL_ID:
+            await interaction.response.send_message('Use the configured bot channel.',ephemeral=True)
+            return
+        c=db()
+        try:
+            try:saved=community.saved_toggle(c,interaction.user.id,self.video_id)
+            except ValueError as e:
+                await interaction.response.send_message(str(e),ephemeral=True)
+                return
+        finally:c.close()
+        msg=('⭐ Zapisano. Lista: `pSaved`.' if saved else 'Usunięto z zapisanych buildów.') if BOT_LANGUAGE=='pl' else (
+            '⭐ Saved. List: `pSaved`.' if saved else 'Removed from your saved builds.')
+        await interaction.response.send_message(msg,ephemeral=True)
+
+
+@bot.command(name='Saved')
+@commands.guild_only()
+async def saved_command(ctx, action='', video_id=''):
+    if ctx.channel.id!=CHANNEL_ID:return
+    c=db()
+    try:
+        if action.lower()=='clear':
+            count=community.saved_remove(c,ctx.author.id)
+            msg=f'Usunięto {count} zakładek.' if BOT_LANGUAGE=='pl' else f'Removed {count} bookmarks.'
+        elif action.lower()=='remove':
+            if not community.VIDEO_ID.fullmatch(video_id):
+                msg='Użycie: `pSaved remove VIDEO_ID`.' if BOT_LANGUAGE=='pl' else 'Usage: `pSaved remove VIDEO_ID`.'
+            else:
+                count=community.saved_remove(c,ctx.author.id,video_id)
+                msg='Usunięto zakładkę.' if count else 'Nie znaleziono zakładki.'
+        elif action:
+            msg='Użycie: `pSaved`, `pSaved remove VIDEO_ID`, `pSaved clear`.'
+        else:
+            ids=community.saved_list(c,ctx.author.id)
+            msg=('⭐ **Twoje zapisane buildy:**\n' if BOT_LANGUAGE=='pl' else '⭐ **Your saved builds:**\n')+(
+                '\n'.join(f'{i}. https://youtu.be/{v}' for i,v in enumerate(ids,1)) if ids else ('Brak zakładek.' if BOT_LANGUAGE=='pl' else 'No bookmarks.'))
+    finally:c.close()
+    # Prefix commands cannot use ephemeral messages: send user bookmarks via DM.
+    try:
+        await ctx.author.send(msg,allowed_mentions=discord.AllowedMentions.none())
+        await ctx.reply('📩 Sprawdź wiadomość prywatną / Check your DMs.',mention_author=False,delete_after=20)
+    except discord.Forbidden:
+        await ctx.reply('Nie mogę wysłać DM. Włącz wiadomości prywatne. / Please enable DMs.',mention_author=False,delete_after=30)
+
+
+HELP_PAGES={
+ 'scan':('🔎 Wyszukiwanie / Discovery', '`pScan` — ręczny skan\n`pSearch Spark` — wyszukiwanie skilla\n`pGame poe2` / `pGame poe1` — wybór gry\n`pLeague` — wersja gry'),
+ 'config':('⚙️ Konfiguracja / Settings', '`pSetup` — kreator\n`pSettings` — panel ustawień\n`pLanguage` — język bota\n`pQuietHours 23:00 08:00` — godziny ciszy\n`pPause 6h` / `pResume` — pauza'),
+ 'community':('⭐ Społeczność / Community','`pSaved` — zapisane buildy\n`pTrending` — popularność filmów\n`pTranslateTitles on/off` — tłumaczenie tytułów'),
+ 'admin':('🛠️ Administracja / Admin', '`pHealth`, `pLimit`, `pVersion` — stan i API\n`pBackup` — kopie danych\n`pFilters`, `pChannelRules` — reguły\n`pPrivacy` / `pAgree` — zasady')}
+
+
+class HelpSelect(discord.ui.Select):
+    def __init__(self):
+        super().__init__(placeholder='Wybierz kategorię / Select category',
+            options=[discord.SelectOption(label=v[0][:90],value=k) for k,v in HELP_PAGES.items()])
+    async def callback(self,interaction):
+        heading,content=HELP_PAGES[self.values[0]]
+        await interaction.response.edit_message(embed=discord.Embed(title=heading,description=content,color=discord.Color.dark_purple()))
+
+
+class HelpView(discord.ui.View):
+    def __init__(self):
+        super().__init__(timeout=180)
+        self.add_item(HelpSelect())
+
+
+@bot.command(name='Help')
+@commands.guild_only()
+async def help_command(ctx):
+    if ctx.channel.id!=CHANNEL_ID:return
+    await ctx.reply(embed=discord.Embed(title='📚 PoE Build Notifier — Help / Pomoc',
+        description='Wybierz kategorię z menu poniżej. / Choose a category below.',
+        color=discord.Color.dark_purple()),view=HelpView(),mention_author=False)
+
+
+class SetupSelect(discord.ui.Select):
+    def __init__(self,owner,kind):
+        self.owner,self.kind=owner,kind
+        if kind=='game':opts=[('Path of Exile 1','poe1'),('Path of Exile 2','poe2')]
+        elif kind=='language':opts=[('Polski','pl'),('English','en')]
+        else:opts=[(f'Co {v} h / Every {v} h',str(v)) for v in (1,2,3,4,6,12,24)]
+        super().__init__(placeholder={'game':'Gra / Game','language':'Język / Language','hours':'Skanowanie / Scan interval'}[kind],
+            options=[discord.SelectOption(label=l,value=v) for l,v in opts],row={'game':0,'language':1,'hours':2}[kind])
+    async def callback(self,interaction):
+        self.owner.values[self.kind]=self.values[0]
+        if self.kind=='game':
+            c=db()
+            try:
+                self.owner.values['patch']=storage.current_game_version(c,self.values[0],
+                    poe1_default=DEFAULT_LEAGUE,poe2_default=DEFAULT_POE2_VERSION)
+            finally:c.close()
+        await interaction.response.edit_message(embed=self.owner.embed(),view=self.owner)
+
+
+class SetupPatchModal(discord.ui.Modal):
+    def __init__(self,owner):
+        super().__init__(title='Liga / Wersja gry',timeout=180)
+        self.owner=owner
+        self.patch=discord.ui.TextInput(label='Patch / Liga',default=owner.values['patch'],max_length=12)
+        self.add_item(self.patch)
+
+    async def on_submit(self,interaction):
+        if not await setting_interaction_allowed(interaction,self.owner.owner_id,self.owner.guild_id):return
+        candidate=str(self.patch.value).strip()
+        game=self.owner.values['game']
+        okay=game_modes.valid_poe2_version(candidate) if game=='poe2' else features.league_valid(candidate)
+        if not okay:
+            await interaction.response.send_message('Niepoprawna wersja gry. / Invalid game patch.',ephemeral=True)
+            return
+        self.owner.values['patch']=candidate
+        await interaction.response.edit_message(embed=self.owner.embed(),view=self.owner)
+
+
+class SetupView(discord.ui.View):
+    def __init__(self,owner_id,guild_id,game,language_code,hours,patch):
+        super().__init__(timeout=300)
+        self.owner_id,self.guild_id=owner_id,guild_id
+        self.values={'game':game,'language':language_code,'hours':str(hours),'patch':patch}
+        for k in ('game','language','hours'):self.add_item(SetupSelect(self,k))
+
+    async def interaction_check(self,interaction):
+        return await setting_interaction_allowed(interaction,self.owner_id,self.guild_id)
+
+    def embed(self):
+        return discord.Embed(title='🧭 PoE Build Notifier — pSetup',description=(
+            'Wybierz grę, język i interwał. Zmiany zostaną zapisane **dopiero po kliknięciu Zapisz**.\n'
+            'Choose game, language and scan interval, then press Save.\n\n'
+            f'🎮 **{self.values["game"]}** · 🏷️ **{self.values["patch"]}** · 🌐 **{self.values["language"]}** · ⏱️ **{self.values["hours"]} h**\n'
+            'Wersję gry można zmienić później przez `pLeague`; pozostałe parametry przez `pSettings`.'),
+            color=discord.Color.dark_purple())
+
+    @discord.ui.button(label='🏷️ Wersja / Patch',style=discord.ButtonStyle.secondary,row=3)
+    async def version_button(self,interaction,button):
+        await interaction.response.send_modal(SetupPatchModal(self))
+
+    @discord.ui.button(label='✅ Zapisz / Save',style=discord.ButtonStyle.success,row=4)
+    async def confirm(self,interaction,button):
+        global BOT_LANGUAGE
+        c=db()
+        try:
+            if scan_lock.locked():
+                await interaction.response.send_message('Trwa skanowanie. Spróbuj po zakończeniu.',ephemeral=True)
+                return
+            game=self.values['game'];patch=self.values['patch']
+            good=game_modes.valid_poe2_version(patch) if game=='poe2' else features.league_valid(patch)
+            if not good:
+                await interaction.response.send_message('Niepoprawna wersja gry.',ephemeral=True)
+                return
+            new=runtime_settings.update_setting(c,SETTING_DEFAULTS,'scan_interval_hours',self.values['hours'])
+            storage.set_game_version(c,game,patch)
+            storage.set_game(c,game)
+            BOT_LANGUAGE=runtime_settings.set_language(c,self.values['language'])
+        finally:c.close()
+        apply_runtime_values(new)
+        for child in self.children:child.disabled=True
+        await interaction.response.edit_message(embed=self.embed(),view=self)
+
+
+@bot.command(name='Setup')
+@commands.check(allowed)
+async def setup_command(ctx):
+    if not await require_consent(ctx):return
+    c=db()
+    try:
+        game=storage.current_game(c)
+        patch=storage.current_game_version(c,game,poe1_default=DEFAULT_LEAGUE,poe2_default=DEFAULT_POE2_VERSION)
+    finally:c.close()
+    view=SetupView(ctx.author.id,ctx.guild.id,game,BOT_LANGUAGE,INTERVAL_H,patch)
+    await localized_reply(ctx,embed=view.embed(),view=view)
+
+
+@bot.command(name='QuietHours')
+@commands.check(allowed)
+async def quiet_hours_command(ctx,start='',end=''):
+    if not await require_consent(ctx):return
+    c=db()
+    try:
+        if start.lower()=='off':
+            community.set_quiet(c)
+            text='✅ Godziny ciszy wyłączone. / Quiet hours disabled.'
+        elif not start and not end:
+            a,b=community.get_quiet(c)
+            text=f'🌙 Godziny ciszy: **{a}–{b}** (Warszawa).' if a else '🌙 Godziny ciszy wyłączone / Quiet hours off.'
+        else:
+            try:
+                a,b=community.validate_quiet(start,end)
+                community.set_quiet(c,a,b)
+                text=f'🌙 Godziny ciszy: **{a}–{b}** (Europe/Warsaw). Bot nadal skanuje, wysyła jedno podsumowanie po ciszy.'
+            except ValueError:
+                text='Użycie / Usage: `pQuietHours 23:00 08:00`, `pQuietHours off`.'
+    finally:c.close()
+    await localized_reply(ctx,text)
+
+
+@bot.command(name='Pause')
+@commands.check(allowed)
+async def pause_command(ctx, duration='status'):
+    if not await require_consent(ctx):return
+    c=db()
+    try:
+        if duration=='status':
+            until=community.pause_until(c)
+            text=('⏸️ Automatyczne skanowanie działa.' if until is None else
+                '⏸️ Wstrzymano bezterminowo.' if until=='forever' else f'⏸️ Pauza do <t:{int(until.timestamp())}:F>.')
+        else:
+            try:
+                until=community.set_pause(c,duration)
+                text='⏸️ Wstrzymano automatyczne wyszukiwania. `pResume` wznawia.'
+                if until!='forever':text+=' Do <t:'+str(int(datetime.fromisoformat(until).timestamp()))+'>.'
+            except ValueError:text='Użycie: `pPause 1h`, `pPause 6h`, `pPause 24h`, `pPause forever`, `pResume`.'
+    finally:c.close()
+    await localized_reply(ctx,text)
+
+
+@bot.command(name='Resume')
+@commands.check(allowed)
+async def resume_command(ctx):
+    if not await require_consent(ctx):return
+    c=db()
+    try:community.clear_pause(c)
+    finally:c.close()
+    await localized_reply(ctx,'▶️ Automatyczne skanowanie wznowione. / Automatic scans resumed.')
+
+
+@bot.command(name='TranslateTitles')
+@commands.check(allowed)
+async def translate_titles_command(ctx,mode='status'):
+    if not await require_consent(ctx):return
+    c=db()
+    try:
+        if mode=='on':
+            if not TRANSLATION_API_KEY:
+                reply='⚠️ Najpierw skonfiguruj prywatny `TRANSLATION_API_KEY` dla Google Cloud Translation API v2.'
+            else:
+                storage.set_setting(c,'translate_titles','true')
+                reply='✅ Tłumaczenie tytułów na angielski włączone (oryginał pozostanie w wiadomości).'
+        elif mode=='off':
+            storage.set_setting(c,'translate_titles','false')
+            reply='✅ Tłumaczenie tytułów wyłączone.'
+        elif mode=='status':
+            enabled=storage.get_setting(c,'translate_titles','false')=='true'
+            reply=f'🌐 Tłumaczenie: **{"włączone" if enabled else "wyłączone"}**. Klucz usługi: **{"skonfigurowany" if TRANSLATION_API_KEY else "brak"}**. Limit: **{TRANSLATION_DAILY_LIMIT}/24h**.'
+        else:reply='Użycie: `pTranslateTitles on`, `pTranslateTitles off`, `pTranslateTitles status`.'
+    finally:c.close()
+    await localized_reply(ctx,reply)
+
+
+async def fetch_video_views(session,ids):
+    """One videos.list request per 50 IDs; never execute a new search.list."""
+    data={}
+    for start in range(0,len(ids),50):
+        params={'key':API_KEY,'part':'statistics','id':','.join(ids[start:start+50])}
+        async with session.get('https://www.googleapis.com/youtube/v3/videos',params=params,
+            timeout=aiohttp.ClientTimeout(total=15)) as resp:
+            if resp.status!=200:raise RuntimeError(f'YouTube statistics HTTP {resp.status}')
+            payload=await resp.json(content_type=None)
+            for item in payload.get('items',[]):
+                try:data[item['id']]=int(item.get('statistics',{}).get('viewCount',-1))
+                except (ValueError,TypeError):pass
+    return {vid:v for vid,v in data.items() if v>=0}
+
+
+@bot.command(name='Trending')
+@commands.guild_only()
+async def trending_command(ctx):
+    if ctx.channel.id!=CHANNEL_ID:return
+    c=db()
+    try:
+        game=storage.current_game(c)
+        league=storage.current_game_version(c,game,poe1_default=DEFAULT_LEAGUE,poe2_default=DEFAULT_POE2_VERSION)
+        cutoff=(utc_now()-timedelta(hours=48)).isoformat()
+        rows=c.execute('SELECT v.video_id,v.title FROM videos v JOIN builds b ON b.first_video_id=v.video_id WHERE b.league=? AND v.sent_at>=? ORDER BY v.sent_at DESC LIMIT 30',(league,cutoff)).fetchall()
+        ids=[r['video_id'] for r in rows if community.VIDEO_ID.fullmatch(r['video_id'])]
+        if not ids:
+            await ctx.reply('Brak świeżych buildów do rankingu. / No recent builds for trending.',mention_author=False)
+            return
+        # Prevent repeated API charges for impatient command invocations.
+        recent=c.execute('SELECT MAX(observed_at) FROM video_trends WHERE video_id=?',(ids[0],)).fetchone()[0]
+        fresh=recent and datetime.fromisoformat(recent)>utc_now()-timedelta(minutes=15)
+        if fresh:
+            counts={vid:c.execute('SELECT view_count FROM video_trends WHERE video_id=? ORDER BY observed_at DESC LIMIT 1',(vid,)).fetchone() for vid in ids}
+            counts={vid:int(r[0]) for vid,r in counts.items() if r}
+            observed=datetime.fromisoformat(recent)
+        else:
+            async with aiohttp.ClientSession() as session:
+                counts=await fetch_video_views(session,ids)
+            observed=utc_now()
+            for _ in range((len(ids)+49)//50):
+                c.execute('INSERT INTO api_usage(used_at,units,operation) VALUES(?,?,?)',(observed.isoformat(),1,'videos.list'))
+            c.commit()
+        ranked=community.trend_rank(c,counts,observed)
+        if not fresh:community.record_views(c,counts,observed)
+        names={r['video_id']:r['title'] for r in rows}
+        lines=[]
+        for i,(vid,rate,growth,views,has_delta) in enumerate(ranked[:8],1):
+            title=discord.utils.escape_markdown(names[vid][:65])
+            if has_delta:metric=f'+{growth:,} views · {rate:.0f}/h'
+            else:metric=f'{views:,} views · collecting baseline'
+            lines.append(f'{i}. [{title}](https://youtu.be/{vid}) — {metric}')
+        description='\n'.join(lines) if lines else 'Brak danych / No statistics.'
+        embed=discord.Embed(title=f'📈 Trending — {game_modes.game_label(game)} {league}',
+            description=description,color=discord.Color.dark_purple())
+        embed.set_footer(text='YouTube public view counts · sample-based · no search.list calls')
+        await ctx.reply(embed=embed,mention_author=False,allowed_mentions=discord.AllowedMentions.none())
+    except Exception as exc:
+        log.warning('Trending unavailable: %s',type(exc).__name__)
+        await ctx.reply('Nie można teraz pobrać statystyk YouTube. / YouTube statistics unavailable.',mention_author=False)
+    finally:c.close()
+
+
+@tasks.loop(minutes=1)
+async def automatic_quiet_flush():
+    if scan_lock.locked():return
+    c=db()
+    try:
+        start,end=community.get_quiet(c)
+        if community.is_quiet(utc_now(),start,end):return
+        rows=community.queued(c,limit=25)
+        if not rows:return
+        # Queue entries correspond to videos that passed the freshness filter
+        # when discovered. A single digest keeps the channel noise low.
+        valid=[r for r in rows if community.VIDEO_ID.fullmatch(r['video_id'])]
+        lines=[f'• [{discord.utils.escape_markdown(r["title"][:85])}](https://youtu.be/{r["video_id"]}) · {r["game"]} {r["league"]}' for r in valid]
+        msg=discord.Embed(title='🌙 Buildy z godzin ciszy / Quiet-hours digest',
+            description='\n'.join(lines)[:3900],color=discord.Color.dark_purple())
+        channel=bot.get_channel(CHANNEL_ID) or await bot.fetch_channel(CHANNEL_ID)
+        await channel.send(embed=msg,allowed_mentions=discord.AllowedMentions.none())
+        community.finish_queue(c,rows)
+    except Exception:
+        log.exception('Quiet hours queue delivery failed, will retry')
+    finally:c.close()
+
+
+@automatic_quiet_flush.before_loop
+async def quiet_flush_wait_ready():
+    await bot.wait_until_ready()
 
 
 @bot.command(name='Game')
