@@ -8,7 +8,24 @@
     "PoE 3.30 bossing build"
   ],
   "exclude_phrases": [
-    "path of exile 2", "poe 2", "poe2", "trailer", "patch notes",
-    "reaction", "livestream", "stream highlights", "news"
+    "path of exile 2",
+    "poe 2",
+    "poe2",
+    "trailer",
+    "patch notes",
+    "reaction",
+    "livestream",
+    "stream highlights",
+    "news"
+  ],
+  "poe2_search_queries": [
+    "Path of Exile 2 {version} build guide",
+    "PoE2 {version} league starter build",
+    "PoE 2 {version} leveling build",
+    "Path of Exile 2 {version} endgame build",
+    "PoE2 {version} bossing build",
+    "PoE 2 {version} starter guide",
+    "Path of Exile 2 {version} new class build",
+    "PoE2 {version} launch build guide"
   ]
 }
