@@ -8,6 +8,15 @@
 
 ## Polski
 
+### Strategie farmienia waluty (v0.6.4)
+
+- `pFarmScan`: jednorazowy skan najnowszych strategii farmienia waluty (maks. 3 zapytania).
+- `pFarmSearch essence`: wyszukiwanie określonej kategorii, np. `harvest`, `expedition`, `atlas`, `crafting` lub `trading`. Wszystkie kategorie: `pFarmTopics`.
+- `pFarmRecent`: ostatnie znalezione strategie dla aktualnie wybranej gry i wersji.
+- `pFarmAuto on` / `pFarmAuto off`: opcjonalne wyszukiwanie co interwał automatycznego skanu buildów (maksymalnie jedno dodatkowe wyszukiwanie, wspólny limit YouTube). Domyślnie wyłączone.
+- Domyślnie wyniki trafiają na ten sam kanał Discord. Aby użyć osobnego kanału, ustaw prywatnie `FARM_CHANNEL_ID` w `.env` i zrestartuj bota. Filtry wersji gry i wieku filmów pozostają aktywne. Strategie z godzin ciszy trafiają do osobnego podsumowania.
+
+
 PoE Build Notifier automatycznie wyszukuje **świeże poradniki buildów** na YouTube i publikuje je na wybranym kanale Discord. Obsługuje **Path of Exile 1** oraz **Path of Exile 2**. To niekomercyjny, nieoficjalny projekt społecznościowy.
 
 ### Funkcje bota
@@ -103,6 +112,15 @@ Na skonfigurowanym kanale Discorda użyj `pPrivacy`, `pAgree` i `pHealth`. Wybra
 ---
 
 ## English
+
+### Currency farming strategy discovery (v0.6.4)
+
+- `pFarmScan`: run up to three queries for fresh currency farming guides.
+- `pFarmSearch essence`: search a category such as `harvest`, `expedition`, `atlas`, `crafting` or `trading`; `pFarmTopics` lists all options.
+- `pFarmRecent`: view recently discovered strategies for the active game and patch.
+- `pFarmAuto on` / `pFarmAuto off`: opt in/out of up to one extra YouTube search each scheduled interval, using the shared API quota. Off by default.
+- Optionally direct strategy posts to another channel by setting `FARM_CHANNEL_ID` in private `.env` and restarting. Patch/age filters and quiet-hours digests remain active.
+
 
 PoE Build Notifier automatically discovers **fresh Path of Exile build guides** on YouTube and posts them to a configured Discord channel. It supports **Path of Exile 1** and **Path of Exile 2**. This is an unofficial, non-commercial community project.
 
