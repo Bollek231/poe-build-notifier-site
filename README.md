@@ -1,13 +1,13 @@
-# PoE Build Notifier v0.5.2 — PL 🇵🇱 / EN 🇬🇧
+# PoE Build Notifier v0.6.0 — PL 🇵🇱 / EN 🇬🇧
 
 **Wybierz język / Choose language:** [🇵🇱 Polski](#polski) · [🇬🇧 English](#english)
 
 ## Polski
 
-**Nowość w v0.5.2:** przeprojektowana, animowana strona GitHub Pages z efektem poświaty pod kursorem, ruchomymi cząsteczkami, przełącznikiem motywu ☀️/🌙, nowym podglądem Discorda i spójną stylistyką dokumentacji. Funkcje bota pozostały bez zmian względem v0.5.1.
+**Nowość w v0.6.0:** przeprojektowana, animowana strona GitHub Pages z efektem poświaty pod kursorem, ruchomymi cząsteczkami, przełącznikiem motywu ☀️/🌙, nowym podglądem Discorda i spójną stylistyką dokumentacji. Funkcje bota pozostały bez zmian względem v0.5.1.
 
 
-**Aktualna wersja: v0.5.2. Następna aktualizacja: v0.5.3.**
+**Aktualna wersja: v0.6.0. Następna aktualizacja: v0.6.1.**
 
 
 Niekomercyjny projekt bota Discord, który wyszukuje nowe buildy Path of Exile 1 przez YouTube Data API v3 i publikuje linki do oryginalnych filmów.
@@ -21,9 +21,26 @@ Niekomercyjny projekt bota Discord, który wyszukuje nowe buildy Path of Exile 1
 - 📄 **[Warunki korzystania](https://bollek231.github.io/poe-build-notifier-site/terms.html)**
 - 📝 **[Lista zmian / Patch Notes](https://bollek231.github.io/poe-build-notifier-site/changelog.html)**
 
-## Pobierz PoE Build Notifier v0.5.2
+### Nowość v0.6.0 — PoE 1 / PoE 2
 
-- 📦 **[Pobierz paczkę ZIP z kodem](https://bollek231.github.io/poe-build-notifier-site/downloads/PoE_Build_Notifier_v0.5.2.zip)**
+Bot obsługuje teraz **Path of Exile 1** i **Path of Exile 2**. PoE 2 domyślnie filtruje **wersję 1.0** (premiera planowana na 11 grudnia 2026 PST), bez pobierania starych filmów o 0.3/0.5.
+
+| Komenda | Działanie |
+|---|---|
+| \`pGame\` | Pokazuje aktualną grę i wersję |
+| \`pGame poe2\` | Przełącza na **PoE 2 1.0** |
+| \`pGame poe1\` | Wraca do **PoE 1** i zapamiętanej ligi |
+| \`pLeague 1.0\` | Ustawia wersję PoE 2 na **1.0** |
+| \`pScan\` | Skanuje YouTube dla wybranej gry |
+| \`pSearch Spark\` | Wyszukiwanie skilla w wybranej grze |
+
+Weryfikacja PoE 2 wymaga oznaczenia PoE 2 i 1.0 w tytule lub początku opisu oraz wskazania, że film jest poradnikiem/buildem. Niezależnie obowiązuje **24-godzinny limit wieku publikacji**. Wersje i dodatkowe filtry dla obu gier są zapisywane oddzielnie. Obsługiwane są również linki \`mobalytics.gg/poe-2/\`.
+
+Przy aktualizacji **skopiuj też nowy plik \`game_modes.py\`**, ale zachowaj dotychczasowy \`.env\`, \`search_config.json\` i \`poe330_seen.sqlite3\`. PoE 2 nie wymaga nowych kluczy API.
+
+## Pobierz PoE Build Notifier v0.6.0
+
+- 📦 **[Pobierz paczkę ZIP z kodem](https://bollek231.github.io/poe-build-notifier-site/downloads/PoE_Build_Notifier_v0.6.0.zip)**
 - 🐍 **[Przejrzyj kod źródłowy na GitHubie](https://github.com/Bollek231/poe-build-notifier-site/tree/main/bot)**
 - 📚 **[README kodu bota](bot/README.md)**
 
@@ -79,10 +96,10 @@ Projekt nie jest związany z Google, YouTube, Discord ani Grinding Gear Games. N
 
 ## English
 
-**New in v0.5.2:** redesigned, animated GitHub Pages website with a cursor spotlight, drifting particles, ☀️/🌙 theme toggle, new Discord command preview, and consistent documentation styling. Bot runtime features are unchanged from v0.5.1.
+**New in v0.6.0:** redesigned, animated GitHub Pages website with a cursor spotlight, drifting particles, ☀️/🌙 theme toggle, new Discord command preview, and consistent documentation styling. Bot runtime features are unchanged from v0.5.1.
 
 
-**Current version: v0.5.2. Next update: v0.5.3.**
+**Current version: v0.6.0. Next update: v0.6.1.**
 
 
 A non-commercial Discord bot that discovers fresh Path of Exile 1 builds using YouTube Data API v3 and posts links to the original videos.
@@ -96,9 +113,26 @@ A non-commercial Discord bot that discovers fresh Path of Exile 1 builds using Y
 - 📄 **[Terms of Use](https://bollek231.github.io/poe-build-notifier-site/terms-en.html)**
 - 📝 **[Patch Notes / Changelog](https://bollek231.github.io/poe-build-notifier-site/changelog-en.html)**
 
-### Download PoE Build Notifier v0.5.2
+### New in v0.6.0 — PoE 1 / PoE 2
 
-- 📦 **[Download the source ZIP](https://bollek231.github.io/poe-build-notifier-site/downloads/PoE_Build_Notifier_v0.5.2.zip)**
+The bot now supports **Path of Exile 1** and **Path of Exile 2**. PoE 2 defaults to **patch 1.0**, ahead of the announced December 11, 2026 PST release. Old 0.3/0.5 build videos are rejected.
+
+| Command | Purpose |
+|---|---|
+| \`pGame\` | Show the active game and patch |
+| \`pGame poe2\` | Switch to **PoE 2 1.0** |
+| \`pGame poe1\` | Return to **PoE 1** and its saved league |
+| \`pLeague 1.0\` | Select **PoE 2 version 1.0** |
+| \`pScan\` | Scan YouTube for the selected game |
+| \`pSearch Spark\` | Search builds for the selected game |
+
+PoE 2 filtering requires explicit game and 1.0 evidence near the start of the video metadata, plus a build/guide title. The independent **24-hour publication-age limit** remains enforced. Each game has its own saved patch and filters. PoE 2 Mobalytics links (\`/poe-2/\`) are supported.
+
+During upgrades, **copy the new \`game_modes.py\` file** alongside the existing source modules. Preserve your own \`.env\`, \`search_config.json\`, and \`poe330_seen.sqlite3\`. No new API keys are required.
+
+### Download PoE Build Notifier v0.6.0
+
+- 📦 **[Download the source ZIP](https://bollek231.github.io/poe-build-notifier-site/downloads/PoE_Build_Notifier_v0.6.0.zip)**
 - 🐍 **[Browse the source on GitHub](https://github.com/Bollek231/poe-build-notifier-site/tree/main/bot)**
 - 📚 **[Bot source README (PL/EN)](bot/README.md)**
 
