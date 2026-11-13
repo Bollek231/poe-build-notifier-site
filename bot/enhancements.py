@@ -9,7 +9,7 @@ from pathlib import Path
 from urllib.parse import urlparse
 from zoneinfo import ZoneInfo
 
-VERSION = '0.6.2'
+VERSION = '0.6.2b'
 PACIFIC = ZoneInfo('America/Los_Angeles')
 POLAND = ZoneInfo('Europe/Warsaw')
 CHANNEL_ID_RE = re.compile(r'UC[A-Za-z0-9_-]{22}\Z')
@@ -156,9 +156,11 @@ def sane_external_url(url: str, known_urls: dict | None = None) -> bool:
         return False
 
 
-def parse_version(value: str) -> tuple[int,int,int] | None:
-    match=re.fullmatch(r'v?(\d+)\.(\d+)\.(\d+)',value.strip())
-    return tuple(map(int,match.groups())) if match else None
+def parse_version(value: str) -> tuple[int,int,int,int] | None:
+    match=re.fullmatch(r'v?(\d+)\.(\d+)\.(\d+)([a-z]?)',value.strip(),re.I)
+    if not match:return None
+    major,minor,patch,suffix=match.groups()
+    return int(major),int(minor),int(patch),(ord(suffix.lower())-96 if suffix else 0)
 
 
 def is_newer(remote: str, local: str=VERSION) -> bool:
