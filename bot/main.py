@@ -510,7 +510,7 @@ async def notify_error(message):
 # Siedmiodniowy okres dotyczy wyłącznie lokalnych metadanych w SQLite.
 
 
-async def scan(kind='auto', custom_query=None, *, content_type='build'):
+async def scan(kind='auto', custom_query=None, *, content_type='build', max_videos=None):
     if scan_lock.locked():
         return None
     if kind=='auto':
@@ -617,12 +617,16 @@ async def scan(kind='auto', custom_query=None, *, content_type='build'):
                     await notify_error(f'Nie udało się pobrać pełnych opisów filmów: {exc}')
                     return {'sent':0,'searched':searched,'warning':'Brak opisów filmów; publikacja wstrzymana.'}
             sent = 0
+            queued = 0
+            accepted = 0
             link_session=aiohttp.ClientSession()
             # Oldest first. Always verify age locally, even if YouTube search
             # returned a video outside the requested publishedAfter window.
             for vid, info in sorted(candidates.items(), key=lambda it: (
                 0 if storage.channel_rule(c,it[1].get('channelId',''))=='allow' else 1,
                 it[1].get('publishedAt', ''))):
+                if enhancements.scan_limit_reached(accepted, max_videos):
+                    break
                 published = parse_time(info.get('publishedAt'))
                 if published is None or not (utc_now() - timedelta(hours=MAX_VIDEO_AGE_HOURS) <= published <= utc_now() + timedelta(minutes=2)):
                     continue
@@ -663,8 +667,11 @@ async def scan(kind='auto', custom_query=None, *, content_type='build'):
                 if community.is_quiet(utc_now(),qstart,qend):
                     if content_type=='farm':
                         farming.queue(c,vid,game,league,category,title,info.get('publishedAt',''))
-                    else:
-                        community.queue_video(c,vid,game,league,title,info.get('publishedAt',''))
+                        queued += 1
+                        accepted += 1
+                    elif community.queue_video(c,vid,game,league,title,info.get('publishedAt','')):
+                        queued += 1
+                        accepted += 1
                     continue
                 url = f'https://www.youtube.com/watch?v={vid}'
                 translate_enabled=storage.get_setting(c,'translate_titles','false')=='true'
@@ -727,10 +734,11 @@ async def scan(kind='auto', custom_query=None, *, content_type='build'):
                     # Both notification types can gain new PoB/Maxroll/Mobalytics links.
                     storage.record_post(c,vid,channel.id,posted_message.id,links)
                     sent += 1
+                    accepted += 1
                 except discord.HTTPException as exc:
                     await notify_error(f'Nie udało się wysłać filmu na Discord: {exc}')
                     break
-            result = {'sent': sent, 'searched': searched,
+            result = {'sent': sent, 'queued': queued, 'searched': searched,
                       'warning': quota_message(quota_reset) if quota_exhausted
                                  else (f'Nieudane wyszukiwania: {failures}' if failures else ''),
                       'quota_exhausted': quota_exhausted}
@@ -1063,7 +1071,7 @@ async def revoke_command(ctx):
     await localized_reply(ctx, message, allowed_mentions=discord.AllowedMentions.none())
 
 
-async def report_scan(ctx, custom=None, *, content_type='build'):
+async def report_scan(ctx, custom=None, *, content_type='build', max_videos=None):
     if scan_lock.locked():
         await localized_reply(ctx, 'Skanowanie już trwa. Poczekaj na jego zakończenie.')
         return
@@ -1078,14 +1086,15 @@ async def report_scan(ctx, custom=None, *, content_type='build'):
         return
     await localized_reply(ctx, '🔎 Rozpoczynam wyszukiwanie YouTube…')
     try:
-        result = await scan('manual', custom, content_type=content_type)
+        result = await scan('manual', custom, content_type=content_type, max_videos=max_videos)
         if result is None:
             await localized_reply(ctx, 'Skanowanie już trwa.')
         elif result.get('quota_exhausted') or result.get('budget_exhausted'):
             await localized_reply(ctx, result['warning'], allowed_mentions=discord.AllowedMentions.none())
         else:
             await localized_reply(ctx, f"Skan zakończony. Nowe filmy: **{result['sent']}**. "
-                            f"Wykonane wyszukiwania: **{result['searched']}**. "
+                            + (f"Do kolejki ciszy: **{result.get('queued',0)}**. " if result.get('queued') else '')
+                            + f"Wykonane wyszukiwania: **{result['searched']}**. "
                             + result['warning'])
     except Exception as exc:
         log.exception('Manual scan error')
@@ -1095,9 +1104,15 @@ async def report_scan(ctx, custom=None, *, content_type='build'):
 
 @bot.command(name='Scan')
 @commands.check(allowed)
-async def scan_command(ctx):
-    if await require_consent(ctx):
-        await report_scan(ctx)
+async def scan_command(ctx, count: str=''):
+    if not await require_consent(ctx):
+        return
+    try:
+        max_videos=enhancements.parse_scan_limit(count)
+    except ValueError:
+        await localized_reply(ctx, 'Użycie: `pScan` albo `pScan LICZBA` (1–25), np. `pScan 1` lub `pScan 2`.')
+        return
+    await report_scan(ctx,max_videos=max_videos)
 
 
 @bot.command(name='Search')
@@ -1121,10 +1136,16 @@ async def search_command(ctx, *, query: str = ''):
 
 @bot.command(name='FarmScan')
 @commands.check(allowed)
-async def farm_scan_command(ctx):
-    """Search farming strategies for the selected game/version (max 3 queries)."""
-    if await require_consent(ctx):
-        await report_scan(ctx,content_type='farm')
+async def farm_scan_command(ctx, count: str=''):
+    """Search farming strategies (up to three queries), optionally cap new videos."""
+    if not await require_consent(ctx):
+        return
+    try:
+        max_videos=enhancements.parse_scan_limit(count)
+    except ValueError:
+        await localized_reply(ctx, 'Użycie: `pFarmScan` albo `pFarmScan LICZBA` (1–25), np. `pFarmScan 1`.')
+        return
+    await report_scan(ctx,content_type='farm',max_videos=max_videos)
 
 
 @bot.command(name='FarmSearch')
@@ -1531,7 +1552,7 @@ async def saved_command(ctx, action='', video_id=''):
 
 
 HELP_PAGES={
- 'scan':('🔎 Wyszukiwanie / Discovery', '`pScan` — ręczny skan\n`pSearch Spark` — wyszukiwanie skilla\n`pGame poe2` / `pGame poe1` — wybór gry\n`pLeague` — wersja gry\n`pFarmScan`, `pFarmSearch essence` — strategie farmienia'),
+ 'scan':('🔎 Wyszukiwanie / Discovery', '`pScan` / `pScan 1` — pełny skan / limit nowych filmów\n`pSearch Spark` — wyszukiwanie skilla\n`pGame poe2` / `pGame poe1` — wybór gry\n`pLeague` — wersja gry\n`pFarmScan` / `pFarmScan 2`, `pFarmSearch essence` — farmienie'),
  'config':('⚙️ Konfiguracja / Settings', '`pSetup` — kreator\n`pSettings` — panel ustawień\n`pLanguage` — język bota\n`pQuietHours 23:00 08:00` — godziny ciszy\n`pPause 6h` / `pResume` — pauza\n`pFarmAuto on/off` — monitoring farmienia'),
  'community':('⭐ Społeczność / Community','`pSaved` — zapisane buildy\n`pTrending` — popularność filmów\n`pFarmRecent`, `pFarmTopics` — strategie farmienia\n`pTranslateTitles on/off/mymemory/google` — tłumaczenie tytułów'),
  'admin':('🛠️ Administracja / Admin', '`pHealth`, `pLimit`, `pVersion` — stan i API\n`pBackup` — kopie danych\n`pFilters`, `pChannelRules` — reguły\n`pPrivacy` / `pAgree` — zasady')}
