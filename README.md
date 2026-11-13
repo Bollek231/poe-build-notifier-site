@@ -1,4 +1,4 @@
-# PoE Build Notifier · v0.6.1
+# PoE Build Notifier · v0.6.2
 
 **Discord bot for Path of Exile 1 & Path of Exile 2 · 🇵🇱 Polski / 🇬🇧 English**
 
@@ -9,6 +9,18 @@
 ## Polski
 
 PoE Build Notifier automatycznie wyszukuje **świeże poradniki buildów** na YouTube i publikuje je na wybranym kanale Discord. Obsługuje **Path of Exile 1** oraz **Path of Exile 2**. To niekomercyjny, nieoficjalny projekt społecznościowy.
+
+### Nowe funkcje v0.6.2
+
+- **`pSetup`:** konfiguracja gry, wersji, języka i interwału skanowania z menu Discorda. Zapis dopiero po zatwierdzeniu.
+- **`pHelp`:** menu kategorii komend dostępne na kanale bota.
+- **`pQuietHours 23:00 08:00`:** cisza nocna w strefie Warszawa; skanowanie trwa, a wykryte buildy trafiają do zbiorczego podsumowania po zakończeniu ciszy. `pQuietHours off` wyłącza funkcję.
+- **`pPause 6h` / `pResume`:** pauza tylko dla automatycznego wyszukiwania (1–24 h lub `forever`). Ręczne `pScan` pozostaje dostępne.
+- **`pSaved`:** przycisk zapisywania przy nowych buildach i prywatna lista zakładek wysyłana przez DM; `pSaved remove VIDEO_ID` i `pSaved clear` usuwają dane.
+- **`pTrending`:** popularność ostatnich filmów według przyrostu wyświetleń między pomiarami. Pierwsze wywołanie ustala punkt odniesienia; ponowne odczyty mają 15-minutową pamięć podręczną.
+- **`pTranslateTitles on/off`:** tłumaczenie zaakceptowanych tytułów na angielski (oryginał w oddzielnym polu). Wymaga własnego klucza **Google Cloud Translation Basic v2** i włączenia rozliczeń. Bez klucza lub w razie błędu bot pokazuje oryginał. Domyślnie wyłączone, limit 30 tłumaczeń/24 h.
+
+**Tłumaczenia:** w prywatnym `.env` ustaw `TRANSLATION_API_KEY=...` i opcjonalnie `TRANSLATION_DAILY_LIMIT=30`, po czym użyj `pTranslateTitles on`. Nazwy skilli i wersje gry są rozpoznawane z oryginalnego tytułu; tłumaczenie wpływa tylko na wyświetlanie. **Bot nie używa `pTop`.**
 
 ### Możliwości
 
@@ -34,7 +46,7 @@ PoE Build Notifier automatycznie wyszukuje **świeże poradniki buildów** na Yo
 
 ### Instalacja na Windows — krok po kroku
 
-**1. Pobierz pliki.** Zainstaluj [Python 3.11 lub nowszy](https://www.python.org/downloads/) i pobierz **[PoE Build Notifier v0.6.1 (ZIP)](https://bollek231.github.io/poe-build-notifier-site/downloads/PoE_Build_Notifier_v0.6.1.zip)**. Wypakuj pliki tak, aby w folderze `D:\PoE-Bot` znajdowały się m.in. `main.py` i `requirements.txt`.
+**1. Pobierz pliki.** Zainstaluj [Python 3.11 lub nowszy](https://www.python.org/downloads/) i pobierz **[PoE Build Notifier v0.6.2 (ZIP)](https://bollek231.github.io/poe-build-notifier-site/downloads/PoE_Build_Notifier_v0.6.2.zip)**. Wypakuj pliki tak, aby w folderze `D:\PoE-Bot` znajdowały się m.in. `main.py` i `requirements.txt`.
 
 **2. Przygotuj środowisko Pythona.** Otwórz **Wiersz polecenia (CMD)** i wykonaj po kolei:
 
@@ -78,7 +90,7 @@ Na skonfigurowanym kanale Discorda użyj `pPrivacy`, `pAgree` i `pHealth`. Wybra
 
 **Aktualizacja istniejącego bota:** zatrzymaj go (`Ctrl + C`), wykonaj kopię folderu i pliku SQLite, a następnie podmień pliki Pythona, `VERSION` i `requirements.txt` z aktualnego ZIP-a. **Nie nadpisuj** własnego `.env`, `search_config.json`, bazy `.sqlite3` ani kopii zapasowych. Po aktualizacji uruchom ponownie `python -m pip install -r requirements.txt` i `python main.py`.
 
-[Pełny poradnik instalacji (PL/EN)](bot/INSTRUKCJA_INSTALACJI_v0.6.1_PL_EN.md) · [Instalacja na GitHub Pages](https://bollek231.github.io/poe-build-notifier-site/instalacja.html) · [Kod źródłowy](bot/) · [Lista zmian](CHANGELOG.md)
+[Pełny poradnik instalacji (PL/EN)](bot/INSTRUKCJA_INSTALACJI_v0.6.2_PL_EN.md) · [Instalacja na GitHub Pages](https://bollek231.github.io/poe-build-notifier-site/instalacja.html) · [Kod źródłowy](bot/) · [Lista zmian](CHANGELOG.md)
 
 ### Dokumentacja
 
@@ -89,6 +101,18 @@ Na skonfigurowanym kanale Discorda użyj `pPrivacy`, `pAgree` i `pHealth`. Wybra
 ## English
 
 PoE Build Notifier automatically discovers **fresh Path of Exile build guides** on YouTube and posts them to a configured Discord channel. It supports **Path of Exile 1** and **Path of Exile 2**. This is an unofficial, non-commercial community project.
+
+### New in v0.6.2
+
+- **`pSetup`:** choose game, patch, language and scan interval from a Discord menu; changes apply only after confirmation.
+- **`pHelp`:** interactive command categories.
+- **`pQuietHours 23:00 08:00`:** Warsaw-time quiet hours with continued scanning and a single digest after quiet hours; disable with `pQuietHours off`.
+- **`pPause 6h` / `pResume`:** pause scheduled searches (1–24 hours or `forever`); manual `pScan` remains available.
+- **`pSaved`:** Save button on new build posts; private bookmarks sent via DM. Remove them with `pSaved remove VIDEO_ID` or `pSaved clear`.
+- **`pTrending`:** popularity based on sampled view growth of recently detected videos. The first reading establishes a baseline; results are cached for 15 minutes.
+- **`pTranslateTitles on/off`:** optionally translate accepted video titles into English and include the original. Requires a private **Google Cloud Translation Basic v2** API key and billing. On errors the original title is used. Disabled by default, limited to 30 translations per 24 hours.
+
+**Translation setup:** put `TRANSLATION_API_KEY=...` and optionally `TRANSLATION_DAILY_LIMIT=30` in your private `.env`, then use `pTranslateTitles on`. Classification and duplicate checks always use the original titles. **No `pTop` or voting feature is included.**
 
 ### Features
 
@@ -114,7 +138,7 @@ PoE Build Notifier automatically discovers **fresh Path of Exile build guides** 
 
 ### Windows installation — step by step
 
-**1. Download the bot.** Install [Python 3.11+](https://www.python.org/downloads/) and **[download PoE Build Notifier v0.6.1 (ZIP)](https://bollek231.github.io/poe-build-notifier-site/downloads/PoE_Build_Notifier_v0.6.1.zip)**. Extract the bot files so that `D:\PoE-Bot` contains `main.py` and `requirements.txt`.
+**1. Download the bot.** Install [Python 3.11+](https://www.python.org/downloads/) and **[download PoE Build Notifier v0.6.2 (ZIP)](https://bollek231.github.io/poe-build-notifier-site/downloads/PoE_Build_Notifier_v0.6.2.zip)**. Extract the bot files so that `D:\PoE-Bot` contains `main.py` and `requirements.txt`.
 
 **2. Set up Python.** Open **Windows Command Prompt (CMD)** and run:
 
@@ -158,7 +182,7 @@ On the configured Discord channel run `pPrivacy`, `pAgree` and `pHealth`. Use `p
 
 **Upgrading an existing bot:** stop it (`Ctrl + C`), back up the folder and SQLite database, then replace the Python modules, `VERSION`, and `requirements.txt` from the newest ZIP. **Keep** your private `.env`, custom `search_config.json`, `.sqlite3` database and backups. Run `python -m pip install -r requirements.txt`, then `python main.py`.
 
-[Complete installation guide (PL/EN)](bot/INSTRUKCJA_INSTALACJI_v0.6.1_PL_EN.md) · [Installation on GitHub Pages](https://bollek231.github.io/poe-build-notifier-site/instalacja-en.html) · [Source code](bot/) · [Patch Notes](CHANGELOG.md)
+[Complete installation guide (PL/EN)](bot/INSTRUKCJA_INSTALACJI_v0.6.2_PL_EN.md) · [Installation on GitHub Pages](https://bollek231.github.io/poe-build-notifier-site/instalacja-en.html) · [Source code](bot/) · [Patch Notes](CHANGELOG.md)
 
 ### Documentation
 
