@@ -141,6 +141,37 @@ def set_setting(connection: sqlite3.Connection, name: str, value: str) -> None:
     connection.commit()
 
 
+def current_game(connection: sqlite3.Connection) -> str:
+    """Persistent game selection, defaulting to legacy PoE 1 installations."""
+    from game_modes import normalize_game
+    return normalize_game(get_setting(connection,'target_game','poe1')) or 'poe1'
+
+
+def set_game(connection: sqlite3.Connection, game: str) -> None:
+    from game_modes import normalize_game
+    normalized=normalize_game(game)
+    if normalized is None:raise ValueError('Game must be poe1 or poe2')
+    set_setting(connection,'target_game',normalized)
+
+
+def current_game_version(connection: sqlite3.Connection, game: str, *,
+                         poe1_default: str='3.30', poe2_default: str='1.0') -> str:
+    """Keep separate league/patch settings; never overwrite a user's PoE 1 league."""
+    if game=='poe2':return get_setting(connection,'target_version_poe2',poe2_default)
+    if game=='poe1':return current_league(connection,poe1_default)
+    raise ValueError('Unsupported game')
+
+
+def set_game_version(connection: sqlite3.Connection, game: str, version: str) -> None:
+    if game=='poe1':
+        set_league(connection,version)
+    elif game=='poe2':
+        from game_modes import valid_poe2_version
+        if not valid_poe2_version(version):raise ValueError('PoE 2 version must use X.Y, e.g. 1.0')
+        set_setting(connection,'target_version_poe2',version)
+    else:raise ValueError('Unsupported game')
+
+
 def current_league(connection: sqlite3.Connection, default: str='3.30') -> str:
     return get_setting(connection, 'target_league', default)
 
@@ -202,17 +233,17 @@ def all_channel_rules(connection: sqlite3.Connection):
     return connection.execute('SELECT channel_id,rule FROM channel_rules ORDER BY rule,channel_id').fetchall()
 
 
-def get_filters(connection: sqlite3.Connection) -> dict:
+def get_filters(connection: sqlite3.Connection, game: str='poe1') -> dict:
     import json
     from enhancements import normalize_filters
-    try:return normalize_filters(json.loads(get_setting(connection,'build_filters','{}')))
+    try:return normalize_filters(json.loads(get_setting(connection,'build_filters' if game=='poe1' else 'build_filters_poe2','{}')))
     except (TypeError,ValueError):return {}
 
 
-def set_filters(connection: sqlite3.Connection, filters: dict) -> None:
+def set_filters(connection: sqlite3.Connection, filters: dict, game: str='poe1') -> None:
     import json
     from enhancements import normalize_filters
-    set_setting(connection,'build_filters',json.dumps(normalize_filters(filters),ensure_ascii=False,sort_keys=True))
+    set_setting(connection,'build_filters' if game=='poe1' else 'build_filters_poe2',json.dumps(normalize_filters(filters),ensure_ascii=False,sort_keys=True))
 
 
 def record_post(connection: sqlite3.Connection, video_id: str, channel_id: int, message_id: int,
