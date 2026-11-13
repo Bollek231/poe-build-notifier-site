@@ -33,11 +33,18 @@ TARGET_LEAGUE=3.30</code></pre>
 <h2>6. Uruchom i przetestuj</h2>
 <pre><code>python main.py</code></pre>
 <p>Na Discordzie zacznij od <code>pPrivacy</code> i <code>pAgree</code>, potem użyj <code>pHealth</code>, <code>pSettings</code> oraz <code>pLeague</code>. Zobacz <a href="https://bollek231.github.io/poe-build-notifier-site/komendy.html">pełny opis komend</a>.</p>
-<h2>Aktualizowanie istniejącej instalacji</h2>
-<p>Zatrzymaj bota przez <code>Ctrl + C</code>, zrób kopię folderu i zastąp tylko <code>main.py</code>, <code>storage.py</code>, <code>features.py</code>, <code>enhancements.py</code>, <code>services.py</code>, <code>backups.py</code>, <code>VERSION</code> oraz <code>requirements.txt</code>. <strong>Zachowaj własny .env, search_config.json i poe330_seen.sqlite3.</strong> Następnie uruchom:</p>
-<pre><code>python -m pip install -r requirements.txt
+<h2>Aktualizacja istniejącej instalacji</h2>
+<p><strong>1.</strong> Zatrzymaj bota w CMD przez <code>Ctrl + C</code> i wykonaj kopię folderu oraz pliku bazy <code>poe330_seen.sqlite3</code>.</p>
+<p><strong>2.</strong> Rozpakuj nowy ZIP do osobnego folderu. Do obecnej instalacji skopiuj aktualne moduły Pythona (w tym <code>game_modes.py</code>, <code>localization.py</code> i <code>runtime_settings.py</code>), <code>VERSION</code> i <code>requirements.txt</code>. <strong>Zachowaj własny .env, bazę SQLite, kopie zapasowe i search_config.json.</strong></p>
+<p><strong>3.</strong> Zainstaluj zależności i ponownie uruchom bota:</p>
+<pre><code>cd /d D:\PoE-Bot
+.venv\Scripts\activate
+python -m pip install -r requirements.txt
 python main.py</code></pre>
-<h2>Aktualizacja istniejącej instalacji</h2><p>Zatrzymaj bota i wykonaj kopię jego folderu oraz bazy SQLite. Skopiuj moduły Pythona z aktualnej paczki, w tym <code>game_modes.py</code>, <code>localization.py</code> i <code>runtime_settings.py</code>, a także <code>requirements.txt</code> i <code>VERSION</code>. Zachowaj prywatny <code>.env</code>, własny <code>search_config.json</code> i bazę SQLite. Nie uruchamiaj dwóch instancji z tym samym tokenem.</p><pre><code># Opcjonalne wpisy do prywatnego .env
+<p><strong>4.</strong> Na Discordzie sprawdź <code>pHealth</code>, <code>pVersion</code>, <code>pLanguage</code> i <code>pSettings</code>. Nie uruchamiaj dwóch instancji bota jednocześnie.</p>
+<p>Pełną instrukcję z komendami znajdziesz także w <a href="https://github.com/Bollek231/poe-build-notifier-site/blob/main/bot/INSTRUKCJA_INSTALACJI_v0.6.1_PL_EN.md">poradniku instalacji (PL/EN) na GitHubie</a>.</p>
+<h2>Opcjonalne ustawienia</h2>
+<pre><code># Opcjonalne wpisy do prywatnego .env
 DAILY_SEARCH_BUDGET=96
 RESERVED_SEARCHES=24
 ALERT_CHANNEL_ID=0
