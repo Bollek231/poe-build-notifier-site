@@ -1,6 +1,6 @@
-<!doctype html><html lang="pl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="description" content="Instrukcja instalacji bota Discord PoE Build Notifier na Windows, konfiguracja YouTube API i Discord."><title>PoE Build Notifier v0.6.2 — Instalacja</title><link rel="stylesheet" href="style.css"><link rel="stylesheet" href="fancy.css"><link rel="stylesheet" href="unified.css"><link rel="alternate" hreflang="pl" href="https://bollek231.github.io/poe-build-notifier-site/instalacja.html"><link rel="alternate" hreflang="en" href="https://bollek231.github.io/poe-build-notifier-site/instalacja-en.html"></head><body class="docs-redesign dark"><div class="site-atmosphere" aria-hidden="true"><canvas id="ember-field"></canvas></div><div class="site-spotlight" aria-hidden="true"></div><header class="unified-header">
+<!doctype html><html lang="pl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="description" content="Instrukcja instalacji bota Discord PoE Build Notifier na Windows, konfiguracja YouTube API i Discord."><title>PoE Build Notifier v0.6.2b — Instalacja</title><link rel="stylesheet" href="style.css"><link rel="stylesheet" href="fancy.css"><link rel="stylesheet" href="unified.css"><link rel="alternate" hreflang="pl" href="https://bollek231.github.io/poe-build-notifier-site/instalacja.html"><link rel="alternate" hreflang="en" href="https://bollek231.github.io/poe-build-notifier-site/instalacja-en.html"></head><body class="docs-redesign dark"><div class="site-atmosphere" aria-hidden="true"><canvas id="ember-field"></canvas></div><div class="site-spotlight" aria-hidden="true"></div><header class="unified-header">
 <div class="wrap header-inner">
-  <a class="logo" href="https://bollek231.github.io/poe-build-notifier-site/index.html" aria-label="PoE Build Notifier — strona główna"><span class="logo-symbol" aria-hidden="true">✧</span><span class="logo-text"><strong>POE BUILD NOTIFIER</strong><small>EXILE INTELLIGENCE SYSTEM <b class="site-version">v0.6.2</b></small></span></a>
+  <a class="logo" href="https://bollek231.github.io/poe-build-notifier-site/index.html" aria-label="PoE Build Notifier — strona główna"><span class="logo-symbol" aria-hidden="true">✧</span><span class="logo-text"><strong>POE BUILD NOTIFIER</strong><small>EXILE INTELLIGENCE SYSTEM <b class="site-version">v0.6.2b</b></small></span></a>
   <nav id="site-nav" aria-label="Nawigacja główna">
     <a href="https://bollek231.github.io/poe-build-notifier-site/index.html">Strona główna</a>
 <a href="https://bollek231.github.io/poe-build-notifier-site/instalacja.html" class="active" aria-current="page">Instalacja</a>
@@ -16,10 +16,10 @@
     <button type="button" class="ctrl theme-button" id="theme-toggle" title="Zmień motyw strony" aria-label="Przełącz jasny/ciemny motyw">☀️</button>
   </div>
 </div>
-</header><main class="wrap content"><aside class="site-notice" data-site-notice><button class="site-notice__close" type="button" data-notice-close aria-label="Zamknij powiadomienie" title="Zamknij">×</button><div><strong>Instalacja i aktualizacja:</strong> Pobierz v0.6.2, zachowując własny <code>.env</code>, bazę SQLite i konfigurację. Do PoE 2 1.0 przełączysz się przez <code>pGame poe2</code>, a <code>pLanguage</code> i <code>pSettings</code> otworzą menu na Discordzie.</div><span class="site-notice__hint">Powiadomienie zniknie automatycznie po 10 sekundach.</span></aside><span class="pill">Instrukcja po polsku</span>
+</header><main class="wrap content"><aside class="site-notice" data-site-notice><button class="site-notice__close" type="button" data-notice-close aria-label="Zamknij powiadomienie" title="Zamknij">×</button><div><strong>Instalacja i aktualizacja:</strong> Pobierz v0.6.2b, zachowując własny <code>.env</code>, bazę SQLite i konfigurację. Do PoE 2 1.0 przełączysz się przez <code>pGame poe2</code>, a <code>pLanguage</code> i <code>pSettings</code> otworzą menu na Discordzie.</div><span class="site-notice__hint">Powiadomienie zniknie automatycznie po 10 sekundach.</span></aside><span class="pill">Instrukcja po polsku</span>
 <h1>Instalacja bota krok po kroku</h1>
 <p>Bot działa na Twoim komputerze lub serwerze. <strong>GitHub Pages publikuje jedynie tę stronę, dokumentację i pliki do pobrania</strong> — nie uruchamia bota na Discordzie.</p>
-<p><a class="btn" href="https://bollek231.github.io/poe-build-notifier-site/downloads/PoE_Build_Notifier_v0.6.2.zip" download>Pobierz bota ZIP</a><a class="btn secondary" href="https://github.com/Bollek231/poe-build-notifier-site/tree/main/bot">Przeglądaj kod na GitHubie</a></p>
+<p><a class="btn" href="https://bollek231.github.io/poe-build-notifier-site/downloads/PoE_Build_Notifier_v0.6.2b.zip" download>Pobierz bota ZIP</a><a class="btn secondary" href="https://github.com/Bollek231/poe-build-notifier-site/tree/main/bot">Przeglądaj kod na GitHubie</a></p>
 <h2>1. Pobierz i rozpakuj pliki</h2>
 <p>Pobierz ZIP i wypakuj go np. do <code>D:\PoE-Bot</code>. W tym folderze powinny znaleźć się <code>main.py</code>, <code>storage.py</code>, <code>features.py</code>, <code>requirements.txt</code> i <code>.env.example</code>.</p>
 <h2>2. Przygotuj Pythona</h2>
@@ -60,7 +60,7 @@ TARGET_LEAGUE=3.30</code></pre>
 python -m pip install -r requirements.txt
 python main.py</code></pre>
 <p><strong>4.</strong> Na Discordzie sprawdź <code>pHealth</code>, <code>pVersion</code>, <code>pLanguage</code> i <code>pSettings</code>. Nie uruchamiaj dwóch instancji bota jednocześnie.</p>
-<p>Pełną instrukcję z komendami znajdziesz także w <a href="https://github.com/Bollek231/poe-build-notifier-site/blob/main/bot/INSTRUKCJA_INSTALACJI_v0.6.2_PL_EN.md">poradniku instalacji (PL/EN) na GitHubie</a>.</p>
+<p>Pełną instrukcję z komendami znajdziesz także w <a href="https://github.com/Bollek231/poe-build-notifier-site/blob/main/bot/INSTRUKCJA_INSTALACJI_v0.6.2b_PL_EN.md">poradniku instalacji (PL/EN) na GitHubie</a>.</p>
 <h2>Opcjonalne ustawienia</h2>
 <pre><code># Opcjonalne wpisy do prywatnego .env
 DAILY_SEARCH_BUDGET=96
