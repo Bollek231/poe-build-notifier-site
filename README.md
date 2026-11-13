@@ -1,10 +1,10 @@
-# PoE Build Notifier v0.5.0 — PL 🇵🇱 / EN 🇬🇧
+# PoE Build Notifier v0.5.1 — PL 🇵🇱 / EN 🇬🇧
 
 **Wybierz język / Choose language:** [🇵🇱 Polski](#polski) · [🇬🇧 English](#english)
 
 ## Polski
 
-**Aktualna wersja: v0.5.0. Następna aktualizacja: v0.5.1.**
+**Aktualna wersja: v0.5.1. Następna aktualizacja: v0.5.2.**
 
 
 Niekomercyjny projekt bota Discord, który wyszukuje nowe buildy Path of Exile 1 przez YouTube Data API v3 i publikuje linki do oryginalnych filmów.
@@ -18,13 +18,22 @@ Niekomercyjny projekt bota Discord, który wyszukuje nowe buildy Path of Exile 1
 - 📄 **[Warunki korzystania](https://bollek231.github.io/poe-build-notifier-site/terms.html)**
 - 📝 **[Lista zmian / Patch Notes](https://bollek231.github.io/poe-build-notifier-site/changelog.html)**
 
-## Pobierz PoE Build Notifier v0.5.0
+## Pobierz PoE Build Notifier v0.5.1
 
-- 📦 **[Pobierz paczkę ZIP z kodem](https://bollek231.github.io/poe-build-notifier-site/downloads/PoE_Build_Notifier_v0.5.0.zip)**
+- 📦 **[Pobierz paczkę ZIP z kodem](https://bollek231.github.io/poe-build-notifier-site/downloads/PoE_Build_Notifier_v0.5.1.zip)**
 - 🐍 **[Przejrzyj kod źródłowy na GitHubie](https://github.com/Bollek231/poe-build-notifier-site/tree/main/bot)**
 - 📚 **[README kodu bota](bot/README.md)**
 
-Archiwum zawiera pliki `main.py`, `storage.py`, `features.py`, zależności, przykładową konfigurację i testy. **Nie zawiera prywatnych tokenów, kluczy API, plików .env ani bazy SQLite.**
+Archiwum zawiera pliki `main.py`, `storage.py`, `features.py`, `enhancements.py`, `services.py`, `backups.py`, zależności, przykładową konfigurację i testy. **Nie zawiera prywatnych tokenów, kluczy API, plików .env ani bazy SQLite.**
+
+### Nowe w v0.5.1
+
+- Inteligentny budżet wyszukiwań, rotacja fraz i rezerwa na ręczne komendy.
+- Czarne/białe listy twórców: `pBlockChannel`, `pAllowChannel`, `pWhitelist on/off`, `pChannelRules`, `pUnlistChannel`.
+- Rozszerzone filtry: `pFilters`, `pFilter skill Lightning Strike`, `pFilter mode SSF`, `pFilter class Ranger`, `pFilter stage starter`.
+- Walidacja linków PoB/Maxroll/Mobalytics oraz uzupełnianie przycisków w nowych wiadomościach przez `pRefreshLinks`.
+- Alerty o starcie, odzyskaniu połączenia i problemach; prywatne kopie SQLite z komendą `pBackup`.
+- `pVersion` i powiadomienia o nowej wersji na GitHubie (bez automatycznej instalacji).
 
 ## Najważniejsze funkcje
 
@@ -67,7 +76,7 @@ Projekt nie jest związany z Google, YouTube, Discord ani Grinding Gear Games. N
 
 ## English
 
-**Current version: v0.5.0. Next update: v0.5.1.**
+**Current version: v0.5.1. Next update: v0.5.2.**
 
 
 A non-commercial Discord bot that discovers fresh Path of Exile 1 builds using YouTube Data API v3 and posts links to the original videos.
@@ -81,13 +90,22 @@ A non-commercial Discord bot that discovers fresh Path of Exile 1 builds using Y
 - 📄 **[Terms of Use](https://bollek231.github.io/poe-build-notifier-site/terms-en.html)**
 - 📝 **[Patch Notes / Changelog](https://bollek231.github.io/poe-build-notifier-site/changelog-en.html)**
 
-### Download PoE Build Notifier v0.5.0
+### Download PoE Build Notifier v0.5.1
 
-- 📦 **[Download the source ZIP](https://bollek231.github.io/poe-build-notifier-site/downloads/PoE_Build_Notifier_v0.5.0.zip)**
+- 📦 **[Download the source ZIP](https://bollek231.github.io/poe-build-notifier-site/downloads/PoE_Build_Notifier_v0.5.1.zip)**
 - 🐍 **[Browse the source on GitHub](https://github.com/Bollek231/poe-build-notifier-site/tree/main/bot)**
 - 📚 **[Bot source README (PL/EN)](bot/README.md)**
 
-The archive contains `main.py`, `storage.py`, `features.py`, dependencies, sample configuration, and tests. **It does not contain real tokens, API keys, private .env files, or SQLite databases.**
+The archive contains `main.py`, `storage.py`, `features.py`, `enhancements.py`, `services.py`, `backups.py`, dependencies, sample configuration, and tests. **It does not contain real tokens, API keys, private .env files, or SQLite databases.**
+
+### What's new in v0.5.1
+
+- Smarter local YouTube search budgeting, query rotation and a reserve for manual commands.
+- Creator blocklist/allowlist: `pBlockChannel`, `pAllowChannel`, `pWhitelist on/off`, `pChannelRules`, `pUnlistChannel`.
+- Advanced build filters: `pFilters`, `pFilter skill Lightning Strike`, `pFilter mode SSF`, `pFilter class Ranger`, `pFilter stage starter`.
+- Restricted PoB/Maxroll/Mobalytics URL checks and button completion for newly posted Discord messages via `pRefreshLinks`.
+- Startup, reconnection and error alerts; private SQLite backups with `pBackup`.
+- `pVersion` and new-release notifications (no automatic installations).
 
 ### Key features
 
