@@ -9,7 +9,7 @@ from pathlib import Path
 from urllib.parse import urlparse
 from zoneinfo import ZoneInfo
 
-VERSION = '0.6.4b'
+VERSION = '0.6.4c'
 PACIFIC = ZoneInfo('America/Los_Angeles')
 POLAND = ZoneInfo('Europe/Warsaw')
 CHANNEL_ID_RE = re.compile(r'UC[A-Za-z0-9_-]{22}\Z')
