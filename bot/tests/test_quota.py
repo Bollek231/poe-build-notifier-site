@@ -44,7 +44,10 @@ class QuotaTests(unittest.TestCase):
         self.assertIsNone(storage.quota_pause(self.c))
     def test_code_does_not_delete_discord_posts(self):
         source=(Path(__file__).resolve().parents[1]/'main.py').read_text()
-        self.assertNotIn('fetch_message(',source)
+        # v0.5.1 may FETCH an existing post to add new link buttons.
+        # It must never delete/repost the message.
+        self.assertNotIn('await message.delete(',source)
+        self.assertIn('await message.edit(view=buttons_from_links(merged))',source)
         self.assertNotIn('message.delete(',source)
         self.assertIn('except DailySearchQuotaExceeded:',source)
         self.assertIn('await announce_quota_pause(c, quota_reset)',source)

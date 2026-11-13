@@ -59,7 +59,10 @@ class StorageTests(unittest.TestCase):
     def test_never_delete_discord_messages_in_bot_code(self):
         source=(Path(__file__).resolve().parents[1] / 'main.py').read_text(encoding='utf8')
         self.assertNotIn('message.delete(',source)
-        self.assertNotIn('fetch_message(',source)
+        # v0.5.1 may FETCH an existing post to add new link buttons.
+        # It must never delete/repost the message.
+        self.assertNotIn('await message.delete(',source)
+        self.assertIn('await message.edit(view=buttons_from_links(merged))',source)
         self.assertNotIn('await cleanup_discord_posts(',source)
         self.assertNotIn('storage.track_post(',source)
         self.assertNotIn('OPT_IN_ROLE_ID',source)

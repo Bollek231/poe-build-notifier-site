@@ -27,6 +27,11 @@ def initialize(connection: sqlite3.Connection) -> None:
     connection.execute('CREATE TABLE IF NOT EXISTS quota_pauses (quota_type TEXT PRIMARY KEY, until_utc TEXT NOT NULL, notice_sent INTEGER NOT NULL DEFAULT 0)')
     connection.execute('CREATE TABLE IF NOT EXISTS bot_settings (name TEXT PRIMARY KEY, value TEXT NOT NULL)')
     connection.execute('CREATE TABLE IF NOT EXISTS daily_digests (channel_id TEXT NOT NULL, digest_date TEXT NOT NULL, sent_at TEXT NOT NULL, PRIMARY KEY(channel_id, digest_date))')
+    # v0.5.1: additive migration. No existing data or Discord messages are removed.
+    connection.execute('CREATE TABLE IF NOT EXISTS channel_rules (channel_id TEXT PRIMARY KEY, rule TEXT NOT NULL CHECK(rule IN (\'allow\',\'block\')), updated_at TEXT NOT NULL)')
+    connection.execute('CREATE TABLE IF NOT EXISTS posted_messages (video_id TEXT PRIMARY KEY, channel_id TEXT NOT NULL, message_id TEXT NOT NULL, links_json TEXT NOT NULL, checked_at TEXT NOT NULL, created_at TEXT NOT NULL)')
+    connection.execute('CREATE TABLE IF NOT EXISTS link_checks (url TEXT PRIMARY KEY, state TEXT NOT NULL, checked_at TEXT NOT NULL)')
+    connection.execute('CREATE TABLE IF NOT EXISTS alert_events (name TEXT PRIMARY KEY, notified_at TEXT NOT NULL)')
     # Compatible with databases created by the old bot without a league column.
     columns = [row[1] for row in connection.execute('PRAGMA table_info(builds)').fetchall()]
     if 'league' not in columns:
@@ -53,6 +58,9 @@ def cleanup(connection: sqlite3.Connection, retention_days: int = 7, *, now: dat
     ]:
         cur = connection.execute(f'DELETE FROM {table} WHERE {column} < ?', (cutoff,))
         changes[table] = cur.rowcount
+    # Only refresh links for recently published posts; never delete their Discord messages.
+    changes['posted_messages'] = connection.execute('DELETE FROM posted_messages WHERE created_at < ?', (cutoff,)).rowcount
+    changes['link_checks'] = connection.execute('DELETE FROM link_checks WHERE checked_at < ?', (cutoff,)).rowcount
     # old legacy rows may have metadata without a valid current cached video.
     cur = connection.execute('DELETE FROM video_metadata WHERE video_id NOT IN (SELECT video_id FROM videos)')
     changes['video_metadata'] = cur.rowcount
@@ -164,3 +172,103 @@ def digest_builds(connection: sqlite3.Connection, league: str, start: str, end: 
         WHERE b.league=? AND b.created_at>=? AND b.created_at<=?
         ORDER BY b.created_at DESC LIMIT ?
     """, (league, start, end, limit)).fetchall()
+
+
+# v0.5.1: channel rules and filters survive the 7-day YouTube cache cleanup.
+def put_channel_rule(connection: sqlite3.Connection, channel_id: str, rule: str) -> None:
+    if rule not in ('allow','block'):
+        raise ValueError('rule must be allow or block')
+    from enhancements import youtube_channel_id
+    if youtube_channel_id(channel_id) != channel_id:
+        raise ValueError('Invalid YouTube channel ID')
+    connection.execute('INSERT INTO channel_rules(channel_id,rule,updated_at) VALUES(?,?,?) '
+                       'ON CONFLICT(channel_id) DO UPDATE SET rule=excluded.rule,updated_at=excluded.updated_at',
+                       (channel_id,rule,utc_now().isoformat()))
+    connection.commit()
+
+
+def delete_channel_rule(connection: sqlite3.Connection, channel_id: str) -> bool:
+    result=connection.execute('DELETE FROM channel_rules WHERE channel_id=?',(channel_id,))
+    connection.commit()
+    return result.rowcount>0
+
+
+def channel_rule(connection: sqlite3.Connection, channel_id: str) -> str | None:
+    row=connection.execute('SELECT rule FROM channel_rules WHERE channel_id=?',(channel_id,)).fetchone()
+    return row[0] if row else None
+
+
+def all_channel_rules(connection: sqlite3.Connection):
+    return connection.execute('SELECT channel_id,rule FROM channel_rules ORDER BY rule,channel_id').fetchall()
+
+
+def get_filters(connection: sqlite3.Connection) -> dict:
+    import json
+    from enhancements import normalize_filters
+    try:return normalize_filters(json.loads(get_setting(connection,'build_filters','{}')))
+    except (TypeError,ValueError):return {}
+
+
+def set_filters(connection: sqlite3.Connection, filters: dict) -> None:
+    import json
+    from enhancements import normalize_filters
+    set_setting(connection,'build_filters',json.dumps(normalize_filters(filters),ensure_ascii=False,sort_keys=True))
+
+
+def record_post(connection: sqlite3.Connection, video_id: str, channel_id: int, message_id: int,
+                links: dict, *, now: datetime | None=None) -> None:
+    import json
+    stamp=(now or utc_now()).astimezone(timezone.utc).isoformat()
+    connection.execute('INSERT OR REPLACE INTO posted_messages(video_id,channel_id,message_id,links_json,checked_at,created_at) VALUES(?,?,?,?,?,?)',
+                       (video_id,str(channel_id),str(message_id),json.dumps(links,sort_keys=True),stamp,stamp))
+    connection.commit()
+
+
+def refresh_candidates(connection: sqlite3.Connection, *, cutoff: datetime, limit: int=10):
+    return connection.execute('SELECT video_id,channel_id,message_id,links_json,checked_at FROM posted_messages '
+       'WHERE checked_at <= ? ORDER BY checked_at ASC LIMIT ?', (cutoff.astimezone(timezone.utc).isoformat(),limit)).fetchall()
+
+
+def update_post_links(connection: sqlite3.Connection, video_id: str, links: dict | None) -> None:
+    import json
+    stamp=utc_now().isoformat()
+    if links is None:
+        connection.execute('UPDATE posted_messages SET checked_at=? WHERE video_id=?',(stamp,video_id))
+    else:
+        connection.execute('UPDATE posted_messages SET links_json=?,checked_at=? WHERE video_id=?',
+                           (json.dumps(links,sort_keys=True),stamp,video_id))
+    connection.commit()
+
+
+def remove_post_tracking(connection: sqlite3.Connection, video_id: str) -> None:
+    connection.execute('DELETE FROM posted_messages WHERE video_id=?',(video_id,))
+    connection.commit()
+
+
+def cached_link_state(connection: sqlite3.Connection, url: str, *, max_age_hours: int=12) -> str | None:
+    row=connection.execute('SELECT state,checked_at FROM link_checks WHERE url=?',(url,)).fetchone()
+    if not row:return None
+    try:time_of_check=datetime.fromisoformat(row[1])
+    except ValueError:return None
+    if (utc_now()-time_of_check)>timedelta(hours=max_age_hours):return None
+    return row[0]
+
+
+def store_link_state(connection: sqlite3.Connection, url: str, state: str) -> None:
+    if state not in ('ok','dead','uncertain'):raise ValueError('Invalid link state')
+    connection.execute('INSERT OR REPLACE INTO link_checks(url,state,checked_at) VALUES(?,?,?)',
+                       (url,state,utc_now().isoformat()))
+    connection.commit()
+
+
+def alert_allowed(connection: sqlite3.Connection, key: str, *, cooldown_minutes: int=60,now: datetime | None=None) -> bool:
+    current=now or utc_now()
+    row=connection.execute('SELECT notified_at FROM alert_events WHERE name=?',(key,)).fetchone()
+    if not row:return True
+    try:return current-datetime.fromisoformat(row[0])>=timedelta(minutes=cooldown_minutes)
+    except (TypeError,ValueError):return True
+
+
+def record_alert(connection: sqlite3.Connection,key: str, *, now: datetime | None=None) -> None:
+    connection.execute('INSERT OR REPLACE INTO alert_events(name,notified_at) VALUES(?,?)',(key,(now or utc_now()).isoformat()))
+    connection.commit()

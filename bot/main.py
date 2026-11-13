@@ -16,6 +16,9 @@ from discord.ext import commands, tasks
 from dotenv import load_dotenv
 import storage
 import features
+import enhancements
+import services
+import backups
 
 load_dotenv()
 logging.basicConfig(level=logging.INFO, format='%(asctime)s %(levelname)s %(message)s')
@@ -29,7 +32,7 @@ MAX_RESULTS = min(50, max(1, int(os.getenv('MAX_RESULTS_PER_QUERY', '25'))))
 SEND_DELAY = max(0, float(os.getenv('SEND_DELAY_SECONDS', '3')))
 MAX_VIDEO_AGE_HOURS = max(1, int(os.getenv('MAX_VIDEO_AGE_HOURS', '24')))
 # Conservative per-day ceiling for this bot; separate from Google Cloud's actual quota.
-DAILY_SEARCH_BUDGET = min(100, max(1, int(os.getenv('DAILY_SEARCH_BUDGET', '96'))))
+DAILY_SEARCH_BUDGET = min(10000, max(1, int(os.getenv('DAILY_SEARCH_BUDGET', '96'))))
 RESERVED_SEARCHES = max(0, int(os.getenv('RESERVED_SEARCHES', '24')))
 CONFIG_FILE = Path(os.getenv('SEARCH_CONFIG_FILE', 'search_config.json'))
 DEFAULT_LEAGUE = os.getenv('TARGET_LEAGUE', '3.30').strip() or '3.30'
@@ -42,7 +45,18 @@ if not re.fullmatch(r'(?:[01]\d|2[0-3]):[0-5]\d', DAILY_DIGEST_TIME):
 DAILY_DIGEST_CHANNEL_ID = int(os.getenv('DAILY_DIGEST_CHANNEL_ID', '0')) or CHANNEL_ID
 # YouTube API metadata stays cached for at most seven days by default.
 CACHE_RETENTION_DAYS = max(1, min(29, int(os.getenv('YOUTUBE_CACHE_DAYS', '7'))))
+# No new personal data fields are added to the consent policy.
 POLICY_VERSION = '2026-11-12-v2'
+VERSION = enhancements.VERSION
+ALERT_CHANNEL_ID = int(os.getenv('ALERT_CHANNEL_ID', str(CHANNEL_ID)))
+CHECK_EXTERNAL_LINKS = os.getenv('CHECK_EXTERNAL_LINKS', 'true').lower() in ('true','1','yes','on')
+LINK_REFRESH_INTERVAL_HOURS = max(1, int(os.getenv('LINK_REFRESH_INTERVAL_HOURS','6')))
+MAX_LINK_REFRESH_PER_RUN = max(1, min(50,int(os.getenv('MAX_LINK_REFRESH_PER_RUN','10'))))
+BACKUP_DIR = os.getenv('BACKUP_DIR', str(Path(DB_PATH).parent / 'backups'))
+BACKUP_KEEP_DAYS = max(1,min(30,int(os.getenv('BACKUP_KEEP_DAYS','7'))))
+VERSION_CHECK_ENABLED = os.getenv('VERSION_CHECK_ENABLED','true').lower() in ('true','1','yes','on')
+_health_disconnect_at = None
+
 PRIVACY_URL = 'https://bollek231.github.io/poe-build-notifier-site/privacy.html'
 TERMS_URL = 'https://bollek231.github.io/poe-build-notifier-site/terms.html'
 # Pacific Time is used to calculate the daily YouTube search quota reset.
@@ -270,14 +284,17 @@ def extract_links(description):
     return found
 
 
-def video_buttons(description):
-    links = extract_links(description)
+def buttons_from_links(links):
     if not links:
         return None
     view = discord.ui.View(timeout=None)
     for label, url in links.items():
         view.add_item(discord.ui.Button(label=label, style=discord.ButtonStyle.link, url=url))
     return view
+
+
+def video_buttons(description):
+    return buttons_from_links(extract_links(description))
 
 
 async def video_details(session, video_ids):
@@ -288,7 +305,7 @@ async def video_details(session, video_ids):
         async with session.get('https://www.googleapis.com/youtube/v3/videos', params=params, timeout=aiohttp.ClientTimeout(total=30)) as response:
             payload = await response.json(content_type=None)
             if response.status != 200:
-                raise RuntimeError(f'YouTube videos.list HTTP {response.status}: {str(payload)[:250]}')
+                raise RuntimeError(f'YouTube videos.list HTTP {response.status}')
             for item in payload.get('items', []):
                 results[item['id']] = item.get('snippet', {})
     return results
@@ -352,18 +369,36 @@ async def search_youtube(session, query):
         if response.status != 200:
             if storage.is_daily_search_quota_error(response.status, payload):
                 raise DailySearchQuotaExceeded('YouTube: Search Queries per day')
-            raise RuntimeError(f'YouTube API HTTP {response.status}: {str(payload)[:400]}')
+            raise RuntimeError(f'YouTube API HTTP {response.status}')
         return payload.get('items', [])
+
+
+async def alert_admin(key, message, *, cooldown_minutes=60):
+    # Deduplicate alerts across restarts. An alert channel may be configured
+    # independently of the regular build channel.
+    if not ALERT_CHANNEL_ID:
+        return False
+    c=db()
+    try:
+        if not storage.alert_allowed(c,key,cooldown_minutes=cooldown_minutes):
+            return False
+        channel=bot.get_channel(ALERT_CHANNEL_ID) or await bot.fetch_channel(ALERT_CHANNEL_ID)
+        await channel.send(discord.utils.escape_mentions(message[:1700]),allowed_mentions=discord.AllowedMentions.none())
+        storage.record_alert(c,key)
+        return True
+    except Exception:
+        log.exception('Admin alert could not be delivered')
+        return False
+    finally:
+        c.close()
 
 
 async def notify_error(message):
     log.error(message)
     _health['last_error'] = {'at':utc_now().isoformat(), 'message':message[:400]}
-    try:
-        channel = bot.get_channel(CHANNEL_ID) or await bot.fetch_channel(CHANNEL_ID)
-        await channel.send('⚠️ **PoE Bot – problem:** ' + discord.utils.escape_mentions(message[:1500]))
-    except Exception:
-        log.exception('Could not notify Discord about error')
+    await alert_admin('error:'+message.split(':',1)[0][:50],
+                      '⚠️ **PoE Bot – problem:** '+discord.utils.escape_mentions(message[:1000]),
+                      cooldown_minutes=30)
 
 
 # Bot nie kasuje, nie edytuje i nie śledzi wieku powiadomień na Discordzie.
@@ -376,6 +411,7 @@ async def scan(kind='auto', custom_query=None):
     async with scan_lock:
         _health['last_start'] = utc_now().isoformat()
         c = db()
+        link_session = None
         try:
             config = cfg()
             league = storage.current_league(c, DEFAULT_LEAGUE)
@@ -392,7 +428,18 @@ async def scan(kind='auto', custom_query=None):
                         'warning': 'Wyczerpano dzienny budżet zapytań tego bota.\n'
                                    + f'Kolejny reset: <t:{int(reset.timestamp())}:F>.',
                         'budget_exhausted': True}
-            queries = queries[:budget]
+            if kind == 'auto' and custom_query is None:
+                # Spread remaining calls across the scans left before midnight PT.
+                current_count=search_count(c)
+                quota_left=max(0,DAILY_SEARCH_BUDGET-current_count)
+                count=enhancements.auto_query_allocation(quota_left,RESERVED_SEARCHES,utc_now(),INTERVAL_H,len(queries))
+                try:cursor=int(storage.get_setting(c,'query_cursor','0'))
+                except ValueError:cursor=0
+                queries,next_cursor=enhancements.rotate_queries(queries,min(budget,count),cursor)
+                storage.set_setting(c,'query_cursor',str(next_cursor))
+            else:
+                queries=queries[:budget]
+            filters=storage.get_filters(c)
             candidates = {}
             searched = 0
             failures = 0
@@ -450,13 +497,20 @@ async def scan(kind='auto', custom_query=None):
                     await notify_error(f'Nie udało się pobrać pełnych opisów filmów: {exc}')
                     return {'sent':0,'searched':searched,'warning':'Brak opisów filmów; publikacja wstrzymana.'}
             sent = 0
+            link_session=aiohttp.ClientSession()
             # Oldest first. Always verify age locally, even if YouTube search
             # returned a video outside the requested publishedAfter window.
-            for vid, info in sorted(candidates.items(), key=lambda it: it[1].get('publishedAt', '')):
+            for vid, info in sorted(candidates.items(), key=lambda it: (
+                0 if storage.channel_rule(c,it[1].get('channelId',''))=='allow' else 1,
+                it[1].get('publishedAt', ''))):
                 published = parse_time(info.get('publishedAt'))
                 if published is None or not (utc_now() - timedelta(hours=MAX_VIDEO_AGE_HOURS) <= published <= utc_now() + timedelta(minutes=2)):
                     continue
                 if c.execute('SELECT 1 FROM videos WHERE video_id=?', (vid,)).fetchone():
+                    continue
+                channel_id=info.get('channelId','')
+                channel_rule=storage.channel_rule(c,channel_id)
+                if channel_rule=='block' or (storage.get_setting(c,'allowlist_only','false')=='true' and channel_rule!='allow'):
                     continue
                 title = info.get('title', 'Film YouTube')
                 description = info.get('description', '')
@@ -464,6 +518,9 @@ async def scan(kind='auto', custom_query=None):
                 if result is None:
                     continue
                 skill, asc, category = result
+                # Trust list prioritizes, but never bypasses league, age, PoE1 or user filters.
+                if not enhancements.matches_filters(title,description,skill,asc,category,filters):
+                    continue
                 fp = fingerprint(title, skill, asc, league)
                 if duplicate(c, fp, league):
                     # Mark as seen to avoid rechecking it, but do not add a new build.
@@ -488,9 +545,14 @@ async def scan(kind='auto', custom_query=None):
                     embed.set_thumbnail(url=thumb['url'])
                 embed.set_footer(text='Dane filmu: YouTube • Kategorie ustala bot, nie YouTube • Zasady: pPrivacy')
                 try:
+                    links=extract_links(description)
+                    if CHECK_EXTERNAL_LINKS:
+                        links=await services.verified_links(link_session,c,links)
+                    else:
+                        links={label:target for label,target in links.items() if enhancements.sane_external_url(target)}
                     if sent:
                         await asyncio.sleep(SEND_DELAY)
-                    await channel.send(content=url, embed=embed, view=video_buttons(description))
+                    posted_message=await channel.send(content=url, embed=embed, view=buttons_from_links(links))
                     c.execute('INSERT OR IGNORE INTO videos VALUES(?,?,?,?,?)',
                               (vid, title, url, info.get('publishedAt'), utc_now().isoformat()))
                     c.execute('INSERT OR IGNORE INTO builds(fingerprint,canonical_title,first_video_id,created_at,league) VALUES(?,?,?,?,?)',
@@ -498,6 +560,8 @@ async def scan(kind='auto', custom_query=None):
                     c.execute('INSERT OR REPLACE INTO video_metadata VALUES(?,?,?,?)',
                               (vid, skill, asc, category))
                     c.commit()
+                    # New posts only; previously sent Discord messages stay untouched.
+                    storage.record_post(c,vid,channel.id,posted_message.id,links)
                     sent += 1
                 except discord.HTTPException as exc:
                     await notify_error(f'Nie udało się wysłać filmu na Discord: {exc}')
@@ -510,6 +574,8 @@ async def scan(kind='auto', custom_query=None):
             _health['last_results'] = result
             return result
         finally:
+            if link_session is not None:
+                await link_session.close()
             c.close()
 
 
@@ -617,9 +683,148 @@ async def wait_ready():
     await bot.wait_until_ready()
 
 
+async def refresh_post_links(*, manual=False):
+    """Inspect only tracked recent posts (up to seven days). Add missing buttons
+    by EDITING the existing Discord message, never deleting/reposting it.
+    """
+    if scan_lock.locked():return 'Skanowanie w toku; ponów później.'
+    c=db()
+    try:
+        cutoff=utc_now() - timedelta(hours=LINK_REFRESH_INTERVAL_HOURS if not manual else 0)
+        rows=storage.refresh_candidates(c,cutoff=cutoff,limit=MAX_LINK_REFRESH_PER_RUN)
+        if not rows:return 'Brak powiadomień wymagających sprawdzenia.'
+        updated=0
+        async with aiohttp.ClientSession() as session:
+            for offset in range(0,len(rows),50):
+                batch=rows[offset:offset+50]
+                details=await video_details(session,[row['video_id'] for row in batch])
+                c.execute('INSERT INTO api_usage(used_at,units,operation) VALUES(?,?,?)',(utc_now().isoformat(),1,'videos.list'))
+                c.commit()
+                for row in batch:
+                    vid=row['video_id']
+                    info=details.get(vid)
+                    if not info:
+                        storage.update_post_links(c,vid,None)
+                        continue
+                    try:previous=json.loads(row['links_json'])
+                    except (ValueError,TypeError):previous={}
+                    fresh=extract_links(info.get('description',''))
+                    if CHECK_EXTERNAL_LINKS:
+                        fresh=await services.verified_links(session,c,fresh)
+                    else:
+                        fresh={k:v for k,v in fresh.items() if enhancements.sane_external_url(v)}
+                    if not enhancements.links_changed(previous,fresh):
+                        storage.update_post_links(c,vid,None)
+                        continue
+                    merged=enhancements.merged_links(previous,fresh)
+                    try:
+                        destination=bot.get_channel(int(row['channel_id'])) or await bot.fetch_channel(int(row['channel_id']))
+                        message=await destination.fetch_message(int(row['message_id']))
+                        await message.edit(view=buttons_from_links(merged))
+                        storage.update_post_links(c,vid,merged)
+                        updated+=1
+                        await asyncio.sleep(min(SEND_DELAY,3))
+                    except discord.NotFound:
+                        # Message removed by a human; do not repost or delete anything.
+                        storage.remove_post_tracking(c,vid)
+                    except discord.HTTPException as error:
+                        log.warning('Cannot edit links for video %s: %s',vid,type(error).__name__)
+                        storage.update_post_links(c,vid,None)
+        return f'Zbadano {len(rows)} powiadomień, uzupełniono przyciski w {updated} wiadomościach.'
+    finally:
+        c.close()
+
+
+@tasks.loop(hours=LINK_REFRESH_INTERVAL_HOURS)
+async def automatic_link_refresh():
+    try:
+        await refresh_post_links()
+    except Exception as exc:
+        log.exception('Refresh links failed')
+        await notify_error(f'Odświeżanie linków: {type(exc).__name__}')
+
+
+@automatic_link_refresh.before_loop
+async def link_refresh_wait_ready():
+    await bot.wait_until_ready()
+
+
+@tasks.loop(hours=12)
+async def automatic_backup():
+    try:
+        dest,created=await asyncio.to_thread(backups.backup_database,DB_PATH,BACKUP_DIR,
+                                              keep=BACKUP_KEEP_DAYS,now=utc_now())
+        if created:log.info('Private SQLite backup created: %s',dest)
+    except Exception as exc:
+        log.exception('Backup failed')
+        await notify_error(f'Kopia SQLite: {type(exc).__name__}')
+
+
+@automatic_backup.before_loop
+async def backup_wait_ready():
+    await bot.wait_until_ready()
+
+
+async def check_new_version(*, announce=True):
+    async with aiohttp.ClientSession() as session:
+        latest=await services.latest_public_version(session)
+    if latest is None:return None
+    if announce and enhancements.is_newer(latest, VERSION):
+        c=db()
+        try:
+            prev=storage.get_setting(c,'last_notified_version','')
+            if prev!=latest:
+                delivered=await alert_admin('new_version_'+latest,
+                    f'🆕 **Dostępna aktualizacja PoE Build Notifier v{latest}** (obecnie v{VERSION}).\n'
+                    '📋 https://bollek231.github.io/poe-build-notifier-site/changelog.html\n'
+                    'Bot nie aktualizuje się automatycznie.',cooldown_minutes=60)
+                if delivered:storage.set_setting(c,'last_notified_version',latest)
+        finally:
+            c.close()
+    return latest
+
+
+@tasks.loop(hours=12)
+async def automatic_version_check():
+    if VERSION_CHECK_ENABLED:
+        try:await check_new_version()
+        except Exception:log.exception('Could not check latest version')
+
+
+@automatic_version_check.before_loop
+async def version_wait_ready():
+    await bot.wait_until_ready()
+
+
+@bot.event
+async def on_disconnect():
+    global _health_disconnect_at
+    if _health_disconnect_at is None:_health_disconnect_at=utc_now()
+
+
+@bot.event
+async def on_resumed():
+    global _health_disconnect_at
+    if _health_disconnect_at is not None:
+        downtime=utc_now()-_health_disconnect_at
+        _health_disconnect_at=None
+        if downtime.total_seconds()>15:
+            await alert_admin('connection_restored','✅ **PoE Bot: połączenie z Discordem odzyskane.**',
+                              cooldown_minutes=10)
+
+
 @bot.event
 async def on_ready():
+    global _health_disconnect_at
     log.info('Connected as %s', bot.user)
+    first_ready=not getattr(bot,'_first_connection_reported',False)
+    if first_ready:
+        bot._first_connection_reported=True
+        await alert_admin('service_started','✅ **PoE Build Notifier v'+VERSION+' działa.** '
+                          'Bot uruchomiony lub ponownie uruchomiony.',cooldown_minutes=10)
+    elif _health_disconnect_at is not None:
+        _health_disconnect_at=None
+        await alert_admin('connection_restored','✅ **PoE Bot: połączenie z Discordem odzyskane.**',cooldown_minutes=10)
     if not getattr(bot, '_privacy_view_registered', False):
         bot.add_view(ConsentView())
         bot._privacy_view_registered = True
@@ -627,6 +832,12 @@ async def on_ready():
         automatic_scan.start()
     if DAILY_DIGEST_ENABLED and not automatic_digest.is_running():
         automatic_digest.start()
+    if not automatic_link_refresh.is_running():
+        automatic_link_refresh.start()
+    if not automatic_backup.is_running():
+        automatic_backup.start()
+    if VERSION_CHECK_ENABLED and not automatic_version_check.is_running():
+        automatic_version_check.start()
 
 
 def allowed(ctx):
@@ -731,6 +942,8 @@ async def limit_command(ctx):
     try:
         searches, other_units = local_quota(c)
         auto_remaining = max(0, DAILY_SEARCH_BUDGET - RESERVED_SEARCHES - searches)
+        next_auto = enhancements.auto_query_allocation(max(0,DAILY_SEARCH_BUDGET-searches),
+                         RESERVED_SEARCHES,utc_now(),INTERVAL_H,len(cfg()['search_queries']))
         daily_remaining = max(0, DAILY_SEARCH_BUDGET - searches)
         pause = storage.quota_pause(c)
         if pause:
@@ -744,6 +957,7 @@ async def limit_command(ctx):
             f'Wyszukiwania: **{searches}/{DAILY_SEARCH_BUDGET}** dzisiaj.\n'
             f'Pozostało w budżecie bota: **{daily_remaining}** wyszukiwań.\n'
             f'Dostępne dla skanów automatycznych: **{auto_remaining}**.\n'
+            f'Plan na kolejny skan: **{next_auto}** zapytań (rotacja fraz).\n'
             f'Rezerwa na ręczne komendy: **{RESERVED_SEARCHES}**.\n'
             f'Pozostałe operacje YouTube API: **{other_units}** szacowanych jednostek.\n'
             'ℹ️ To licznik tego bota, nie oficjalny odczyt limitów Google; '
@@ -767,7 +981,7 @@ async def health_command(ctx):
     finally:
         connection.close()
     quota_status = ('Wyczerpany do <t:' + str(int(pause[0].timestamp())) + ':F>') if pause else 'Brak potwierdzonego wyczerpania'
-    await ctx.reply('🩺 **Stan bota**\n'
+    await ctx.reply('🩺 **Stan bota v'+VERSION+'**\n'
                     f'Codzienne podsumowanie: **{"wysłano dziś" if digest_today else "jeszcze nie wysłano"}** (godz. {DAILY_DIGEST_TIME} PL)\n'
                     f'Limit wyszukiwań YouTube: **{quota_status}**\n'
                     f'Połączenie Discord: **{ "OK" if bot.is_ready() else "Niedostępne" }**\n'
@@ -808,7 +1022,7 @@ async def settings_command(ctx):
         league = storage.current_league(c, DEFAULT_LEAGUE)
     finally:
         c.close()
-    await ctx.reply(f'⚙️ **Ustawienia**\n'
+    await ctx.reply(f'⚙️ **Ustawienia v{VERSION}**\n'
                     f'Liga: **{league}** (zmiana: `pLeague 3.31`)\n'
                     f'Podsumowanie: **{DAILY_DIGEST_TIME} czasu polskiego** ({"włączone" if DAILY_DIGEST_ENABLED else "wyłączone"})\n'
                     f'Automatyczny skan: co **{INTERVAL_H} h**\n'
@@ -863,6 +1077,164 @@ async def digest_command(ctx):
     except Exception:
         log.exception('Ręczne podsumowanie nie powiodło się')
         await ctx.reply('Nie udało się wysłać podsumowania. Sprawdź logi bota.')
+
+
+@bot.command(name='BlockChannel')
+@commands.check(allowed)
+async def block_channel_command(ctx, *, channel: str=''):
+    if not await require_consent(ctx):return
+    ident=enhancements.youtube_channel_id(channel)
+    if not ident:
+        await ctx.reply('Podaj ID kanału YouTube: `pBlockChannel UCxxxxxxxxxxxxxxxxxxxxxx` (lub jego URL /channel/UC...).')
+        return
+    c=db()
+    try:storage.put_channel_rule(c,ident,'block')
+    finally:c.close()
+    await ctx.reply(f'⛔ Zablokowano kanał YouTube `{ident}`. Nie będzie publikowany.')
+
+
+@bot.command(name='AllowChannel')
+@commands.check(allowed)
+async def allow_channel_command(ctx, *, channel: str=''):
+    if not await require_consent(ctx):return
+    ident=enhancements.youtube_channel_id(channel)
+    if not ident:
+        await ctx.reply('Podaj ID kanału YouTube: `pAllowChannel UCxxxxxxxxxxxxxxxxxxxxxx`.')
+        return
+    c=db()
+    try:storage.put_channel_rule(c,ident,'allow')
+    finally:c.close()
+    await ctx.reply(f'✅ Zaufany kanał `{ident}`. Priorytet kolejności, ale wszystkie filtry nadal obowiązują.')
+
+
+@bot.command(name='UnlistChannel')
+@commands.check(allowed)
+async def unlist_channel_command(ctx, *, channel: str=''):
+    if not await require_consent(ctx):return
+    ident=enhancements.youtube_channel_id(channel)
+    if not ident:
+        await ctx.reply('Użycie: `pUnlistChannel UCxxxxxxxxxxxxxxxxxxxxxx`.')
+        return
+    c=db()
+    try:removed=storage.delete_channel_rule(c,ident)
+    finally:c.close()
+    await ctx.reply('Usunięto regułę kanału.' if removed else 'Kanału nie było na żadnej liście.')
+
+
+@bot.command(name='Whitelist')
+@commands.check(allowed)
+async def whitelist_command(ctx, mode: str=''):
+    if not await require_consent(ctx):return
+    c=db()
+    try:
+        if mode.casefold() in ('on','only'):
+            if not any(r[1]=='allow' for r in storage.all_channel_rules(c)):
+                await ctx.reply('Najpierw dodaj zaufany kanał: `pAllowChannel UC...`.')
+                return
+            storage.set_setting(c,'allowlist_only','true')
+        elif mode.casefold()=='off':
+            storage.set_setting(c,'allowlist_only','false')
+        elif mode:
+            await ctx.reply('Użycie: `pWhitelist on` (publikuj tylko zaufane kanały) lub `pWhitelist off`.')
+            return
+        value=storage.get_setting(c,'allowlist_only','false')=='true'
+    finally:c.close()
+    await ctx.reply('✅ Biała lista: **tylko zaufane kanały**.' if value else
+                    'ℹ️ Biała lista: **priorytet zaufanych, pozostałe dozwolone** (poza zablokowanymi).')
+
+
+@bot.command(name='ChannelRules')
+@commands.check(allowed)
+async def channel_rules_command(ctx):
+    if not await require_consent(ctx):return
+    c=db()
+    try:rules=storage.all_channel_rules(c)
+    finally:c.close()
+    lines=[f'{"✅ zaufany" if r[1]=="allow" else "⛔ zablokowany"}: `{r[0]}`' for r in rules[:35]]
+    await ctx.reply('📃 **Lista kanałów YouTube**\n'+('\n'.join(lines) if lines else 'Brak reguł.') +
+                    ('\n… i kolejne.' if len(rules)>35 else ''),allowed_mentions=discord.AllowedMentions.none())
+
+
+@bot.command(name='Filters')
+@commands.check(allowed)
+async def filters_command(ctx):
+    if not await require_consent(ctx):return
+    c=db()
+    try:f=storage.get_filters(c)
+    finally:c.close()
+    values=', '.join(f'**{k}**: `{v}`' for k,v in f.items()) or 'brak (wszystkie zgodne buildy)'
+    await ctx.reply('🎯 **Filtry buildów**\n'+values+'\nPrzykłady: `pFilter skill Lightning Strike`, '
+                    '`pFilter ascendancy Deadeye`, `pFilter class Ranger`, '
+                    '`pFilter mode SSF`, `pFilter stage starter`; `pFilter clear`.')
+
+
+@bot.command(name='Filter')
+@commands.check(allowed)
+async def filter_command(ctx, field: str='', *, value: str=''):
+    if not await require_consent(ctx):return
+    field=field.casefold().strip()
+    if field=='clear':
+        c=db()
+        try:storage.set_filters(c,{})
+        finally:c.close()
+        await ctx.reply('✅ Wyczyszczono wszystkie rozszerzone filtry.')
+        return
+    try:canonical=enhancements.validate_filter(field,value,SKILLS,ASCENDANCIES)
+    except ValueError:
+        await ctx.reply('Wybierz: `skill`, `ascendancy`, `class`, `mode` (SSF/HC/SC), '
+                        '`stage` (starter/endgame/leveling/build). Wpisz `all`, by usunąć wybrany filtr.')
+        return
+    c=db()
+    try:
+        all_filters=storage.get_filters(c)
+        if canonical is None:all_filters.pop(field,None)
+        else:all_filters[field]=canonical
+        storage.set_filters(c,all_filters)
+    finally:c.close()
+    await ctx.reply(f'✅ Filtr `{field}`: `{canonical or "wszystkie"}`. Zmiana obowiązuje przy następnym skanie.')
+
+
+@bot.command(name='RefreshLinks')
+@commands.check(allowed)
+async def refresh_links_command(ctx):
+    if not await require_consent(ctx):return
+    await ctx.reply('🔗 Sprawdzam linki w ostatnio opublikowanych filmach…')
+    try:reply=await refresh_post_links(manual=True)
+    except Exception as exc:
+        log.exception('Manual refresh error')
+        reply=f'Nie udało się odświeżyć przycisków ({type(exc).__name__}).'
+    await ctx.reply(reply,allowed_mentions=discord.AllowedMentions.none())
+
+
+@bot.command(name='Backup')
+@commands.check(allowed)
+async def backup_command(ctx):
+    if not await require_consent(ctx):return
+    try:
+        path,created=await asyncio.to_thread(backups.backup_database,DB_PATH,BACKUP_DIR,
+                                             keep=BACKUP_KEEP_DAYS,now=utc_now())
+        await ctx.reply('💾 **Kopia SQLite**: '+('utworzona' if created else 'już istnieje dzisiaj')+
+                        f'. Folder: `{discord.utils.escape_mentions(str(path.parent))}`. '
+                        'Plik nie jest publikowany na GitHubie.')
+    except Exception as exc:
+        log.exception('Manual backup error')
+        await ctx.reply(f'Błąd kopii zapasowej ({type(exc).__name__}). Sprawdź logi.')
+
+
+@bot.command(name='Version')
+@commands.check(allowed)
+async def version_command(ctx):
+    if not await require_consent(ctx):return
+    remote=await check_new_version(announce=False)
+    if not remote:
+        status='Nie udało się sprawdzić najnowszej wersji (brak połączenia z GitHubem).'
+    elif enhancements.is_newer(remote,VERSION):
+        status=f'🆕 Dostępna aktualizacja **v{remote}**.'
+    else:
+        status=f'Aktualna publiczna wersja: **v{remote}**.'
+    await ctx.reply(f'📦 **PoE Build Notifier v{VERSION}**\n{status}\n'
+                    '📋 https://bollek231.github.io/poe-build-notifier-site/changelog.html\n'
+                    'Bot sam nie pobiera ani nie instaluje aktualizacji.',allowed_mentions=discord.AllowedMentions.none())
 
 
 @bot.event
