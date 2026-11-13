@@ -953,10 +953,12 @@ async def search_command(ctx, *, query: str = ''):
         return
     c = db()
     try:
-        league = storage.current_league(c, DEFAULT_LEAGUE)
+        game=storage.current_game(c)
+        league=storage.current_game_version(c,game,poe1_default=DEFAULT_LEAGUE,poe2_default=DEFAULT_POE2_VERSION)
     finally:
         c.close()
-    await report_scan(ctx, f'PoE {league} {query} build')
+    label = 'PoE 2' if game=='poe2' else 'PoE'
+    await report_scan(ctx, f'{label} {league} {query} build')
 
 
 @bot.command(name='Limit')
@@ -968,8 +970,11 @@ async def limit_command(ctx):
     try:
         searches, other_units = local_quota(c)
         auto_remaining = max(0, DAILY_SEARCH_BUDGET - RESERVED_SEARCHES - searches)
+        game=storage.current_game(c)
+        queries=cfg()
+        total_queries=len(queries['poe2_search_queries'] if game=='poe2' else queries['search_queries'])
         next_auto = enhancements.auto_query_allocation(max(0,DAILY_SEARCH_BUDGET-searches),
-                         RESERVED_SEARCHES,utc_now(),INTERVAL_H,len(cfg()['search_queries']))
+                         RESERVED_SEARCHES,utc_now(),INTERVAL_H,total_queries)
         daily_remaining = max(0, DAILY_SEARCH_BUDGET - searches)
         pause = storage.quota_pause(c)
         if pause:
@@ -1003,7 +1008,7 @@ async def health_command(ctx):
     connection = db()
     try:
         pause = storage.quota_pause(connection)
-        digest_today = storage.digest_sent_date(connection, DAILY_DIGEST_CHANNEL_ID, utc_now().astimezone(features.POLAND).date().isoformat())
+        digest_today = storage.digest_sent_date(connection, f'{DAILY_DIGEST_CHANNEL_ID}:{storage.current_game(connection)}', utc_now().astimezone(features.POLAND).date().isoformat())
     finally:
         connection.close()
     quota_status = ('Wyczerpany do <t:' + str(int(pause[0].timestamp())) + ':F>') if pause else 'Brak potwierdzonego wyczerpania'
@@ -1025,7 +1030,8 @@ async def builds_command(ctx):
         return
     c = db()
     try:
-        league = storage.current_league(c, DEFAULT_LEAGUE)
+        game=storage.current_game(c)
+        league = storage.current_game_version(c,game,poe1_default=DEFAULT_LEAGUE,poe2_default=DEFAULT_POE2_VERSION)
         rows = c.execute('SELECT canonical_title, first_video_id FROM builds WHERE league=? ORDER BY created_at DESC LIMIT 10', (league,)).fetchall()
         if not rows:
             await ctx.reply('Brak zapisanych buildów.')
@@ -1045,14 +1051,17 @@ async def settings_command(ctx):
     config = cfg()
     c = db()
     try:
-        league = storage.current_league(c, DEFAULT_LEAGUE)
+        game=storage.current_game(c)
+        league=storage.current_game_version(c,game,poe1_default=DEFAULT_LEAGUE,poe2_default=DEFAULT_POE2_VERSION)
     finally:
         c.close()
+    number_of_queries=len(config['poe2_search_queries'] if game=='poe2' else config['search_queries'])
     await ctx.reply(f'⚙️ **Ustawienia v{VERSION}**\n'
-                    f'Liga: **{league}** (zmiana: `pLeague 3.31`)\n'
+                    f'Gra: **{game_modes.game_label(game)}** (zmiana: `pGame poe1` / `pGame poe2`)\n'
+                    f'Wersja: **{league}** (zmiana: `pLeague {"1.0" if game=="poe2" else "3.31"}`)\n'
                     f'Podsumowanie: **{DAILY_DIGEST_TIME} czasu polskiego** ({"włączone" if DAILY_DIGEST_ENABLED else "wyłączone"})\n'
                     f'Automatyczny skan: co **{INTERVAL_H} h**\n'
-                    f'Frazy: **{len(config["search_queries"])}**\n'
+                    f'Frazy: **{number_of_queries}**\n'
                     f'Wyniki na frazę: **{MAX_RESULTS}**\n'
                     f'Odstęp wiadomości: **{SEND_DELAY:g} s**\n'
                     f'Budżet: **{DAILY_SEARCH_BUDGET}** zapytań / dzień PT\n'
@@ -1060,34 +1069,70 @@ async def settings_command(ctx):
                     f'Przechowywanie metadanych: **{CACHE_RETENTION_DAYS} dni**\n'
                     'Zgoda na komendy: `pPrivacy`, `pAgree`, `pRevoke` (bez dodatkowej roli)\n'
                     'Wiadomości Discord: pozostają na kanale; bot ich nie usuwa\n'
-                    f'Filtry: PoE 1 / {league} / build, wykluczanie PoE 2 i newsów.')
+                    f'Filtry: {game_modes.game_label(game)} / {league} / build, filtr 24h, odrzucanie starszych wersji.')
+
+
+@bot.command(name='Game')
+@commands.check(allowed)
+async def game_command(ctx, *, selected: str=''):
+    """Switch PoE 1 / PoE 2 without a restart. Persistent across restarts."""
+    if not await require_consent(ctx):return
+    c=db()
+    try:
+        game=storage.current_game(c)
+        version=storage.current_game_version(c,game,poe1_default=DEFAULT_LEAGUE,poe2_default=DEFAULT_POE2_VERSION)
+        if not selected.strip():
+            await ctx.reply(f'🎮 Gra: **{game_modes.game_label(game)}**, wersja **{version}**.\n'
+                            'Przełącz: pGame poe2 lub pGame poe1.')
+            return
+        new=game_modes.normalize_game(selected)
+        if new is None:
+            await ctx.reply('Użycie: pGame poe1 lub pGame poe2.')
+            return
+        if scan_lock.locked():
+            await ctx.reply('Skanowanie trwa. Zmień grę po zakończeniu bieżącego skanu.')
+            return
+        if game==new:
+            await ctx.reply(f'🎮 **{game_modes.game_label(game)} {version}** jest już aktywne.')
+            return
+        storage.set_game(c,new)
+        new_version=storage.current_game_version(c,new,poe1_default=DEFAULT_LEAGUE,poe2_default=DEFAULT_POE2_VERSION)
+        await ctx.reply(f'✅ Przełączono grę na **{game_modes.game_label(new)} {new_version}**.\n'
+                        'Od teraz pScan, pSearch, automatyczne skanowanie i podsumowanie używają tej gry. '
+                        'Poprzednia wersja drugiej gry pozostaje zapamiętana. Restart nie jest wymagany.')
+    finally:
+        c.close()
 
 
 @bot.command(name='League')
 @commands.check(allowed)
-async def league_command(ctx, *, version: str = ''):
-    if not await require_consent(ctx):
-        return
-    c = db()
+async def league_command(ctx, *, version: str=''):
+    if not await require_consent(ctx):return
+    c=db()
     try:
-        current = storage.current_league(c, DEFAULT_LEAGUE)
-        new = version.strip()
+        game=storage.current_game(c)
+        current=storage.current_game_version(c,game,poe1_default=DEFAULT_LEAGUE,poe2_default=DEFAULT_POE2_VERSION)
+        new=version.strip()
+        sample='1.0' if game=='poe2' else '3.31'
         if not new:
-            await ctx.reply(f'Obecna liga: **{current}**. Zmiana: `pLeague 3.31`.')
+            await ctx.reply(f'Gra: **{game_modes.game_label(game)}**. Aktualna wersja: **{current}**. '
+                            f'Zmiana: pLeague {sample}.')
             return
-        if not features.league_valid(new):
-            await ctx.reply('Niepoprawny numer ligi. Użyj np. `pLeague 3.31`.')
+        valid=game_modes.valid_poe2_version(new) if game=='poe2' else features.league_valid(new)
+        if not valid:
+            await ctx.reply(f'Niepoprawny numer wersji dla {game_modes.game_label(game)}. '
+                            f'Użyj np. pLeague {sample}.')
             return
         if scan_lock.locked():
-            await ctx.reply('Skanowanie trwa. Spróbuj zmienić ligę po jego zakończeniu.')
+            await ctx.reply('Skanowanie trwa. Zmień wersję po jego zakończeniu.')
             return
-        if current == new:
-            await ctx.reply(f'Liga **{new}** jest już aktywna.')
+        if new==current:
+            await ctx.reply(f'Wersja **{new}** jest już aktywna.')
             return
-        storage.set_league(c, new)
-        await ctx.reply(f'✅ Zmieniono ligę z **{current}** na **{new}**. '
-                        'Wyszukiwania, pSearch, filtrowanie i dzienne podsumowanie będą odtąd korzystały z nowej wersji. '
-                        'Nie musisz zmieniać search_config.json ani restartować bota.')
+        storage.set_game_version(c,game,new)
+        await ctx.reply(f'✅ {game_modes.game_label(game)}: wersja **{current}** → **{new}**.\n'
+                        'Wyszukiwanie i filtry już korzystają z nowej wersji. '
+                        'Nie zmieniono ustawień drugiej gry ani historii wysłanych filmów.')
     finally:
         c.close()
 
@@ -1186,7 +1231,7 @@ async def channel_rules_command(ctx):
 async def filters_command(ctx):
     if not await require_consent(ctx):return
     c=db()
-    try:f=storage.get_filters(c)
+    try:f=storage.get_filters(c,storage.current_game(c))
     finally:c.close()
     values=', '.join(f'**{k}**: `{v}`' for k,v in f.items()) or 'brak (wszystkie zgodne buildy)'
     await ctx.reply('🎯 **Filtry buildów**\n'+values+'\nPrzykłady: `pFilter skill Lightning Strike`, '
@@ -1201,21 +1246,26 @@ async def filter_command(ctx, field: str='', *, value: str=''):
     field=field.casefold().strip()
     if field=='clear':
         c=db()
-        try:storage.set_filters(c,{})
+        try:storage.set_filters(c,{},storage.current_game(c))
         finally:c.close()
         await ctx.reply('✅ Wyczyszczono wszystkie rozszerzone filtry.')
         return
-    try:canonical=enhancements.validate_filter(field,value,SKILLS,ASCENDANCIES)
+    c=db()
+    try:active_game=storage.current_game(c)
+    finally:c.close()
+    available_skills=SKILLS+list(game_modes.POE2_SKILLS) if active_game=='poe2' else SKILLS
+    available_asc=ASCENDANCIES+list(game_modes.POE2_ASCENDANCIES) if active_game=='poe2' else ASCENDANCIES
+    try:canonical=enhancements.validate_filter(field,value,available_skills,available_asc)
     except ValueError:
         await ctx.reply('Wybierz: `skill`, `ascendancy`, `class`, `mode` (SSF/HC/SC), '
                         '`stage` (starter/endgame/leveling/build). Wpisz `all`, by usunąć wybrany filtr.')
         return
     c=db()
     try:
-        all_filters=storage.get_filters(c)
+        all_filters=storage.get_filters(c,active_game)
         if canonical is None:all_filters.pop(field,None)
         else:all_filters[field]=canonical
-        storage.set_filters(c,all_filters)
+        storage.set_filters(c,all_filters,active_game)
     finally:c.close()
     await ctx.reply(f'✅ Filtr `{field}`: `{canonical or "wszystkie"}`. Zmiana obowiązuje przy następnym skanie.')
 
