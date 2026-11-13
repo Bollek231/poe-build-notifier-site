@@ -91,7 +91,9 @@ class NotificationLayoutTests(unittest.TestCase):
             "Mobalytics": "https://mobalytics.gg/poe/builds/abc",
             "PoE Planner": "https://poeplanner.com/a/abc"
         }, VIDEO_ID)
-        labels = [component.label for component in view.children]
+        labels = [getattr(component, "label", None) or
+                  getattr(getattr(component, "item", None), "label", None)
+                  for component in view.children]
         for label in ("⭐ Save / Zapisz", "YouTube", "PoB", "Maxroll", "Mobalytics", "PoE Planner"):
             self.assertIn(label, labels)
         self.assertEqual(len(view.children), 6)
@@ -99,7 +101,10 @@ class NotificationLayoutTests(unittest.TestCase):
 
     def test_invalid_external_url_is_not_button(self):
         view = main.buttons_from_links({"PoE Planner":"https://poeplanner.com.evil.test/x"},VIDEO_ID)
-        self.assertNotIn("PoE Planner",[c.label for c in view.children])
+        self.assertNotIn("PoE Planner",[
+            getattr(component, "label", None) or
+            getattr(getattr(component, "item", None), "label", None)
+            for component in view.children])
 
     def test_style_is_persistable_in_existing_settings(self):
         c=sqlite3.connect(":memory:")
