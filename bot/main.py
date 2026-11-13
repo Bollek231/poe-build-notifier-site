@@ -19,6 +19,7 @@ import features
 import enhancements
 import services
 import backups
+import game_modes
 
 load_dotenv()
 logging.basicConfig(level=logging.INFO, format='%(asctime)s %(levelname)s %(message)s')
@@ -36,6 +37,9 @@ DAILY_SEARCH_BUDGET = min(10000, max(1, int(os.getenv('DAILY_SEARCH_BUDGET', '96
 RESERVED_SEARCHES = max(0, int(os.getenv('RESERVED_SEARCHES', '24')))
 CONFIG_FILE = Path(os.getenv('SEARCH_CONFIG_FILE', 'search_config.json'))
 DEFAULT_LEAGUE = os.getenv('TARGET_LEAGUE', '3.30').strip() or '3.30'
+DEFAULT_POE2_VERSION = os.getenv('POE2_TARGET_VERSION','1.0').strip() or '1.0'
+if not game_modes.valid_poe2_version(DEFAULT_POE2_VERSION):
+    raise SystemExit('POE2_TARGET_VERSION musi mieć format X.Y, np. 1.0')
 if not features.league_valid(DEFAULT_LEAGUE):
     raise SystemExit('TARGET_LEAGUE musi mieć postać 3.30 albo 3.31')
 DAILY_DIGEST_ENABLED = os.getenv('DAILY_DIGEST_ENABLED', 'true').strip().lower() in ('1', 'true', 'yes', 'on', 'tak')
@@ -72,6 +76,7 @@ DEFAULT_CONFIG = {
     ],
     'exclude_phrases': ['path of exile 2', 'poe 2', 'poe2', 'trailer', 'patch notes',
                         'reaction', 'livestream', 'stream highlights', 'news'],
+    'poe2_search_queries': list(game_modes.POE2_QUERY_TEMPLATES),
 }
 ASCENDANCIES = [
     'Ascendant', 'Slayer', 'Gladiator', 'Champion', 'Assassin', 'Saboteur', 'Trickster',
@@ -141,9 +146,11 @@ def cfg():
         raise ValueError('search_config.json must contain an object')
     queries = data.get('search_queries', DEFAULT_CONFIG['search_queries'])
     excludes = data.get('exclude_phrases', DEFAULT_CONFIG['exclude_phrases'])
-    if not isinstance(queries, list) or not isinstance(excludes, list):
-        raise ValueError('search_queries and exclude_phrases must be lists')
+    poe2_queries = data.get('poe2_search_queries', DEFAULT_CONFIG['poe2_search_queries'])
+    if not isinstance(queries, list) or not isinstance(excludes, list) or not isinstance(poe2_queries, list):
+        raise ValueError('search_queries, poe2_search_queries and exclude_phrases must be lists')
     return {'search_queries': [q.strip() for q in queries if isinstance(q, str) and q.strip()],
+            'poe2_search_queries': [q.strip() for q in poe2_queries if isinstance(q,str) and q.strip()],
             'exclude_phrases': [x.lower().strip() for x in excludes if isinstance(x, str) and x.strip()]}
 
 
@@ -169,12 +176,23 @@ def find_term(text, candidates):
 
 def identify(title, description=''):
     # Prefer title to description: descriptions often include unrelated skill links.
-    skill = find_term(title, SKILLS) or find_term(description[:400], SKILLS)
-    ascendancy = find_term(title, ASCENDANCIES) or find_term(description[:400], ASCENDANCIES)
+    skill = find_term(title, SKILLS + list(game_modes.POE2_SKILLS)) or find_term(description[:400], SKILLS + list(game_modes.POE2_SKILLS))
+    ascendancy = find_term(title, ASCENDANCIES + list(game_modes.POE2_ASCENDANCIES)) or find_term(description[:400], ASCENDANCIES + list(game_modes.POE2_ASCENDANCIES))
     return skill, ascendancy
 
 
-def classify(title, description, excludes, league):
+def classify(title, description, excludes, league, game='poe1'):
+    if game == 'poe2':
+        # Strict 1.0 mode: never import 0.x guides or unversioned PoE 2 builds.
+        if not game_modes.is_target_poe2_guide(title, description, league):
+            return None
+        skill, asc = identify(title, description)
+        category = ('League Starter' if re.search(r'league\s*start|starter',title,re.I) else
+                    'Leveling' if re.search(r'level(?:ing|ling)',title,re.I) else
+                    'Endgame' if re.search(r'endgame|mapping|bossing',title,re.I) else 'Build')
+        return skill,asc,category
+    if game != 'poe1':
+        return None
     title_lower = title.casefold()
     combined = (title + ' ' + description).casefold()
     # Require the selected league in title or description.
@@ -414,8 +432,11 @@ async def scan(kind='auto', custom_query=None):
         link_session = None
         try:
             config = cfg()
-            league = storage.current_league(c, DEFAULT_LEAGUE)
-            queries = [custom_query] if custom_query else features.rendered_queries(config['search_queries'], league)
+            game = storage.current_game(c)
+            league = storage.current_game_version(c,game,poe1_default=DEFAULT_LEAGUE,poe2_default=DEFAULT_POE2_VERSION)
+            query_pool = (game_modes.target_queries(league,config['poe2_search_queries']) if game=='poe2' else
+                          features.rendered_queries(config['search_queries'],league))
+            queries = [custom_query] if custom_query else query_pool
             pause = storage.quota_pause(c)
             if pause:
                 # Official quota is exhausted. No API calls until its PT reset.
@@ -433,13 +454,13 @@ async def scan(kind='auto', custom_query=None):
                 current_count=search_count(c)
                 quota_left=max(0,DAILY_SEARCH_BUDGET-current_count)
                 count=enhancements.auto_query_allocation(quota_left,RESERVED_SEARCHES,utc_now(),INTERVAL_H,len(queries))
-                try:cursor=int(storage.get_setting(c,'query_cursor','0'))
+                try:cursor=int(storage.get_setting(c,'query_cursor_'+game,'0'))
                 except ValueError:cursor=0
                 queries,next_cursor=enhancements.rotate_queries(queries,min(budget,count),cursor)
-                storage.set_setting(c,'query_cursor',str(next_cursor))
+                storage.set_setting(c,'query_cursor_'+game,str(next_cursor))
             else:
                 queries=queries[:budget]
-            filters=storage.get_filters(c)
+            filters=storage.get_filters(c,game)
             candidates = {}
             searched = 0
             failures = 0
@@ -514,7 +535,7 @@ async def scan(kind='auto', custom_query=None):
                     continue
                 title = info.get('title', 'Film YouTube')
                 description = info.get('description', '')
-                result = classify(title, description, config['exclude_phrases'], league)
+                result = classify(title, description, config['exclude_phrases'], league, game)
                 if result is None:
                     continue
                 skill, asc, category = result
@@ -531,7 +552,8 @@ async def scan(kind='auto', custom_query=None):
                     continue
                 url = f'https://www.youtube.com/watch?v={vid}'
                 embed = discord.Embed(title=title[:256], url=url, color=discord.Color.dark_purple())
-                embed.add_field(name='Liga', value=league, inline=True)
+                embed.add_field(name='Gra', value=game_modes.game_label(game), inline=True)
+                embed.add_field(name='Liga / wersja', value=league, inline=True)
                 embed.add_field(name='Twórca na YouTube', value=info.get('channelTitle', 'Nieznany')[:1024], inline=False)
                 embed.add_field(name='Umiejętność (oznaczenie bota)', value=skill or 'Nie rozpoznano', inline=True)
                 embed.add_field(name='Ascendancy (oznaczenie bota)', value=asc or 'Nie rozpoznano', inline=True)
@@ -579,11 +601,12 @@ async def scan(kind='auto', custom_query=None):
             c.close()
 
 
-def format_digest_pages(rows, league, local_day):
+def format_digest_pages(rows, league, local_day, game='poe1'):
     """One to three embeds, no external requests. Split to fit Discord size limits."""
     header = f'Buildy wysłane na Discorda w ciągu poprzednich 24 godzin • {local_day}'
+    heading = f'📚 Podsumowanie buildów {game_modes.game_label(game)} {league}'
     if not rows:
-        return [discord.Embed(title=f'📚 Podsumowanie buildów PoE {league}',
+        return [discord.Embed(title=heading,
                               description=header + '\n\nBrak nowych buildów w tym okresie.',
                               color=discord.Color.dark_purple())]
     chunks = []
@@ -607,12 +630,12 @@ def format_digest_pages(rows, league, local_day):
     embeds = []
     for i, chunk in enumerate(chunks):
         suffix = f' ({i+1}/{len(chunks)})' if len(chunks) > 1 else ''
-        embed = discord.Embed(title=f'📚 Podsumowanie buildów PoE {league}' + suffix,
+        embed = discord.Embed(title=heading + suffix,
                               description=header + '\n\n' + chunk,
                               color=discord.Color.dark_purple())
         embed.set_footer(text='Źródło: YouTube • Zestawienie przygotował bot • Bez dodatkowych zapytań API')
         embeds.append(embed)
-    return embeds or [discord.Embed(title=f'📚 Podsumowanie buildów PoE {league}',description='Brak wpisów do wyświetlenia.')]
+    return embeds or [discord.Embed(title=heading,description='Brak wpisów do wyświetlenia.')]
 
 
 async def send_digest(*, manual=False):
@@ -624,20 +647,22 @@ async def send_digest(*, manual=False):
         today = current.astimezone(features.POLAND).date().isoformat()
         c = db()
         try:
-            if not manual and storage.digest_sent_date(c, DAILY_DIGEST_CHANNEL_ID, today):
+            game=storage.current_game(c)
+            digest_channel_key = f'{DAILY_DIGEST_CHANNEL_ID}:{game}'
+            if not manual and storage.digest_sent_date(c, digest_channel_key, today):
                 return None
-            league = storage.current_league(c, DEFAULT_LEAGUE)
+            league=storage.current_game_version(c,game,poe1_default=DEFAULT_LEAGUE,poe2_default=DEFAULT_POE2_VERSION)
             start, end = features.digest_window(current)
             rows = storage.digest_builds(c, league, start, end, limit=100)
-            embeds = format_digest_pages(rows, league, today)
+            embeds = format_digest_pages(rows, league, today,game)
             channel = bot.get_channel(DAILY_DIGEST_CHANNEL_ID) or await bot.fetch_channel(DAILY_DIGEST_CHANNEL_ID)
             for index, embed in enumerate(embeds):
                 if index:
                     await asyncio.sleep(SEND_DELAY)
                 await channel.send(embed=embed, allowed_mentions=discord.AllowedMentions.none())
             if not manual:
-                storage.mark_digest_sent(c, DAILY_DIGEST_CHANNEL_ID, today, sent_at=current)
-            return f'Podsumowanie ligi {league}: {len(rows)} buildów z ostatnich 24 godzin.'
+                storage.mark_digest_sent(c, digest_channel_key, today, sent_at=current)
+            return f'Podsumowanie {game_modes.game_label(game)} {league}: {len(rows)} buildów z ostatnich 24 godzin.'
         finally:
             c.close()
 
@@ -651,7 +676,8 @@ async def automatic_digest():
     local_day = now.astimezone(features.POLAND).date().isoformat()
     c = db()
     try:
-        last = local_day if storage.digest_sent_date(c, DAILY_DIGEST_CHANNEL_ID, local_day) else None
+        current_game=storage.current_game(c)
+        last = local_day if storage.digest_sent_date(c, f'{DAILY_DIGEST_CHANNEL_ID}:{current_game}', local_day) else None
     finally:
         c.close()
     if not features.digest_due(now, DAILY_DIGEST_TIME, last):
