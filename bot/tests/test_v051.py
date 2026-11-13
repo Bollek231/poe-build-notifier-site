@@ -20,9 +20,9 @@ import services
 
 class FeatureTests(unittest.TestCase):
     def test_version_number_and_comparison(self):
-        self.assertEqual(e.VERSION,'0.5.1')
-        self.assertTrue(e.is_newer('v0.5.2'))
-        self.assertFalse(e.is_newer('0.5.1'))
+        self.assertEqual(e.VERSION,'0.5.2')
+        self.assertTrue(e.is_newer('v0.5.3'))
+        self.assertFalse(e.is_newer('0.5.2'))
         self.assertFalse(e.is_newer('bad'))
         self.assertFalse(e.is_newer('0.5.0'))
         self.assertFalse(e.is_newer('0.5.99','0.6.0'))
