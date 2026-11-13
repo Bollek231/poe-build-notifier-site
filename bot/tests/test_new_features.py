@@ -73,8 +73,8 @@ class LeagueAndDigestTests(unittest.TestCase):
         self.assertTrue(features.digest_due(summer,'20:00',None))
 
     def test_mobalytics_buttons_only_poe(self):
-        good=['https://mobalytics.gg/poe/builds/example','https://www.mobalytics.gg/poe/planner/builds/x','https://mobalytics.gg/poe']
-        bad=['https://mobalytics.gg/lol/builds/akali', 'https://evil-mobalytics.gg/poe/builds','https://mobalytics.gg.evil.com/poe','https://mobalytics.gg/poe2/builds', 'javascript:alert(1)']
+        good=['https://mobalytics.gg/poe/builds/example','https://www.mobalytics.gg/poe/planner/builds/x','https://mobalytics.gg/poe','https://mobalytics.gg/poe-2/builds','https://mobalytics.gg/poe2/builds']
+        bad=['https://mobalytics.gg/lol/builds/akali', 'https://evil-mobalytics.gg/poe/builds','https://mobalytics.gg.evil.com/poe','https://mobalytics.gg/poe-22/builds', 'javascript:alert(1)']
         for url in good: self.assertTrue(features.mobalytics_poe_url(url),url)
         for url in bad: self.assertFalse(features.mobalytics_poe_url(url),url)
 
