@@ -62,7 +62,7 @@ class StorageTests(unittest.TestCase):
         # v0.5.1 may FETCH an existing post to add new link buttons.
         # It must never delete/repost the message.
         self.assertNotIn('await message.delete(',source)
-        self.assertIn('await message.edit(view=buttons_from_links(merged))',source)
+        self.assertIn('await message.edit(view=buttons_from_links(merged,vid))',source)
         self.assertNotIn('await cleanup_discord_posts(',source)
         self.assertNotIn('storage.track_post(',source)
         self.assertNotIn('OPT_IN_ROLE_ID',source)
