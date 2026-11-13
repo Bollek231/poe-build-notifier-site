@@ -100,19 +100,29 @@ h2{font-family:Georgia,serif;font-size:36px;font-weight:500;letter-spacing:-.035
 @media(max-width:760px){.wrap{width:min(100% - 34px,520px)}.header-inner{height:auto;min-height:78px;gap:10px;flex-wrap:wrap;padding:15px 0}.logo strong{font-size:12px}.logo small{font-size:7px}nav{display:none}.controls{margin-left:auto}.hero{grid-template-columns:1fr;padding:58px 0 40px;min-height:0}.hero h1{font-size:clamp(47px,12vw,65px)}.visual{min-height:320px;transform:scale(.8)}.float1{right:-30px}.float2{left:-30px}.float3{right:-30px}.section-heading{display:block}.section-heading p{margin-top:14px}.cards,.demo-grid{grid-template-columns:1fr}.card{min-height:160px}.demo-section{padding:45px 0 60px}.footer{flex-wrap:wrap}.ctrl{width:36px;height:36px;min-width:36px}#app{background:linear-gradient(180deg,var(--bg),var(--background))}}
 @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}*{animation:none!important;transition:none!important}#spotlight{display:none}}
 </style>
-<link rel="stylesheet" href="fancy.css"><link rel="alternate" hreflang="pl" href="https://bollek231.github.io/poe-build-notifier-site/index.html"><link rel="alternate" hreflang="en" href="https://bollek231.github.io/poe-build-notifier-site/index-en.html"></head>
+<link rel="stylesheet" href="fancy.css"><link rel="stylesheet" href="unified.css"><link rel="alternate" hreflang="pl" href="https://bollek231.github.io/poe-build-notifier-site/index.html"><link rel="alternate" hreflang="en" href="https://bollek231.github.io/poe-build-notifier-site/index-en.html"></head>
 <body class="dark fancy-home">
 <div id="app">
   <div id="starfield"></div><canvas id="ember-field" aria-hidden="true"></canvas><div id="spotlight"></div>
-  <header><div class="wrap header-inner">
-<a class="logo" href="https://bollek231.github.io/poe-build-notifier-site/index.html"><span class="logo-symbol">✧</span><span><strong>POE BUILD NOTIFIER</strong><small>EXILE INTELLIGENCE SYSTEM · <b class="site-version">v0.6.1</b></small></span></a>
-<nav id="site-nav" aria-label="Nawigacja główna"><a href="https://bollek231.github.io/poe-build-notifier-site/index.html" class="active" aria-current="page">Strona główna</a><a href="https://bollek231.github.io/poe-build-notifier-site/instalacja.html">Instalacja</a><a href="https://bollek231.github.io/poe-build-notifier-site/komendy.html">Funkcje i komendy</a><a href="https://bollek231.github.io/poe-build-notifier-site/changelog.html">Lista zmian</a><a href="https://bollek231.github.io/poe-build-notifier-site/privacy.html">Prywatność</a><a href="https://bollek231.github.io/poe-build-notifier-site/terms.html">Regulamin</a></nav>
-<div class="controls">
-  <button type="button" class="ctrl menu-button" id="mobile-menu-toggle" aria-controls="site-nav" aria-expanded="false" aria-label="Otwórz menu">☰</button>
-  <a class="ctrl selected" id="lang-pl" href="https://bollek231.github.io/poe-build-notifier-site/index.html" lang="pl" hreflang="pl" aria-label="Polski" title="Polski"><img class="lang-flag-image" src="assets/flag-pl.svg" width="25" height="18" alt="" aria-hidden="true"></a>
-  <a class="ctrl " id="lang-en" href="https://bollek231.github.io/poe-build-notifier-site/index-en.html" lang="en" hreflang="en" aria-label="English" title="English"><img class="lang-flag-image" src="assets/flag-gb.svg" width="25" height="18" alt="" aria-hidden="true"></a>
-  <button type="button" class="ctrl theme-button" id="theme" title="Przełącz motyw" aria-label="Przełącz motyw">☀️</button>
-</div></div></header>
+  <header class="unified-header">
+<div class="wrap header-inner">
+  <a class="logo" href="https://bollek231.github.io/poe-build-notifier-site/index.html" aria-label="PoE Build Notifier — strona główna"><span class="logo-symbol" aria-hidden="true">✧</span><span class="logo-text"><strong>POE BUILD NOTIFIER</strong><small>EXILE INTELLIGENCE SYSTEM <b class="site-version">v0.6.1</b></small></span></a>
+  <nav id="site-nav" aria-label="Nawigacja główna">
+    <a href="https://bollek231.github.io/poe-build-notifier-site/index.html" class="active" aria-current="page">Strona główna</a>
+<a href="https://bollek231.github.io/poe-build-notifier-site/instalacja.html">Instalacja</a>
+<a href="https://bollek231.github.io/poe-build-notifier-site/komendy.html">Funkcje i komendy</a>
+<a href="https://bollek231.github.io/poe-build-notifier-site/changelog.html">Lista zmian</a>
+<a href="https://bollek231.github.io/poe-build-notifier-site/privacy.html">Prywatność</a>
+<a href="https://bollek231.github.io/poe-build-notifier-site/terms.html">Regulamin</a>
+  </nav>
+  <div class="controls">
+    <button type="button" class="ctrl menu-button" id="mobile-menu-toggle" aria-label="Otwórz menu nawigacji" aria-controls="site-nav" aria-expanded="false" title="Menu">☰</button>
+    <a class="ctrl selected" id="lang-pl" href="https://bollek231.github.io/poe-build-notifier-site/index.html" hreflang="pl" lang="pl" title="Polski" aria-label="Polski — obecny język"><img class="lang-flag-image" src="assets/flag-pl.svg" width="25" height="18" alt="" aria-hidden="true"></a>
+    <a class="ctrl" id="lang-en" href="https://bollek231.github.io/poe-build-notifier-site/index-en.html" hreflang="en" lang="en" title="English" aria-label="Switch to English"><img class="lang-flag-image" src="assets/flag-gb.svg" width="25" height="18" alt="" aria-hidden="true"></a>
+    <button type="button" class="ctrl theme-button" id="theme" title="Zmień motyw strony" aria-label="Przełącz jasny/ciemny motyw">☀️</button>
+  </div>
+</div>
+</header>
   <main id="top"><div class="hero-note">✦ Path of Exile 1 i 2 · Polski / English · Ustawienia przez Discord</div>
     <div class="wrap hero">
       <div class="hero-copy">
