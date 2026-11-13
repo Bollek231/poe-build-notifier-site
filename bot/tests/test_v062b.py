@@ -98,7 +98,7 @@ class TranslationTests(unittest.IsolatedAsyncioTestCase):
 
 class VersionTests(unittest.TestCase):
     def test_version_b(self):
-        self.assertEqual(enhancements.VERSION,'0.6.4c')
+        self.assertEqual(enhancements.VERSION,'0.6.4d')
         self.assertTrue(enhancements.is_newer('0.6.2b','0.6.2'))
         self.assertFalse(enhancements.is_newer('0.6.2','0.6.2b'))
         self.assertTrue(enhancements.is_newer('0.6.3','0.6.2b'))
