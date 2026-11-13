@@ -1,13 +1,29 @@
 # PoE Build Notifier — Changelog / Lista zmian
 
-**Current version / Aktualna wersja:** `v0.5.2`  
-**Versioning / Wersjonowanie:** `vMAJOR.MINOR.PATCH`; starting from `v0.5.0`, each subsequent project update increments the final number (`v0.5.3`, `v0.5.4`, etc.). Every update must have a new entry here and on both GitHub Pages changelog pages.
+**Current version / Aktualna wersja:** `v0.6.0`  
+**Versioning / Wersjonowanie:** `vMAJOR.MINOR.PATCH`; starting from `v0.5.0`, each subsequent project update increments the final number (`v0.6.1`, `v0.6.2`, etc.). Every update must have a new entry here and on both GitHub Pages changelog pages.
 
 [🇵🇱 Lista zmian (GitHub Pages)](https://bollek231.github.io/poe-build-notifier-site/changelog.html) · [🇬🇧 Patch Notes (GitHub Pages)](https://bollek231.github.io/poe-build-notifier-site/changelog-en.html)
 
 ---
 
 ## 🇵🇱 Polski
+
+### v0.6.0 — 13 listopada 2026
+
+**Obsługa Path of Exile 2 — gotowość na wydanie 1.0**
+- **`pGame poe1` / `pGame poe2`**: przełączanie wyszukiwanej gry bez restartowania bota.
+- Dla PoE 2 domyślną wersją jest **1.0** (zapowiedziana premiera: 11 grudnia 2026 PST). PoE 1 pozostaje domyślnie na dotychczasowej lidze.
+- Oddzielne ustawienia wersji obu gier w istniejącej bazie SQLite: `pLeague` działa dla aktualnej gry, a poprzednia wersja drugiej gry jest zapamiętana.
+- Nowe frazy YouTube: `Path of Exile 2 1.0 build guide`, `PoE2 1.0 league starter build`, `PoE 2 1.0 leveling build`, `PoE2 1.0 bossing build` i inne.
+- PoE 2 wymaga wyraźnego potwierdzenia **gry i wersji 1.0** w tytule albo na początku opisu oraz poradnikowej tematyki w tytule.
+- Wykluczanie filmów oznaczonych starymi wersjami, np. **0.3 / 0.5 / 0.5.5**, i filmów o wiadomościach lub patch notes.
+- Zachowany **limit 24 godzin od publikacji**, dodatkowe sprawdzanie daty lokalnie, budżet API i zabezpieczenie 429.
+- Oddzielne filtry buildów i osobne zapamiętywanie dziennych podsumowań dla każdej gry.
+- Obsługa linków Mobalytics **`/poe-2/`**.
+- Zachowane wcześniejsze funkcje, kopie SQLite, przyciski, 7-dniowe czyszczenie lokalnych danych; **wiadomości Discord nie są usuwane automatycznie**.
+
+**Uwaga:** ta wersja świadomie pomija nieoznaczone 1.0 poradniki, aby nie publikować starszych buildów. Nie była testowana z prywatnym tokenem Discord ani realnym kluczem YouTube.
 
 ### v0.5.2 — 13 listopada 2026
 
@@ -59,6 +75,22 @@
 ---
 
 ## 🇬🇧 English
+
+### v0.6.0 — November 13, 2026
+
+**Path of Exile 2 support — targeting the 1.0 release**
+- **`pGame poe1` / `pGame poe2`** switches the target game without a bot restart.
+- PoE 2 targets **version 1.0** by default, ahead of its announced December 11, 2026 PST release. PoE 1 retains its previous league.
+- Per-game versions stored separately in the existing SQLite database; `pLeague` applies to the selected game.
+- Dedicated PoE 2 queries: `Path of Exile 2 1.0 build guide`, `PoE2 1.0 league starter build`, `PoE 2 1.0 leveling build` and more.
+- PoE 2 videos must clearly identify both **PoE 2 and 1.0** near the start of the title/description and contain build/guide evidence in the title.
+- Rejects older patch labels, including **0.3 / 0.5 / 0.5.5**, and generic patch-note/news material.
+- Retains the independent **24-hour published-age window**, YouTube API quota protection and 429 pause.
+- Separate advanced filters and daily digest bookkeeping for the active game.
+- Mobalytics **`/poe-2/`** guide links are recognized.
+- All previous features retained; local YouTube metadata is cleaned after 7 days and **Discord messages are not automatically deleted**.
+
+**Note:** intentionally conservative 1.0 detection may skip unversioned but otherwise valid guides. Not tested with real Discord or YouTube credentials.
 
 ### v0.5.2 — November 13, 2026
 
