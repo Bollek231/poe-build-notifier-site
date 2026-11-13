@@ -1,4 +1,4 @@
-# PoE Build Notifier · v0.6.4
+# PoE Build Notifier · v0.6.4b
 
 **Discord bot for Path of Exile 1 & Path of Exile 2 · 🇵🇱 Polski / 🇬🇧 English**
 
@@ -8,7 +8,12 @@
 
 ## Polski
 
-### Strategie farmienia waluty (v0.6.4)
+### Limit liczby filmów w ręcznym skanowaniu (v0.6.4b)
+
+`pScan` nadal wykonuje pełne ręczne wyszukiwanie buildów, a `pFarmScan` pełne ręczne wyszukiwanie strategii farmienia. Dodanie liczby **1–25** ogranicza liczbę nowych pasujących filmów opublikowanych na Discordzie lub zapisanych do kolejki ciszy nocnej: `pScan 1`, `pScan 2`, `pFarmScan 1`, `pFarmScan 2`. Liczba **nie** oznacza liczby zapytań do YouTube API. Gdy nie ma odpowiednich nowych filmów, wynik może być mniejszy od limitu.
+
+
+### Strategie farmienia waluty (v0.6.4b)
 
 - `pFarmScan`: jednorazowy skan najnowszych strategii farmienia waluty (maks. 3 zapytania).
 - `pFarmSearch essence`: wyszukiwanie określonej kategorii, np. `harvest`, `expedition`, `atlas`, `crafting` lub `trading`. Wszystkie kategorie: `pFarmTopics`.
@@ -46,20 +51,20 @@ PoE Build Notifier automatycznie wyszukuje **świeże poradniki buildów** na Yo
 |---|---|
 | `pGame poe1` / `pGame poe2` | Wybór gry |
 | `pLeague 1.0` | Ustawienie wersji dla wybranej gry (np. PoE 2) |
-| `pScan` | Ręczne skanowanie YouTube |
+| `pScan` / `pScan 1` | Pełny skan lub limit nowych buildów (1–25) |
 | `pSearch Spark` | Wyszukiwanie buildów dla skilla |
 | `pLanguage` | Menu wyboru języka |
 | `pSettings` | Menu edycji ustawień |
 | `pDigest` | Podsumowanie buildów |
 | `pHealth` / `pLimit` / `pVersion` | Status, budżet API i wersja bota |
 
-### Uruchamianie jednym kliknięciem (v0.6.4)
+### Uruchamianie jednym kliknięciem (v0.6.4b)
 
 W folderze bota uruchom `Start_PoE_Bot.bat` (pierwszy raz tworzy `.venv` i instaluje zależności). Następnie używaj `Start_PoE_Bot.vbs` — otwiera graficzny launcher bez okna CMD. Launcher automatycznie sprawdza aktualizacje przed uruchomieniem bota, pozwala go zatrzymać i pokazuje logi. Przy aktualizacji kodu nie nadpisuje `.env`, `search_config.json`, bazy SQLite ani folderu `backups`.
 
 ### Instalacja na Windows — krok po kroku
 
-**1. Pobierz pliki.** Zainstaluj [Python 3.11 lub nowszy](https://www.python.org/downloads/) i pobierz **[PoE Build Notifier v0.6.4 (ZIP)](https://bollek231.github.io/poe-build-notifier-site/downloads/PoE_Build_Notifier_v0.6.4.zip)**. Wypakuj pliki tak, aby w folderze `D:\PoE-Bot` znajdowały się m.in. `main.py` i `requirements.txt`.
+**1. Pobierz pliki.** Zainstaluj [Python 3.11 lub nowszy](https://www.python.org/downloads/) i pobierz **[PoE Build Notifier v0.6.4b (ZIP)](https://bollek231.github.io/poe-build-notifier-site/downloads/PoE_Build_Notifier_v0.6.4b.zip)**. Wypakuj pliki tak, aby w folderze `D:\PoE-Bot` znajdowały się m.in. `main.py` i `requirements.txt`.
 
 **2. Przygotuj środowisko Pythona.** Otwórz **Wiersz polecenia (CMD)** i wykonaj po kolei:
 
@@ -103,7 +108,7 @@ Na skonfigurowanym kanale Discorda użyj `pPrivacy`, `pAgree` i `pHealth`. Wybra
 
 **Aktualizacja istniejącego bota:** zatrzymaj go (`Ctrl + C`), wykonaj kopię folderu i pliku SQLite, a następnie podmień pliki Pythona, `VERSION` i `requirements.txt` z aktualnego ZIP-a. **Nie nadpisuj** własnego `.env`, `search_config.json`, bazy `.sqlite3` ani kopii zapasowych. Po aktualizacji uruchom ponownie `python -m pip install -r requirements.txt` i `python main.py`.
 
-[Pełny poradnik instalacji (PL/EN)](bot/INSTRUKCJA_INSTALACJI_v0.6.4_PL_EN.md) · [Instalacja na GitHub Pages](https://bollek231.github.io/poe-build-notifier-site/instalacja.html) · [Kod źródłowy](bot/) · [Lista zmian](CHANGELOG.md)
+[Pełny poradnik instalacji (PL/EN)](bot/INSTRUKCJA_INSTALACJI_v0.6.4b_PL_EN.md) · [Instalacja na GitHub Pages](https://bollek231.github.io/poe-build-notifier-site/instalacja.html) · [Kod źródłowy](bot/) · [Lista zmian](CHANGELOG.md)
 
 ### Dokumentacja
 
@@ -113,7 +118,12 @@ Na skonfigurowanym kanale Discorda użyj `pPrivacy`, `pAgree` i `pHealth`. Wybra
 
 ## English
 
-### Currency farming strategy discovery (v0.6.4)
+### Optional manual scan video limit (v0.6.4b)
+
+`pScan` still performs the full manual build scan, and `pFarmScan` the full farming strategy scan. Add a number **1–25** to cap newly posted or quiet-hours queued matching videos: `pScan 1`, `pScan 2`, `pFarmScan 1`, `pFarmScan 2`. The number does **not** represent the number of YouTube API searches. Fewer results may appear when fewer eligible new videos are found.
+
+
+### Currency farming strategy discovery (v0.6.4b)
 
 - `pFarmScan`: run up to three queries for fresh currency farming guides.
 - `pFarmSearch essence`: search a category such as `harvest`, `expedition`, `atlas`, `crafting` or `trading`; `pFarmTopics` lists all options.
@@ -151,20 +161,20 @@ PoE Build Notifier automatically discovers **fresh Path of Exile build guides** 
 |---|---|
 | `pGame poe1` / `pGame poe2` | Select the game |
 | `pLeague 1.0` | Set the target patch for the selected game |
-| `pScan` | Scan YouTube manually |
+| `pScan` / `pScan 1` | Full scan or cap on new build videos (1–25) |
 | `pSearch Spark` | Search for builds using a skill |
 | `pLanguage` | Open the language selector |
 | `pSettings` | Edit bot settings interactively |
 | `pDigest` | Show the build digest |
 | `pHealth` / `pLimit` / `pVersion` | Health, quota and release information |
 
-### One-click Windows launcher (v0.6.4)
+### One-click Windows launcher (v0.6.4b)
 
 Run `Start_PoE_Bot.bat` once from the bot folder to create `.venv` and install dependencies. Then open `Start_PoE_Bot.vbs` for a no-console GUI. The launcher checks GitHub for updates at startup, starts/stops the bot and shows its logs. Private `.env`, `search_config.json`, SQLite and backups are not overwritten.
 
 ### Windows installation — step by step
 
-**1. Download the bot.** Install [Python 3.11+](https://www.python.org/downloads/) and **[download PoE Build Notifier v0.6.4b (ZIP)](https://bollek231.github.io/poe-build-notifier-site/downloads/PoE_Build_Notifier_v0.6.4.zip)**. Extract the bot files so that `D:\PoE-Bot` contains `main.py` and `requirements.txt`.
+**1. Download the bot.** Install [Python 3.11+](https://www.python.org/downloads/) and **[download PoE Build Notifier v0.6.4bb (ZIP)](https://bollek231.github.io/poe-build-notifier-site/downloads/PoE_Build_Notifier_v0.6.4b.zip)**. Extract the bot files so that `D:\PoE-Bot` contains `main.py` and `requirements.txt`.
 
 **2. Set up Python.** Open **Windows Command Prompt (CMD)** and run:
 
@@ -208,7 +218,7 @@ On the configured Discord channel run `pPrivacy`, `pAgree` and `pHealth`. Use `p
 
 **Upgrading an existing bot:** stop it (`Ctrl + C`), back up the folder and SQLite database, then replace the Python modules, `VERSION`, and `requirements.txt` from the newest ZIP. **Keep** your private `.env`, custom `search_config.json`, `.sqlite3` database and backups. Run `python -m pip install -r requirements.txt`, then `python main.py`.
 
-[Complete installation guide (PL/EN)](bot/INSTRUKCJA_INSTALACJI_v0.6.4_PL_EN.md) · [Installation on GitHub Pages](https://bollek231.github.io/poe-build-notifier-site/instalacja-en.html) · [Source code](bot/) · [Patch Notes](CHANGELOG.md)
+[Complete installation guide (PL/EN)](bot/INSTRUKCJA_INSTALACJI_v0.6.4b_PL_EN.md) · [Installation on GitHub Pages](https://bollek231.github.io/poe-build-notifier-site/instalacja-en.html) · [Source code](bot/) · [Patch Notes](CHANGELOG.md)
 
 ### Documentation
 
