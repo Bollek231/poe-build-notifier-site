@@ -94,6 +94,8 @@ class Version061Tests(unittest.TestCase):
   self.assertEqual(localization.translate('Brak zapisanych buildów.','pl'),'Brak zapisanych buildów.')
   self.assertIn('YouTube creator',localization.translate('Twórca na YouTube','en'))
   self.assertIn('Scan complete',localization.translate('Skan zakończony. Nowe filmy: **3**.','en'))
+  self.assertEqual(localization.translate('ustawienie', 'en'),'ustawienie')
+  self.assertEqual(localization.translate('nie', 'en'),'no')
 
  def test_settings_have_bilingual_labels(self):
   self.assertGreaterEqual(len(settings.SETTINGS),12)

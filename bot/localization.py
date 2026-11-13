@@ -5,6 +5,8 @@ quota alerts and status notices. Internal logs remain in their original form.
 """
 from __future__ import annotations
 
+import re
+
 
 def choose(pl: str, en: str, lang: str) -> str:
     return en if lang == 'en' else pl
@@ -191,5 +193,10 @@ SORTED = sorted(_TRANSLATIONS.items(), key=lambda item: len(item[0]), reverse=Tr
 def translate(message: str | None, lang: str) -> str | None:
     if not isinstance(message,str) or lang!='en': return message
     for pl,en in SORTED:
-        message=message.replace(pl,en)
+        # Short common words must not mangle other Polish words (e.g. "nie" in
+        # "ustawienie"). Do not alter identifiers, URLs or video titles.
+        if pl in {'nie','tak','brak'}:
+            message=re.sub(r'(?<!\w)'+re.escape(pl)+r'(?!\w)',lambda _m:en,message)
+        else:
+            message=message.replace(pl,en)
     return message
