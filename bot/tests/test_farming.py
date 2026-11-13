@@ -1,7 +1,7 @@
 import sqlite3
 import unittest
 
-import farming
+from features import farming
 import storage
 
 
