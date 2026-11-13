@@ -1,13 +1,24 @@
 # PoE Build Notifier — Changelog / Lista zmian
 
-**Current version / Aktualna wersja:** `v0.5.1`  
-**Versioning / Wersjonowanie:** `vMAJOR.MINOR.PATCH`; starting from `v0.5.0`, each subsequent project update increments the final number (`v0.5.2`, `v0.5.3`, etc.). Every update must have a new entry here and on both GitHub Pages changelog pages.
+**Current version / Aktualna wersja:** `v0.5.2`  
+**Versioning / Wersjonowanie:** `vMAJOR.MINOR.PATCH`; starting from `v0.5.0`, each subsequent project update increments the final number (`v0.5.3`, `v0.5.4`, etc.). Every update must have a new entry here and on both GitHub Pages changelog pages.
 
 [🇵🇱 Lista zmian (GitHub Pages)](https://bollek231.github.io/poe-build-notifier-site/changelog.html) · [🇬🇧 Patch Notes (GitHub Pages)](https://bollek231.github.io/poe-build-notifier-site/changelog-en.html)
 
 ---
 
 ## 🇵🇱 Polski
+
+### v0.5.2 — 13 listopada 2026
+
+**Przeprojektowanie GitHub Pages — Dark Fantasy / Modern Gaming**
+- Całkowicie odświeżona strona główna: duża sekcja powitalna, animowany symbol, karty funkcji i podgląd przykładowych wiadomości Discorda.
+- **Animowane tło** z unoszącymi się cząsteczkami, delikatnie przemieszczającymi się gwiazdami i poświatą pod kursorem.
+- **Przełącznik ☀️/🌙** do wyboru jasnego lub ciemnego motywu z zapamiętywaniem ustawienia w przeglądarce.
+- Ujednolicony wygląd wszystkich stron: instalacja, komendy, prywatność, regulamin i Patch Notes w języku polskim i angielskim.
+- Mobilne menu i ustawienia dostępności: automatyczne ograniczenie animacji przy `prefers-reduced-motion`, wstrzymanie ruchu kart przy ukrytej karcie przeglądarki.
+- Wydanie oczyszczonego ZIP-a **PoE_Build_Notifier_v0.5.2.zip** z aktualnym numerem wersji. **Funkcje działającego bota pozostały bez zmian względem v0.5.1.**
+
 
 ### v0.5.1 — 13 listopada 2026
 
@@ -48,6 +59,17 @@
 ---
 
 ## 🇬🇧 English
+
+### v0.5.2 — November 13, 2026
+
+**GitHub Pages redesign — Dark Fantasy / Modern Gaming**
+- Rebuilt landing page with a prominent hero, animated emblem, feature cards, and simulated Discord messages.
+- **Animated background** featuring gently drifting particles, moving stars, and a cursor-following glow.
+- **☀️/🌙 theme toggle** with persistent light/dark preference in the browser.
+- Consistent design across installation, commands, privacy, terms, and patch notes pages in both Polish and English.
+- Responsive mobile navigation and accessibility: animations respect `prefers-reduced-motion` and pause when the tab is hidden.
+- Published sanitized **PoE_Build_Notifier_v0.5.2.zip** with refreshed version metadata. **Bot runtime functionality is unchanged from v0.5.1.**
+
 
 ### v0.5.1 — November 13, 2026
 
