@@ -1,4 +1,4 @@
-# PoE Build Notifier v0.6.2b — kod źródłowy / source code
+# PoE Build Notifier v0.6.3 — kod źródłowy / source code
 
 [🇵🇱 Polski](#polski) · [🇬🇧 English](#english) · [Strona / Website](https://bollek231.github.io/poe-build-notifier-site/) · [Lista zmian / Patch Notes](../CHANGELOG.md)
 
@@ -18,9 +18,13 @@ Bot Discord do wyszukiwania nowych buildów **Path of Exile 1 i Path of Exile 2*
 
 **Tłumaczenia:** wpisz `pTranslateTitles mymemory`, aby włączyć bezpłatne MyMemory. Możesz opcjonalnie ustawić `MYMEMORY_CONTACT_EMAIL=...` w prywatnym `.env` dla wyższego limitu. Aby wybrać Google, dodaj `TRANSLATION_API_KEY=...` i wpisz `pTranslateTitles google`. Parametr `TRANSLATION_DAILY_LIMIT=30` ogranicza liczbę zapytań. Automatyczne wykrywanie języka jest lokalne, a w razie błędu bot zachowa oryginalny tytuł.
 
+### Launcher i automatyczne aktualizacje
+
+Dwukrotnie kliknij `Start_PoE_Bot.bat` podczas pierwszego uruchomienia: tworzy `.venv`, instaluje zależności i otwiera launcher. Potem korzystaj z `Start_PoE_Bot.vbs`, aby otwierać okno bez CMD. Program sprawdza wersję przed startem bota, pobiera nowsze pliki z GitHuba i pokazuje logi. Aktualizator zachowuje `.env`, `search_config.json`, SQLite i `backups`. W razie niepowodzenia instalacji przywraca poprzednie pliki programu.
+
 ### Instalacja na Windows
 
-1. Zainstaluj **Python 3.11 lub nowszy**. Pobierz [ZIP v0.6.2b](https://bollek231.github.io/poe-build-notifier-site/downloads/PoE_Build_Notifier_v0.6.2b.zip) i wypakuj wszystkie pliki bota do folderu, np. `D:\PoE-Bot`.
+1. Zainstaluj **Python 3.11 lub nowszy**. Pobierz [ZIP v0.6.3](https://bollek231.github.io/poe-build-notifier-site/downloads/PoE_Build_Notifier_v0.6.3.zip) i wypakuj wszystkie pliki bota do folderu, np. `D:\PoE-Bot`.
 2. Otwórz CMD:
 
 ```bat
@@ -62,7 +66,7 @@ Bot automatycznie skanuje YouTube (domyślnie co 2 godziny), przyjmuje tylko fil
 
 Na Railway/VPS ustaw trwały wolumin, np. `DB_PATH=/data/poe330_seen.sqlite3` i `BACKUP_DIR=/data/backups`. Nie udostępniaj swoich plików `.env`, bazy ani kopii zapasowych.
 
-[Pełna instrukcja](INSTRUKCJA_INSTALACJI_v0.6.2b_PL_EN.md) · [Lista komend](https://bollek231.github.io/poe-build-notifier-site/komendy.html)
+[Pełna instrukcja](INSTRUKCJA_INSTALACJI_v0.6.3_PL_EN.md) · [Lista komend](https://bollek231.github.io/poe-build-notifier-site/komendy.html)
 
 ---
 
@@ -82,9 +86,13 @@ A Discord bot for fresh **Path of Exile 1 and Path of Exile 2** YouTube build gu
 
 **Translation setup:** use `pTranslateTitles mymemory` without an API key or billing. Optionally provide `MYMEMORY_CONTACT_EMAIL=...` to raise the free character quota. For Google, add your private `TRANSLATION_API_KEY=...` and select `pTranslateTitles google`. `TRANSLATION_DAILY_LIMIT=30` caps calls per 24 hours. Source language is detected locally when possible; failed translations fall back to original titles.
 
+### Windows launcher and updates
+
+Double-click `Start_PoE_Bot.bat` for the initial environment setup, then `Start_PoE_Bot.vbs` to start the GUI without CMD. On launch, the updater checks GitHub for a newer version; private `.env`, `search_config.json`, SQLite and backups remain unchanged. Failed installations roll back modified program files.
+
 ### Windows setup
 
-1. Install **Python 3.11+**. [Download v0.6.2b](https://bollek231.github.io/poe-build-notifier-site/downloads/PoE_Build_Notifier_v0.6.2b.zip) and extract the bot files to a directory such as `D:\PoE-Bot`.
+1. Install **Python 3.11+**. [Download v0.6.3](https://bollek231.github.io/poe-build-notifier-site/downloads/PoE_Build_Notifier_v0.6.3.zip) and extract the bot files to a directory such as `D:\PoE-Bot`.
 2. Open Command Prompt:
 
 ```bat
@@ -126,7 +134,7 @@ The default scan interval is 2 hours. Only videos published in the past 24 hours
 
 On Railway/VPS use persistent storage, for example `DB_PATH=/data/poe330_seen.sqlite3` and `BACKUP_DIR=/data/backups`. Never publish your `.env`, database or private backups.
 
-[Full setup guide](INSTRUKCJA_INSTALACJI_v0.6.2b_PL_EN.md) · [Commands](https://bollek231.github.io/poe-build-notifier-site/komendy-en.html)
+[Full setup guide](INSTRUKCJA_INSTALACJI_v0.6.3_PL_EN.md) · [Commands](https://bollek231.github.io/poe-build-notifier-site/komendy-en.html)
 
 ---
 
