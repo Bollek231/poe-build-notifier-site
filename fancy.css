@@ -94,3 +94,7 @@ body.docs-redesign .wrap{width:min(1180px,calc(100% - 48px))}
  .site-spotlight,#spotlight{display:none!important}
  body *,body *::before,body *::after{transition:none!important;scroll-behavior:auto!important}
 }
+
+/* Render national flags as local vector images, not platform-dependent emoji glyphs. */
+.lang-flag-image{display:block;width:25px;height:18px;object-fit:fill;border-radius:2px;border:1px solid rgba(255,255,255,.19);box-shadow:0 1px 2px rgba(0,0,0,.24);pointer-events:none}
+.fancy-home .controls .ctrl:has(.lang-flag-image),.docs-redesign .language-switch .flag:has(.lang-flag-image){display:inline-flex;align-items:center;justify-content:center}
