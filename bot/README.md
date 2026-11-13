@@ -1,35 +1,71 @@
-# PoE Build Notifier v0.6.0 — 🇵🇱 Polski / 🇬🇧 English
+# PoE Build Notifier v0.6.1 — 🇵🇱 Polski / 🇬🇧 English
 
 [🇵🇱 Polski](#polski) · [🇬🇧 English](#english) · [Lista zmian / Patch Notes](https://bollek231.github.io/poe-build-notifier-site/changelog.html)
 
 ## Polski
 
-### Nowość v0.6.0 — PoE 1 / PoE 2
+**Nowość v0.6.1: interaktywny język i ustawienia Discorda.** Funkcje PoE 1 / PoE 2 1.0 pozostają bez zmian. Wszystkie nowe preferencje zapisują się do lokalnej bazy SQLite.
 
-Bot obsługuje teraz **Path of Exile 1** i **Path of Exile 2**. PoE 2 domyślnie filtruje **wersję 1.0** (premiera planowana na 11 grudnia 2026 PST), bez pobierania starych filmów o 0.3/0.5.
+### Język powiadomień (`pLanguage`)
+
+- Wpisz **`pLanguage`**, a bot otworzy menu Discorda **Polski / English**.
+- Możesz również użyć **`pLanguage pl`** lub **`pLanguage en`**.
+- Wybrany język dotyczy odpowiedzi komend, nazw pól embedów, alertów i podsumowań. Oryginalne tytuły filmów YouTube i linki pozostają niezmienione.
+- Wybór jest wspólny dla jednego serwera/kanału obsługiwanego przez tego bota i zachowywany po restarcie. Wcześniej opublikowane wiadomości nie są tłumaczone wstecz.
+
+### Edytowalne ustawienia (`pSettings`)
+
+- **`pSettings`** otwiera panel z listą aktualnych parametrów i menu rozwijanym.
+- Wybór parametru liczbowego lub godziny otwiera **formularz Discord**. Opcje tak/nie przełączają się od razu.
+- Dostępne są: interwał skanowania (1–24 h), godzina podsumowania (HH:MM, Warszawa), włączenie podsumowania, wyniki na frazę (1–50), odstęp powiadomień (1–30 s), lokalny budżet dzienny (1–10000), rezerwa na ręczne komendy, wiek publikacji filmu (1–24 h), częstotliwość odświeżania linków (1–24 h), liczba odświeżanych filmów (1–50), kontrola linków, sprawdzanie aktualizacji i interwał GitHub (1–72 h).
+- Niedozwolone wartości nie są zapisywane. Rezerwa ręczna musi być mniejsza niż budżet dzienny. Maksymalny wiek filmu nadal **nie przekracza 24 godzin**.
+- Zmiany działają bez restartu; są zapamiętywane w tabeli `bot_settings`. `.env` pozostaje źródłem wartości domyślnych.
+- Panele może obsługiwać **wyłącznie administrator, który je otworzył**, na wybranym kanale Discorda po `pAgree`. Panel wygasa po 5 minutach.
+- Tokeny, klucze API, ID kanałów i lokalizacja bazy **nie są edytowalne** przez Discorda.
+
+### Bezpieczna aktualizacja z v0.6.0
+
+1. Wyłącz bota (`Ctrl + C`); utwórz **kopię folderu** oraz pliku SQLite `poe330_seen.sqlite3`.
+2. Rozpakuj ZIP v0.6.1. W istniejącym folderze wymień pliki Python, w tym **nowe `runtime_settings.py` i `localization.py`**, oraz `requirements.txt`.
+3. **Nie nadpisuj** swojego `.env`, istniejącej bazy SQLite, prywatnych kopii zapasowych ani własnego `search_config.json`.
+4. W aktywnym środowisku wykonaj `pip install -r requirements.txt`, a potem `python main.py`.
+5. Na kanale Discorda sprawdź `pVersion`, `pLanguage`, `pSettings` i `pHealth`.
+
+> Ważne dla hostingu: plik SQLite musi być na **trwałym woluminie** (np. `DB_PATH=/data/poe330_seen.sqlite3` na Railway). Inaczej zapisane preferencje mogą zniknąć po wdrożeniu. Bot nie zmienia starej historii, zgód ani konfiguracji PoE 1/PoE 2.
+
+
+**W poprzedniej wersji v0.6.0: przełączanie Path of Exile 1 / Path of Exile 2 bez restartu.** PoE 2 domyślnie wyszukuje poradniki do **aktualizacji 1.0**, planowanej na 11 grudnia 2026 (PST). Zanim nadejdzie premiera, bot może wysłać nieliczne, świeże poradniki przygotowawcze do 1.0 — nie publikuje starszych filmów z 0.5 tylko dlatego, że zawierają słowo „build”.
+
+### Najważniejsze komendy
 
 | Komenda | Działanie |
 |---|---|
-| \`pGame\` | Pokazuje aktualną grę i wersję |
-| \`pGame poe2\` | Przełącza na **PoE 2 1.0** |
-| \`pGame poe1\` | Wraca do **PoE 1** i zapamiętanej ligi |
-| \`pLeague 1.0\` | Ustawia wersję PoE 2 na **1.0** |
-| \`pScan\` | Skanuje YouTube dla wybranej gry |
-| \`pSearch Spark\` | Wyszukiwanie skilla w wybranej grze |
+| `pGame` | Wyświetla aktywną grę i wersję |
+| `pGame poe2` | Przełącza na **Path of Exile 2, wersja 1.0** (domyślnie) |
+| `pGame poe1` | Wraca do Path of Exile 1 i poprzednio ustawionej ligi |
+| `pLeague` | Wyświetla wersję wybranej gry |
+| `pLeague 1.0` | Ustawia wersję **1.0** podczas korzystania z PoE 2 |
+| `pLeague 3.31` | Zmienia ligę podczas korzystania z PoE 1 |
+| `pScan` | Skanuje YouTube dla **aktywnej gry** |
+| `pSearch Spark` | Wyszukuje skill/build dla aktywnej gry i aktualnej wersji |
 
-Weryfikacja PoE 2 wymaga oznaczenia PoE 2 i 1.0 w tytule lub początku opisu oraz wskazania, że film jest poradnikiem/buildem. Niezależnie obowiązuje **24-godzinny limit wieku publikacji**. Wersje i dodatkowe filtry dla obu gier są zapisywane oddzielnie. Obsługiwane są również linki \`mobalytics.gg/poe-2/\`.
+### Filtrowanie PoE 2 — bez nieaktualnych poradników
 
-Przy aktualizacji **skopiuj też nowy plik \`game_modes.py\`**, ale zachowaj dotychczasowy \`.env\`, \`search_config.json\` i \`poe330_seen.sqlite3\`. PoE 2 nie wymaga nowych kluczy API.
+- Osobne zapytania dla PoE 2, np. `PoE2 1.0 league starter build`, `Path of Exile 2 1.0 endgame build`, `PoE 2 1.0 leveling build`.
+- Wymagane rozpoznawalne oznaczenie **PoE 2**, **wersji 1.0** w tytule lub na początku opisu oraz oznaczenie buildu/poradnika w tytule.
+- Odrzucane tytuły jasno wskazujące na starsze lub inne aktualizacje, np. **0.3**, **0.5**, **0.5.5**, a także zapowiedzi, reakcje i patch notes.
+- Zawsze działa niezależny filtr **wieku publikacji do 24 godzin** (`publishedAfter` + lokalna weryfikacja daty). Samo „1.0” w tytule nie pozwala przesłać starego filmu.
+- Osobne zapamiętywanie wersji gry oraz filtrów `pFilter` w SQLite. Historia i ustawienia PoE 1 nie znikają po przełączeniu.
+- Linki z `mobalytics.gg/poe-2/...` są rozpoznawane jako przyciski **Mobalytics**.
 
+**Uwaga:** to filtr zachowawczy. Poradnik bez wyraźnego oznaczenia 1.0 może zostać pominięty nawet jeśli jest aktualny. Po premierze można rozszerzyć słowa kluczowe w przyszłej aktualizacji.
 
-Niekomercyjny bot Discord wyszukujący **aktualne buildy Path of Exile 1** na YouTube. Wersja **v0.6.0** zachowuje funkcje v0.5.1 i zmienia wygląd strony, zachowując dotychczasowe komendy i 24-godzinny limit wieku filmów.
+### Instalacja / aktualizacja Windows
 
-### Instalacja / aktualizacja (Windows)
-
-1. **Zatrzymaj lokalnego bota** (`Ctrl + C`) i zrób kopię folderu `D:\PoE-Bot`.
-2. Rozpakuj ZIP v0.6.0. Do istniejącego folderu skopiuj **`main.py`, `storage.py`, `features.py`, `enhancements.py`, `services.py`, `backups.py`, `requirements.txt` i `VERSION`**.
-3. **Nie nadpisuj** swoich plików `.env`, `search_config.json`, `poe330_seen.sqlite3` ani prywatnych kopii bazy.
-4. W CMD wpisz:
+1. Zatrzymaj bota przez `Ctrl + C` i wykonaj kopię folderu `D:\PoE-Bot`.
+2. Wypakuj `PoE_Build_Notifier_v0.6.0.zip`, skopiuj do istniejącego folderu **`main.py`, `storage.py`, `features.py`, `game_modes.py`, `enhancements.py`, `services.py`, `backups.py`, `requirements.txt`, `VERSION`**. Podmień pliki kodu.
+3. **Nie nadpisuj** `.env`, `search_config.json`, `poe330_seen.sqlite3` ani folderu `backups`.
+4. Otwórz CMD:
 
 ```bat
 cd /d D:\PoE-Bot
@@ -38,90 +74,96 @@ python -m pip install -r requirements.txt
 python main.py
 ```
 
-**Pierwsza instalacja** (jeśli nie masz `.venv`):
+5. Na Discordzie sprawdź `pHealth`, potem wpisz `pGame poe2`, `pLeague` i `pScan`. Jeśli nie zaakceptowałeś zasad, najpierw użyj `pPrivacy` i `pAgree`.
 
-```bat
-cd /d D:\PoE-Bot
-py -m venv .venv
-.venv\Scripts\activate
-python -m pip install -r requirements.txt
-copy .env.example .env
-notepad .env
-python main.py
-```
+**Pierwsza instalacja:** utwórz `.venv` przez `py -m venv .venv`, zainstaluj zależności, skopiuj `.env.example` do `.env`, podaj własne `DISCORD_TOKEN`, `YOUTUBE_API_KEY` i `DISCORD_CHANNEL_ID`. Nigdy nie publikuj prawdziwego `.env`.
 
-W `.env` wpisz **własne** `DISCORD_TOKEN`, `DISCORD_CHANNEL_ID` i `YOUTUBE_API_KEY`. W Discord Developer Portal włącz **Message Content Intent**. Nigdy nie publikuj pliku `.env` na GitHubie.
+### Inne funkcje bez zmian
 
-### Nowe funkcje v0.5.1
+Skan co **2 godziny**, wiek filmów **24 h**, **3 s** między wiadomościami, przyciski PoB/Maxroll/Mobalytics, dzienne podsumowanie o **20:00 czasu polskiego**, limit 429 i lokalny licznik wyszukiwań, zaufane/zablokowane kanały, filtry, kopie bazy, alerty, `pVersion`, czyszczenie lokalnych danych YouTube po 7 dniach. **Bot nie usuwa automatycznie wiadomości z Discorda.**
 
-- **Inteligentna quota** — automatyczne wyszukiwania dzielą lokalną pozostałą pulę na kolejne skany do resetu w czasie PT. Rotacja fraz i rezerwa na `pSearch`. **To szacunek tego bota, nie oficjalny odczyt Google Cloud.**
-- **Czarna i biała lista YouTube** — `pBlockChannel UC...`, `pAllowChannel UC...`, `pUnlistChannel UC...`, `pChannelRules`. `pWhitelist on` publikuje wyłącznie materiały kanałów z białej listy; `pWhitelist off` traktuje je priorytetowo, ale nie wyklucza pozostałych. ID kanału to ciąg `UC` i 22 znaki; nazwy `@handle` nie są obsługiwane.
-- **Rozszerzone filtry** — `pFilters`, `pFilter skill Lightning Strike`, `pFilter ascendancy Deadeye`, `pFilter class Ranger`, `pFilter mode SSF`, `pFilter stage starter`; `pFilter mode all` usuwa jeden filtr, `pFilter clear` usuwa wszystkie. SSF/HC/SC wymagają wyraźnego oznaczenia w tytule lub początku opisu; bot nie zgaduje.
-- **Bezpieczne przyciski** — bot sprawdza tylko dozwolone domeny HTTPS PoB / Maxroll / Mobalytics, bez przekierowań. Potwierdzony HTTP 404/410 usuwa wadliwy przycisk; chwilowy błąd, 403 lub timeout go nie usuwa.
-- **Uzupełnianie linków** — co 6 godzin bot może pobrać aktualny opis filmu i **edytować tylko przyciski** istniejącego powiadomienia, bez kasowania ani ponownej publikacji. Działa **wyłącznie dla wiadomości wysłanych od v0.5.1** i monitorowanych maksymalnie 7 dni; ręcznie: `pRefreshLinks`.
-- **Alerty** — wiadomości o uruchomieniu/restartach, odzyskaniu połączenia, błędach oraz dostępnych aktualizacjach; z ograniczeniem częstotliwości. Możesz wskazać prywatny kanał `ALERT_CHANNEL_ID`, domyślnie używany jest kanał buildów. Ustaw `ALERT_CHANNEL_ID=0`, aby wyłączyć wysyłanie alertów na Discord.
-- **Kopie SQLite** — jedna spójna kopia dziennie w `BACKUP_DIR`, rotacja `BACKUP_KEEP_DAYS=7`. `pBackup` uruchamia ręcznie. Kopie zawierają historię, ID Discord oraz ustawienia; **nie zawierają pliku `.env`** i **nie mogą trafić do publicznego repozytorium**.
-- **Sprawdzanie wersji** — `pVersion` porównuje lokalną wersję z publicznym plikiem `VERSION` na GitHubie. Bot może wysłać jednorazowe powiadomienie o nowym wydaniu. **Nigdy nie instaluje aktualizacji samodzielnie.**
-
-### Dotychczasowe funkcje
-
-- `pPrivacy`, `pAgree`, `pRevoke`, `pScan`, `pSearch`, `pLimit`, `pHealth`, `pSettings`, `pBuilds`, `pLeague`, `pDigest`.
-- Skanowanie co **2 godziny**, filmy nie starsze niż **24 godziny**, **3 sekundy** przerwy między wiadomościami.
-- Liga zmieniana przez `pLeague 3.31`; wykrywanie duplikatów; przyciski PoB, Maxroll, Mobalytics; podsumowanie o **20:00 PL**.
-- Ochrona 429 i reset według czasu pacyficznego; lokalne metadane YouTube usuwane po **7 dniach**. **Wiadomości Discord nie są automatycznie usuwane.**
-
-### Ustawienia opcjonalne `.env`
+### Opcjonalne ustawienia `.env`
 
 ```env
-# Lokalny dzienny budżet wyszukiwań: dostosuj do REALNEGO przydziału Google
-DAILY_SEARCH_BUDGET=96
-RESERVED_SEARCHES=24
-ALERT_CHANNEL_ID=0
-CHECK_EXTERNAL_LINKS=true
-LINK_REFRESH_INTERVAL_HOURS=6
-MAX_LINK_REFRESH_PER_RUN=10
-BACKUP_DIR=backups
-BACKUP_KEEP_DAYS=7
-VERSION_CHECK_ENABLED=true
+TARGET_LEAGUE=3.30
+POE2_TARGET_VERSION=1.0
+MAX_VIDEO_AGE_HOURS=24
+CHECK_INTERVAL_HOURS=2
+SEND_DELAY_SECONDS=3
+YOUTUBE_CACHE_DAYS=7
 ```
 
-Przy `ALERT_CHANNEL_ID=0` alerty są tylko w logach. Jeśli chcesz dostawać je na Discord, wpisz **prawdziwy ID kanału administracyjnego**.
+`TARGET_LEAGUE` i `POE2_TARGET_VERSION` to ustawienia początkowe: zmiany przez `pLeague` są pamiętane w SQLite, także po restarcie. Stare `search_config.json` nadal działa bez zmian; nowa opcjonalna lista `poe2_search_queries` znajduje się w `search_config.example.json`.
 
-Na hostingu typu Railway używaj trwałego woluminu: np. `DB_PATH=/data/poe330_seen.sqlite3` i `BACKUP_DIR=/data/backups`. Inaczej kopie i ustawienia mogą zniknąć po ponownym wdrożeniu. Trzymaj kopie z dala od publicznego GitHuba i twórz również kopie poza serwerem w bezpiecznym miejscu.
+**Bezpieczeństwo:** repozytorium nie zawiera tokenów, kluczy API, bazy danych ani prywatnych kopii zapasowych. Na Railway/VPS użyj trwałego woluminu, np. `DB_PATH=/data/poe330_seen.sqlite3` i `BACKUP_DIR=/data/backups`.
 
-**Przywracanie:** zatrzymaj bota, zrób kopię aktualnej bazy, skopiuj wybrany `poe-backup-YYYY-MM-DD.sqlite3` na ścieżkę `DB_PATH`, następnie uruchom `python main.py`.
-
-**Testy offline:** `python -m unittest discover -s tests -v`.
+**Testy:** `python -m unittest discover -s tests -v`.
 
 ---
 
 ## English
 
-### New in v0.6.0 — PoE 1 / PoE 2
+**New in v0.6.1: interactive Discord language and settings controls.** All PoE 1 / PoE 2 1.0 features remain intact. Preferences persist in the existing local SQLite database.
 
-The bot now supports **Path of Exile 1** and **Path of Exile 2**. PoE 2 defaults to **patch 1.0**, ahead of the announced December 11, 2026 PST release. Old 0.3/0.5 build videos are rejected.
+### Bot language (`pLanguage`)
 
-| Command | Purpose |
+- Type **`pLanguage`** to open a Discord dropdown for **Polski / English**.
+- Alternatively, use **`pLanguage pl`** or **`pLanguage en`**.
+- This switches command responses, embed field labels, alerts and digests. Original YouTube video titles and URLs are never translated.
+- One language is shared by the configured server/channel and saved across restarts. Previously posted Discord messages are not retroactively edited.
+
+### Editable settings (`pSettings`)
+
+- **`pSettings`** opens a Discord panel displaying current values and a dropdown of editable settings.
+- Numeric fields and time use Discord **modal forms**; on/off options toggle immediately.
+- Supported settings: scan interval (1–24 h), daily digest time (HH:MM Warsaw), digest on/off, results per query (1–50), notification delay (1–30 s), daily local budget (1–10000), reserve for manual searches, maximum video age (1–24 h), link refresh interval (1–24 h), posts per refresh (1–50), external-link verification on/off, version checks on/off, GitHub version-check interval (1–72 h).
+- Invalid values are rejected. The manual reserve must stay below the daily budget. The **24-hour maximum age filter** remains enforced.
+- Changes apply without restarting, are stored in `bot_settings`, and override the default settings loaded from `.env`.
+- Only the **administrator who opened the menu** can use it, on the configured Discord channel and after `pAgree`. Interactive panels expire after five minutes.
+- Tokens, API keys, channel IDs and database paths **cannot be changed** via Discord.
+
+### Safe upgrade from v0.6.0
+
+1. Stop the bot (`Ctrl + C`) and **back up the bot folder and SQLite database** (`poe330_seen.sqlite3`).
+2. Extract v0.6.1 and replace the Python modules, including the **new `runtime_settings.py` and `localization.py`**, plus `requirements.txt`.
+3. **Do not overwrite** your own `.env`, SQLite database, private backups, or custom `search_config.json`.
+4. Activate your environment, run `pip install -r requirements.txt`, then `python main.py`.
+5. Test `pVersion`, `pLanguage`, `pSettings`, and `pHealth` on Discord.
+
+> Hosting: store the SQLite file on a **persistent volume** (for example `DB_PATH=/data/poe330_seen.sqlite3` on Railway) or settings may be lost on deployment. The migration preserves previous message history, privacy consent, and PoE 1 / PoE 2 preferences.
+
+
+**Previously added in v0.6.0: switch between Path of Exile 1 and Path of Exile 2 without restarting.** PoE 2 searches for **version 1.0** by default, ahead of its announced December 11, 2026 PST full release. Before launch, it may find freshly published 1.0 build preparation guides; it does not publish old 0.5 videos simply because their titles contain “build”.
+
+### Commands
+
+| Command | What it does |
 |---|---|
-| \`pGame\` | Show the active game and patch |
-| \`pGame poe2\` | Switch to **PoE 2 1.0** |
-| \`pGame poe1\` | Return to **PoE 1** and its saved league |
-| \`pLeague 1.0\` | Select **PoE 2 version 1.0** |
-| \`pScan\` | Scan YouTube for the selected game |
-| \`pSearch Spark\` | Search builds for the selected game |
+| `pGame` | Show the active game and target version |
+| `pGame poe2` | Switch to **Path of Exile 2, version 1.0** by default |
+| `pGame poe1` | Return to PoE 1 with its previous league version |
+| `pLeague` | Show the active version |
+| `pLeague 1.0` | Select **1.0** when PoE 2 is active |
+| `pLeague 3.31` | Change the PoE 1 league when PoE 1 is active |
+| `pScan` | Scan YouTube for builds for the **selected game** |
+| `pSearch Spark` | Search builds for the selected game and patch |
 
-PoE 2 filtering requires explicit game and 1.0 evidence near the start of the video metadata, plus a build/guide title. The independent **24-hour publication-age limit** remains enforced. Each game has its own saved patch and filters. PoE 2 Mobalytics links (\`/poe-2/\`) are supported.
+### Strict 1.0 filtering for PoE 2
 
-During upgrades, **copy the new \`game_modes.py\` file** alongside the existing source modules. Preserve your own \`.env\`, \`search_config.json\`, and \`poe330_seen.sqlite3\`. No new API keys are required.
+- Dedicated search phrases such as `PoE2 1.0 league starter build`, `Path of Exile 2 1.0 endgame build`, `PoE 2 1.0 leveling build`.
+- Requires identifiable **PoE 2**, **patch 1.0** near the beginning of the content, and a build/guide signal in the video title.
+- Rejects titles explicitly marked for older patches **0.3**, **0.5**, **0.5.5**, as well as news, reactions, tier lists, and trailers.
+- Applies YouTube's `publishedAfter` plus an independent **24-hour publication-age check**; a 1.0 label alone never overrides video age.
+- Stores each game's version and advanced filters independently in SQLite.
+- Recognizes Mobalytics PoE 2 URLs such as `mobalytics.gg/poe-2/builds/...`.
 
+The filter intentionally prioritizes accuracy over recall. A legitimate fresh video without an explicit 1.0 marker may be skipped.
 
-Non-commercial Discord bot that discovers fresh **Path of Exile 1 builds** using YouTube Data API v3. **v0.6.0** retains the v0.5.1 improvements while retaining the previous v0.5.0 functionality.
+### Upgrade (Windows)
 
-### Windows installation / update
-
-1. Stop the running bot with `Ctrl + C` and back up `D:\PoE-Bot`.
-2. Extract v0.6.0 ZIP. Copy **`main.py`, `storage.py`, `features.py`, `enhancements.py`, `services.py`, `backups.py`, `requirements.txt`, and `VERSION`** into the existing bot directory.
-3. **Keep your original** `.env`, `search_config.json`, `poe330_seen.sqlite3`, and any private database backups.
+1. Stop the bot and back up `D:\PoE-Bot`.
+2. Extract `PoE_Build_Notifier_v0.6.0.zip` and replace **`main.py`, `storage.py`, `features.py`, `game_modes.py`, `enhancements.py`, `services.py`, `backups.py`, `requirements.txt`, `VERSION`**.
+3. **Keep your own** `.env`, `search_config.json`, `poe330_seen.sqlite3`, and private backups.
 4. Run:
 
 ```bat
@@ -131,58 +173,29 @@ python -m pip install -r requirements.txt
 python main.py
 ```
 
-First installation:
+5. On Discord, use `pHealth`, `pGame poe2`, `pLeague`, then `pScan`. The bot requires `pPrivacy` and `pAgree` before administrative commands unless already accepted.
 
-```bat
-cd /d D:\PoE-Bot
-py -m venv .venv
-.venv\Scripts\activate
-python -m pip install -r requirements.txt
-copy .env.example .env
-notepad .env
-python main.py
-```
+For first-time installation, create a virtual environment (`py -m venv .venv`), install dependencies, copy `.env.example` to `.env`, and supply your own Discord token, YouTube API key, and channel ID.
 
-Set your own `DISCORD_TOKEN`, `DISCORD_CHANNEL_ID`, and `YOUTUBE_API_KEY` in `.env`. Enable **Message Content Intent** in the Discord Developer Portal. Never commit private credentials to GitHub.
+### Existing features retained
 
-### New in v0.5.1
+2-hour automatic scans, 24-hour video age window, 3-second message delay, PoB/Maxroll/Mobalytics buttons, 8 PM Warsaw-time digest, 429 quota protection, channel allow/block rules, filters, private SQLite backups, alerts, `pVersion`, and 7-day cleanup of local YouTube metadata. **Discord messages are not automatically deleted.**
 
-- **Smart search quota:** evenly distributes the locally estimated remaining budget across scheduled scans, rotates search phrases, and protects a reserve for manual commands. This is **not** an official Google Cloud quota reading.
-- **Channel blocklist and allowlist:** `pBlockChannel UC...`, `pAllowChannel UC...`, `pUnlistChannel UC...`, `pChannelRules`. With `pWhitelist on`, only allowed channels can be posted; `pWhitelist off` prioritizes trusted channels while still accepting other non-blocked channels. Use YouTube's actual `UC` channel ID rather than `@handles`.
-- **Advanced build filters:** `pFilters`, `pFilter skill Lightning Strike`, `pFilter ascendancy Deadeye`, `pFilter class Ranger`, `pFilter mode SSF`, `pFilter stage starter`; `pFilter clear` removes all filters. The bot requires explicit mode information instead of guessing SSF/HC/SC.
-- **External guide URL checks:** strict HTTPS domain allowlist, no redirects, 404/410 rejection, tolerant of transient 403 and timeouts. Can be switched off with `CHECK_EXTERNAL_LINKS=false` while domain validation remains active.
-- **Automatic button updates:** every 6 hours, recent video descriptions are rechecked and new guide buttons are added by **editing the existing Discord message**. Only messages published by v0.5.1 or newer are tracked, for up to 7 days. Manual command: `pRefreshLinks`.
-- **Operational alerts:** startup, Discord reconnection, errors, and new-version notices are rate-limited. Set `ALERT_CHANNEL_ID` to an admin channel or `0` to disable Discord alerts; without a setting, the build channel is used.
-- **SQLite backups:** one consistent daily snapshot, 7-file retention by default, and manual `pBackup`. Backups contain user/server identifiers and must stay **private**. `.env` is never backed up.
-- **Version command:** `pVersion` checks the public GitHub `VERSION` file and optionally alerts you about new releases. It does **not** install any code automatically.
-
-### Retained v0.5.0 features
-
-Scheduled searches every 2 hours, videos less than 24 hours old, 3-second posting delay, PoE 1 and selected-league filtering, deduplication, PoB/Maxroll/Mobalytics buttons, 8:00 PM Warsaw-time daily digest, 429 quota pause, and the previous command set. Locally cached YouTube data is cleared after 7 days; **Discord messages are never deleted automatically**.
-
-### Optional configuration
+### Optional `.env` settings
 
 ```env
-DAILY_SEARCH_BUDGET=96
-RESERVED_SEARCHES=24
-ALERT_CHANNEL_ID=0
-CHECK_EXTERNAL_LINKS=true
-LINK_REFRESH_INTERVAL_HOURS=6
-MAX_LINK_REFRESH_PER_RUN=10
-BACKUP_DIR=backups
-BACKUP_KEEP_DAYS=7
-VERSION_CHECK_ENABLED=true
+TARGET_LEAGUE=3.30
+POE2_TARGET_VERSION=1.0
+MAX_VIDEO_AGE_HOURS=24
+CHECK_INTERVAL_HOURS=2
+SEND_DELAY_SECONDS=3
+YOUTUBE_CACHE_DAYS=7
 ```
 
-For Railway/VPS, store the live database and private backups on a **persistent volume**, e.g. `DB_PATH=/data/poe330_seen.sqlite3` and `BACKUP_DIR=/data/backups`. To restore a backup, stop the bot, back up your current DB, copy the selected snapshot to `DB_PATH`, then restart.
+`pLeague` persists the per-game version to SQLite; the environment variables are initial defaults. Existing `search_config.json` files remain compatible, with an optional `poe2_search_queries` list for customization.
+
+For Railway/VPS, use persistent storage for `DB_PATH` and `BACKUP_DIR`. Never commit secrets, the database, or backups to a public repository.
 
 Offline tests: `python -m unittest discover -s tests -v`.
 
-[🇵🇱 Lista zmian](https://bollek231.github.io/poe-build-notifier-site/changelog.html) · [🇬🇧 Patch Notes](https://bollek231.github.io/poe-build-notifier-site/changelog-en.html) · [GitHub source](https://github.com/Bollek231/poe-build-notifier-site/tree/main/bot)
-
-
-## Website redesign v0.6.0 / Nowy projekt strony
-
-🇵🇱 Wersja v0.6.0 dodaje nowy wygląd GitHub Pages z animowanym tłem, poświatą pod kursorem, przełącznikiem jasnego/ciemnego motywu i odświeżoną dokumentacją. Działanie bota pozostaje identyczne z v0.5.1; zmienia się numer wersji.
-
-🇬🇧 v0.6.0 introduces the GitHub Pages animated redesign, cursor glow, light/dark mode, and refreshed bilingual documentation. The bot's operational behavior is unchanged from v0.5.1; its version number has been updated.
+[🇵🇱 Changelog](https://bollek231.github.io/poe-build-notifier-site/changelog.html) · [🇬🇧 Patch Notes](https://bollek231.github.io/poe-build-notifier-site/changelog-en.html) · [GitHub source](https://github.com/Bollek231/poe-build-notifier-site/tree/main/bot)

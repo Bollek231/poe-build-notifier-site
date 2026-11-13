@@ -20,6 +20,8 @@ import enhancements
 import services
 import backups
 import game_modes
+import runtime_settings
+import localization
 
 load_dotenv()
 logging.basicConfig(level=logging.INFO, format='%(asctime)s %(levelname)s %(message)s')
@@ -52,6 +54,7 @@ CACHE_RETENTION_DAYS = max(1, min(29, int(os.getenv('YOUTUBE_CACHE_DAYS', '7')))
 # No new personal data fields are added to the consent policy.
 POLICY_VERSION = '2026-11-12-v2'
 VERSION = enhancements.VERSION
+BOT_LANGUAGE = "pl"  # Single configured Discord server / announcement channel
 ALERT_CHANNEL_ID = int(os.getenv('ALERT_CHANNEL_ID', str(CHANNEL_ID)))
 CHECK_EXTERNAL_LINKS = os.getenv('CHECK_EXTERNAL_LINKS', 'true').lower() in ('true','1','yes','on')
 LINK_REFRESH_INTERVAL_HOURS = max(1, int(os.getenv('LINK_REFRESH_INTERVAL_HOURS','6')))
@@ -59,6 +62,7 @@ MAX_LINK_REFRESH_PER_RUN = max(1, min(50,int(os.getenv('MAX_LINK_REFRESH_PER_RUN
 BACKUP_DIR = os.getenv('BACKUP_DIR', str(Path(DB_PATH).parent / 'backups'))
 BACKUP_KEEP_DAYS = max(1,min(30,int(os.getenv('BACKUP_KEEP_DAYS','7'))))
 VERSION_CHECK_ENABLED = os.getenv('VERSION_CHECK_ENABLED','true').lower() in ('true','1','yes','on')
+VERSION_CHECK_INTERVAL_HOURS = max(1,min(72,int(os.getenv('VERSION_CHECK_INTERVAL_HOURS','12'))))
 _health_disconnect_at = None
 
 PRIVACY_URL = 'https://bollek231.github.io/poe-build-notifier-site/privacy.html'
@@ -124,7 +128,7 @@ async def announce_quota_pause(connection, reset_at):
         return
     try:
         channel = bot.get_channel(CHANNEL_ID) or await bot.fetch_channel(CHANNEL_ID)
-        await channel.send(quota_message(reset_at), allowed_mentions=discord.AllowedMentions.none())
+        await channel.send(localization.translate(quota_message(reset_at),BOT_LANGUAGE), allowed_mentions=discord.AllowedMentions.none())
         storage.mark_quota_notice_sent(connection)
     except Exception:
         log.exception('Nie udało się wysłać krótkiego komunikatu o limicie.')
@@ -160,6 +164,70 @@ def db():
     storage.initialize(c)  # Migrates an existing SQLite DB without dropping rows.
     storage.cleanup(c, CACHE_RETENTION_DAYS)
     return c
+
+
+# Editable settings use the original .env as defaults, plus safe SQLite overrides.
+SETTING_DEFAULTS = {
+    'scan_interval_hours': min(24, INTERVAL_H),
+    'digest_time': DAILY_DIGEST_TIME,
+    'digest_enabled': DAILY_DIGEST_ENABLED,
+    'results_per_query': MAX_RESULTS,
+    'send_delay_seconds': max(1., min(30., SEND_DELAY)),
+    'daily_search_budget': DAILY_SEARCH_BUDGET,
+    'reserved_searches': min(RESERVED_SEARCHES, max(0, DAILY_SEARCH_BUDGET-1)),
+    'video_age_hours': min(24, MAX_VIDEO_AGE_HOURS),
+    'link_refresh_hours': min(24, LINK_REFRESH_INTERVAL_HOURS),
+    'links_check_enabled': CHECK_EXTERNAL_LINKS,
+    'version_check_enabled': VERSION_CHECK_ENABLED,
+    'version_check_hours': VERSION_CHECK_INTERVAL_HOURS,
+    'link_refresh_limit': MAX_LINK_REFRESH_PER_RUN,
+}
+
+
+def language():
+    return BOT_LANGUAGE
+
+
+def localize_embed(embed):
+    if BOT_LANGUAGE != 'en':return embed
+    if embed.title:embed.title=localization.translate(embed.title,BOT_LANGUAGE)
+    if embed.description:embed.description=localization.translate(embed.description,BOT_LANGUAGE)
+    for i, field in enumerate(embed.fields):
+        embed.set_field_at(i,name=localization.translate(field.name,BOT_LANGUAGE),
+            value=localization.translate(field.value,BOT_LANGUAGE),inline=field.inline)
+    if embed.footer and embed.footer.text:
+        embed.set_footer(text=localization.translate(embed.footer.text,BOT_LANGUAGE))
+    return embed
+
+
+async def localized_reply(ctx, content=None, **kwargs):
+    if isinstance(content,str):content=localization.translate(content,BOT_LANGUAGE)
+    if kwargs.get('embed') is not None: kwargs['embed']=localize_embed(kwargs['embed'])
+    return await ctx.reply(content,**kwargs)
+
+
+def apply_runtime_values(values: dict):
+    """Apply validated settings immediately, including active loop scheduling."""
+    global INTERVAL_H,DAILY_DIGEST_TIME,DAILY_DIGEST_ENABLED,MAX_RESULTS,SEND_DELAY
+    global DAILY_SEARCH_BUDGET,RESERVED_SEARCHES,MAX_VIDEO_AGE_HOURS
+    global LINK_REFRESH_INTERVAL_HOURS,CHECK_EXTERNAL_LINKS,VERSION_CHECK_ENABLED,MAX_LINK_REFRESH_PER_RUN
+    global VERSION_CHECK_INTERVAL_HOURS
+    INTERVAL_H=values['scan_interval_hours']
+    DAILY_DIGEST_TIME=values['digest_time']
+    DAILY_DIGEST_ENABLED=values['digest_enabled']
+    MAX_RESULTS=values['results_per_query']
+    SEND_DELAY=values['send_delay_seconds']
+    DAILY_SEARCH_BUDGET=values['daily_search_budget']
+    RESERVED_SEARCHES=values['reserved_searches']
+    MAX_VIDEO_AGE_HOURS=values['video_age_hours']
+    LINK_REFRESH_INTERVAL_HOURS=values['link_refresh_hours']
+    CHECK_EXTERNAL_LINKS=values['links_check_enabled']
+    VERSION_CHECK_ENABLED=values['version_check_enabled']
+    VERSION_CHECK_INTERVAL_HOURS=values['version_check_hours']
+    MAX_LINK_REFRESH_PER_RUN=values['link_refresh_limit']
+    automatic_scan.change_interval(hours=INTERVAL_H)
+    automatic_link_refresh.change_interval(hours=LINK_REFRESH_INTERVAL_HOURS)
+    automatic_version_check.change_interval(hours=VERSION_CHECK_INTERVAL_HOURS)
 
 
 def norm(value):
@@ -356,18 +424,18 @@ async def remove_discord_consent(member, guild):
 class ConsentView(discord.ui.View):
     def __init__(self):
         super().__init__(timeout=None)
-        self.add_item(discord.ui.Button(label='Polityka prywatności', style=discord.ButtonStyle.link, url=PRIVACY_URL))
-        self.add_item(discord.ui.Button(label='Warunki korzystania', style=discord.ButtonStyle.link, url=TERMS_URL))
+        self.add_item(discord.ui.Button(label=localization.choose('Polityka prywatności','Privacy policy',BOT_LANGUAGE), style=discord.ButtonStyle.link, url=PRIVACY_URL))
+        self.add_item(discord.ui.Button(label=localization.choose('Warunki korzystania','Terms of use',BOT_LANGUAGE), style=discord.ButtonStyle.link, url=TERMS_URL))
 
-    @discord.ui.button(label='Akceptuję zasady', style=discord.ButtonStyle.success, custom_id='poe_privacy_accept_20261112')
+    @discord.ui.button(label='Agree / Akceptuję', style=discord.ButtonStyle.success, custom_id='poe_privacy_accept_20261112')
     async def accept(self, interaction: discord.Interaction, button: discord.ui.Button):
         ok, answer = await grant_discord_consent(interaction.user, interaction.guild)
-        await interaction.response.send_message(answer, ephemeral=True)
+        await interaction.response.send_message(localization.translate(answer,BOT_LANGUAGE), ephemeral=True)
 
-    @discord.ui.button(label='Cofam zgodę', style=discord.ButtonStyle.secondary, custom_id='poe_privacy_revoke_20261112')
+    @discord.ui.button(label='Revoke / Cofnij', style=discord.ButtonStyle.secondary, custom_id='poe_privacy_revoke_20261112')
     async def revoke(self, interaction: discord.Interaction, button: discord.ui.Button):
         ok, answer = await remove_discord_consent(interaction.user, interaction.guild)
-        await interaction.response.send_message(answer, ephemeral=True)
+        await interaction.response.send_message(localization.translate(answer,BOT_LANGUAGE), ephemeral=True)
 
 
 intents = discord.Intents.default()
@@ -401,7 +469,7 @@ async def alert_admin(key, message, *, cooldown_minutes=60):
         if not storage.alert_allowed(c,key,cooldown_minutes=cooldown_minutes):
             return False
         channel=bot.get_channel(ALERT_CHANNEL_ID) or await bot.fetch_channel(ALERT_CHANNEL_ID)
-        await channel.send(discord.utils.escape_mentions(message[:1700]),allowed_mentions=discord.AllowedMentions.none())
+        await channel.send(discord.utils.escape_mentions(localization.translate(message[:1700],BOT_LANGUAGE)),allowed_mentions=discord.AllowedMentions.none())
         storage.record_alert(c,key)
         return True
     except Exception:
@@ -574,7 +642,7 @@ async def scan(kind='auto', custom_query=None):
                         links={label:target for label,target in links.items() if enhancements.sane_external_url(target)}
                     if sent:
                         await asyncio.sleep(SEND_DELAY)
-                    posted_message=await channel.send(content=url, embed=embed, view=buttons_from_links(links))
+                    posted_message=await channel.send(content=url, embed=localize_embed(embed), view=buttons_from_links(links))
                     c.execute('INSERT OR IGNORE INTO videos VALUES(?,?,?,?,?)',
                               (vid, title, url, info.get('publishedAt'), utc_now().isoformat()))
                     c.execute('INSERT OR IGNORE INTO builds(fingerprint,canonical_title,first_video_id,created_at,league) VALUES(?,?,?,?,?)',
@@ -657,6 +725,7 @@ async def send_digest(*, manual=False):
             embeds = format_digest_pages(rows, league, today,game)
             channel = bot.get_channel(DAILY_DIGEST_CHANNEL_ID) or await bot.fetch_channel(DAILY_DIGEST_CHANNEL_ID)
             for index, embed in enumerate(embeds):
+                embed=localize_embed(embed)
                 if index:
                     await asyncio.sleep(SEND_DELAY)
                 await channel.send(embed=embed, allowed_mentions=discord.AllowedMentions.none())
@@ -810,7 +879,7 @@ async def check_new_version(*, announce=True):
     return latest
 
 
-@tasks.loop(hours=12)
+@tasks.loop(hours=VERSION_CHECK_INTERVAL_HOURS)
 async def automatic_version_check():
     if VERSION_CHECK_ENABLED:
         try:await check_new_version()
@@ -856,13 +925,13 @@ async def on_ready():
         bot._privacy_view_registered = True
     if not automatic_scan.is_running():
         automatic_scan.start()
-    if DAILY_DIGEST_ENABLED and not automatic_digest.is_running():
+    if not automatic_digest.is_running():
         automatic_digest.start()
     if not automatic_link_refresh.is_running():
         automatic_link_refresh.start()
     if not automatic_backup.is_running():
         automatic_backup.start()
-    if VERSION_CHECK_ENABLED and not automatic_version_check.is_running():
+    if not automatic_version_check.is_running():
         automatic_version_check.start()
 
 
@@ -877,14 +946,14 @@ async def require_consent(ctx):
     finally:
         c.close()
     if not agreed:
-        await ctx.reply('Najpierw zaakceptuj politykę prywatności. Wpisz `pPrivacy`, a następnie kliknij „Akceptuję zasady” lub użyj `pAgree`.')
+        await localized_reply(ctx, 'Najpierw zaakceptuj politykę prywatności. Wpisz `pPrivacy`, a następnie kliknij „Akceptuję zasady” lub użyj `pAgree`.')
     return agreed
 
 
 @bot.command(name='Privacy', aliases=['Zasady'])
 @commands.guild_only()
 async def privacy_command(ctx):
-    await ctx.reply('**PoE Build Notifier — zgoda i dokumenty**\n'
+    await localized_reply(ctx, '**PoE Build Notifier — zgoda i dokumenty**\n'
                     'Bot przetwarza publiczne informacje o filmach z YouTube, a także minimalne informacje o zgodzie na Discordzie. '
                     'Przed korzystaniem z komend administratora zapoznaj się z polityką prywatności i warunkami korzystania. '
                     'Kliknij „Akceptuję zasady”, aby korzystać z komend administracyjnych. Powiadomienia na Discordzie pozostają dostępne na dotychczasowym kanale.',
@@ -895,19 +964,19 @@ async def privacy_command(ctx):
 @commands.guild_only()
 async def agree_command(ctx):
     ok, message = await grant_discord_consent(ctx.author, ctx.guild)
-    await ctx.reply(message, allowed_mentions=discord.AllowedMentions.none())
+    await localized_reply(ctx, message, allowed_mentions=discord.AllowedMentions.none())
 
 
 @bot.command(name='Revoke', aliases=['CofnijZgode'])
 @commands.guild_only()
 async def revoke_command(ctx):
     ok, message = await remove_discord_consent(ctx.author, ctx.guild)
-    await ctx.reply(message, allowed_mentions=discord.AllowedMentions.none())
+    await localized_reply(ctx, message, allowed_mentions=discord.AllowedMentions.none())
 
 
 async def report_scan(ctx, custom=None):
     if scan_lock.locked():
-        await ctx.reply('Skanowanie już trwa. Poczekaj na jego zakończenie.')
+        await localized_reply(ctx, 'Skanowanie już trwa. Poczekaj na jego zakończenie.')
         return
     # Avoid 'search starting' noise if we've already learned Google's quota is exhausted.
     connection = db()
@@ -916,23 +985,23 @@ async def report_scan(ctx, custom=None):
     finally:
         connection.close()
     if pause:
-        await ctx.reply(quota_message(pause[0]), allowed_mentions=discord.AllowedMentions.none())
+        await localized_reply(ctx, quota_message(pause[0]), allowed_mentions=discord.AllowedMentions.none())
         return
-    await ctx.reply('🔎 Rozpoczynam wyszukiwanie YouTube…')
+    await localized_reply(ctx, '🔎 Rozpoczynam wyszukiwanie YouTube…')
     try:
         result = await scan('manual', custom)
         if result is None:
-            await ctx.reply('Skanowanie już trwa.')
+            await localized_reply(ctx, 'Skanowanie już trwa.')
         elif result.get('quota_exhausted') or result.get('budget_exhausted'):
-            await ctx.reply(result['warning'], allowed_mentions=discord.AllowedMentions.none())
+            await localized_reply(ctx, result['warning'], allowed_mentions=discord.AllowedMentions.none())
         else:
-            await ctx.reply(f"Skan zakończony. Nowe filmy: **{result['sent']}**. "
+            await localized_reply(ctx, f"Skan zakończony. Nowe filmy: **{result['sent']}**. "
                             f"Wykonane wyszukiwania: **{result['searched']}**. "
                             + result['warning'])
     except Exception as exc:
         log.exception('Manual scan error')
         await notify_error(f'Ręczne skanowanie: {exc}')
-        await ctx.reply('Wystąpił błąd skanowania. Sprawdź komunikat bota.')
+        await localized_reply(ctx, 'Wystąpił błąd skanowania. Sprawdź komunikat bota.')
 
 
 @bot.command(name='Scan')
@@ -949,7 +1018,7 @@ async def search_command(ctx, *, query: str = ''):
         return
     query = query.strip()
     if len(query) < 3 or len(query) > 100:
-        await ctx.reply('Użycie: `pSearch Lightning Strike Slayer` (3–100 znaków).')
+        await localized_reply(ctx, 'Użycie: `pSearch Lightning Strike Slayer` (3–100 znaków).')
         return
     c = db()
     try:
@@ -978,12 +1047,12 @@ async def limit_command(ctx):
         daily_remaining = max(0, DAILY_SEARCH_BUDGET - searches)
         pause = storage.quota_pause(c)
         if pause:
-            await ctx.reply('📊 **YouTube API**\n' + quota_message(pause[0]) +
+            await localized_reply(ctx, '📊 **YouTube API**\n' + quota_message(pause[0]) +
                             '\nLokalny licznik: **' + str(searches) + '** wyszukiwań; '
                             'nie jest oficjalnym odczytem Google.',
                             allowed_mentions=discord.AllowedMentions.none())
             return
-        await ctx.reply(
+        await localized_reply(ctx, 
             '📊 **YouTube API – licznik lokalny**\n'
             f'Wyszukiwania: **{searches}/{DAILY_SEARCH_BUDGET}** dzisiaj.\n'
             f'Pozostało w budżecie bota: **{daily_remaining}** wyszukiwań.\n'
@@ -1012,7 +1081,7 @@ async def health_command(ctx):
     finally:
         connection.close()
     quota_status = ('Wyczerpany do <t:' + str(int(pause[0].timestamp())) + ':F>') if pause else 'Brak potwierdzonego wyczerpania'
-    await ctx.reply('🩺 **Stan bota v'+VERSION+'**\n'
+    await localized_reply(ctx, '🩺 **Stan bota v'+VERSION+'**\n'
                     f'Codzienne podsumowanie: **{"wysłano dziś" if digest_today else "jeszcze nie wysłano"}** (godz. {DAILY_DIGEST_TIME} PL)\n'
                     f'Limit wyszukiwań YouTube: **{quota_status}**\n'
                     f'Połączenie Discord: **{ "OK" if bot.is_ready() else "Niedostępne" }**\n'
@@ -1034,42 +1103,203 @@ async def builds_command(ctx):
         league = storage.current_game_version(c,game,poe1_default=DEFAULT_LEAGUE,poe2_default=DEFAULT_POE2_VERSION)
         rows = c.execute('SELECT canonical_title, first_video_id FROM builds WHERE league=? ORDER BY created_at DESC LIMIT 10', (league,)).fetchall()
         if not rows:
-            await ctx.reply('Brak zapisanych buildów.')
+            await localized_reply(ctx, 'Brak zapisanych buildów.')
             return
         lines = [f'{i}. {discord.utils.escape_mentions(r["canonical_title"][:100])} — https://youtu.be/{r["first_video_id"]}'
                  for i, r in enumerate(rows, 1)]
-        await ctx.reply(f'**Ostatnie buildy (historia w bazie z ostatnich {CACHE_RETENTION_DAYS} dni):**\n' + '\n'.join(lines), allowed_mentions=discord.AllowedMentions.none())
+        await localized_reply(ctx, f'**Ostatnie buildy (historia w bazie z ostatnich {CACHE_RETENTION_DAYS} dni):**\n' + '\n'.join(lines), allowed_mentions=discord.AllowedMentions.none())
     finally:
         c.close()
+
+
+def settings_embed(values, lang=None):
+    lang=lang or BOT_LANGUAGE
+    title=localization.choose('⚙️ Ustawienia PoE Build Notifier','⚙️ PoE Build Notifier settings',lang)
+    subtitle=localization.choose('Wybierz parametr z menu, aby go zmienić. Zmiany zapisują się automatycznie i działają bez restartu.',
+                                'Choose an option below to edit it. Changes are saved automatically and take effect without a restart.',lang)
+    embed=discord.Embed(title=title,description=subtitle,color=discord.Color.dark_purple())
+    for key in runtime_settings.SPECS:
+        embed.add_field(name=runtime_settings.label(key,lang),
+            value=runtime_settings.display_value(key,values[key],lang),inline=True)
+    embed.set_footer(text=localization.choose('Bezpieczne zakresy • Tylko administrator • SQLite • Nie zmienia tokenów ani ID kanałów',
+            'Validated ranges • Admin only • SQLite • No token or channel-ID edits',lang))
+    return embed
+
+
+async def setting_interaction_allowed(interaction,owner_id,guild_id):
+    if (interaction.user.id!=owner_id or interaction.guild_id!=guild_id
+        or interaction.channel_id!=CHANNEL_ID
+        or not interaction.user.guild_permissions.manage_guild):
+        await interaction.response.send_message(
+            localization.choose('Tylko administrator, który otworzył menu, może używać tych przycisków.',
+                                'Only the administrator who opened this menu can use it.',BOT_LANGUAGE),ephemeral=True)
+        return False
+    c=db()
+    try:authorized=storage.has_consent(c,guild_id,owner_id,POLICY_VERSION)
+    finally:c.close()
+    if not authorized:
+        await interaction.response.send_message(
+            localization.choose('Najpierw zaakceptuj zasady przez pAgree.',
+                                'Accept the terms using pAgree first.',BOT_LANGUAGE),ephemeral=True)
+    return authorized
+
+
+class SettingsModal(discord.ui.Modal):
+    def __init__(self,view,key):
+        self.settings_view=view
+        self.key=key
+        self.lang=BOT_LANGUAGE
+        super().__init__(title=runtime_settings.label(key,self.lang)[:45],timeout=180)
+        c=db()
+        try:values=runtime_settings.snapshot(c,SETTING_DEFAULTS)
+        finally:c.close()
+        self.setting_input=discord.ui.TextInput(label=runtime_settings.label(key,self.lang)[:45],
+            placeholder=runtime_settings.description(key,self.lang)[:100],
+            default=str(values[key]),max_length=20,min_length=1,required=True)
+        self.add_item(self.setting_input)
+
+    async def on_submit(self,interaction):
+        if not await setting_interaction_allowed(interaction,self.settings_view.owner_id,self.settings_view.guild_id):return
+        c=db()
+        try:
+            try:values=runtime_settings.update_setting(c,SETTING_DEFAULTS,self.key,str(self.setting_input.value))
+            except ValueError as exc:
+                await interaction.response.send_message(
+                    localization.choose('Niepoprawna wartość: ','Invalid value: ',BOT_LANGUAGE)+str(exc),ephemeral=True)
+                return
+        finally:c.close()
+        apply_runtime_values(values)
+        if self.settings_view.message:
+            try:await self.settings_view.message.edit(embed=settings_embed(values),view=self.settings_view)
+            except discord.HTTPException:pass
+        await interaction.response.send_message(
+            localization.choose('✅ Zapisano ustawienie: ','✅ Saved setting: ',BOT_LANGUAGE)
+            +f'**{runtime_settings.label(self.key,BOT_LANGUAGE)}** → `{runtime_settings.display_value(self.key,values[self.key],BOT_LANGUAGE)}`',
+            ephemeral=True)
+
+
+class SettingsView(discord.ui.View):
+    def __init__(self,owner_id,guild_id):
+        super().__init__(timeout=300)
+        self.owner_id,self.guild_id=owner_id,guild_id
+        self.message=None
+        self.add_item(SettingsSelect(self))
+
+    async def interaction_check(self,interaction):
+        return await setting_interaction_allowed(interaction,self.owner_id,self.guild_id)
+
+    async def on_timeout(self):
+        for item in self.children:item.disabled=True
+        if self.message:
+            try:await self.message.edit(view=self)
+            except discord.HTTPException:pass
+
+
+class SettingsSelect(discord.ui.Select):
+    def __init__(self,view):
+        self.settings_view=view
+        lang=BOT_LANGUAGE
+        options=[discord.SelectOption(label=runtime_settings.label(x.key,lang)[:100],
+            value=x.key,description=runtime_settings.description(x.key,lang)[:100])
+            for x in runtime_settings.SETTINGS]
+        super().__init__(placeholder=localization.choose('Wybierz ustawienie do zmiany','Select a setting to edit',lang),
+                         min_values=1,max_values=1,options=options)
+
+    async def callback(self,interaction):
+        key=self.values[0]
+        spec=runtime_settings.SPECS[key]
+        if spec.kind!='bool':
+            await interaction.response.send_modal(SettingsModal(self.settings_view,key))
+            return
+        c=db()
+        try:
+            current=runtime_settings.snapshot(c,SETTING_DEFAULTS)
+            values=runtime_settings.update_setting(c,SETTING_DEFAULTS,key,not current[key])
+        finally:c.close()
+        apply_runtime_values(values)
+        await interaction.response.send_message(
+            localization.choose('✅ Zmieniono: ','✅ Updated: ',BOT_LANGUAGE)+
+            f'**{runtime_settings.label(key,BOT_LANGUAGE)}** → {runtime_settings.display_value(key,values[key],BOT_LANGUAGE)}',
+            ephemeral=True)
+        if self.settings_view.message:
+            try:await self.settings_view.message.edit(embed=settings_embed(values),view=self.settings_view)
+            except discord.HTTPException:pass
+
+
+class LanguageView(discord.ui.View):
+    def __init__(self,owner_id,guild_id):
+        super().__init__(timeout=300)
+        self.owner_id,self.guild_id=owner_id,guild_id
+        self.message=None
+        self.add_item(LanguageSelect(self))
+
+    async def interaction_check(self,interaction):
+        return await setting_interaction_allowed(interaction,self.owner_id,self.guild_id)
+
+    async def on_timeout(self):
+        for item in self.children:item.disabled=True
+        if self.message:
+            try:await self.message.edit(view=self)
+            except discord.HTTPException:pass
+
+
+class LanguageSelect(discord.ui.Select):
+    def __init__(self,view):
+        self.language_view=view
+        super().__init__(placeholder=localization.choose('Wybierz język bota','Choose bot language',BOT_LANGUAGE),
+            options=[discord.SelectOption(label='Polski',value='pl',emoji='🇵🇱'),
+                     discord.SelectOption(label='English',value='en',emoji='🇬🇧')],min_values=1,max_values=1)
+
+    async def callback(self,interaction):
+        global BOT_LANGUAGE
+        c=db()
+        try:BOT_LANGUAGE=runtime_settings.set_language(c,self.values[0])
+        finally:c.close()
+        new_lang=BOT_LANGUAGE
+        await interaction.response.send_message(
+            localization.choose('✅ Język bota: **polski**. Ustawienie zostało zapisane.',
+                                '✅ Bot language: **English**. Setting saved.',new_lang),ephemeral=True)
+        if self.language_view.message:
+            try:await self.language_view.message.edit(
+                content=localization.choose('🌐 **Język bota**: Polski. Aby zmienić, otwórz menu ponownie przez `pLanguage`.',
+                                             '🌐 **Bot language**: English. To change it, open the menu again with `pLanguage`.',new_lang),view=None)
+            except discord.HTTPException:pass
+
+
+@bot.command(name='Language',aliases=['Jezyk','Język'])
+@commands.check(allowed)
+async def language_command(ctx, *, selected: str=''):
+    global BOT_LANGUAGE
+    if not await require_consent(ctx):return
+    if selected:
+        choice=runtime_settings.normalize_language(selected)
+        if not choice:
+            await localized_reply(ctx,localization.choose('Wybierz `pLanguage pl` lub `pLanguage en`, albo wpisz samo `pLanguage`.',
+                              'Use `pLanguage pl` or `pLanguage en`, or type `pLanguage` for the menu.',BOT_LANGUAGE))
+            return
+        c=db()
+        try:BOT_LANGUAGE=runtime_settings.set_language(c,choice)
+        finally:c.close()
+        await localized_reply(ctx,localization.choose('✅ Język bota został zmieniony na **polski**.',
+                                                  '✅ Bot language has been set to **English**.',BOT_LANGUAGE))
+        return
+    view=LanguageView(ctx.author.id,ctx.guild.id)
+    message=await localized_reply(ctx,
+        localization.choose('🌐 **Wybierz język bota** — polski lub angielski. Wybrany język dotyczy powiadomień i komend na tym serwerze.',
+                            '🌐 **Choose bot language** — Polish or English. This changes bot notifications and commands on this server.',BOT_LANGUAGE),view=view)
+    view.message=message
 
 
 @bot.command(name='Settings')
 @commands.check(allowed)
 async def settings_command(ctx):
-    if not await require_consent(ctx):
-        return
-    config = cfg()
-    c = db()
-    try:
-        game=storage.current_game(c)
-        league=storage.current_game_version(c,game,poe1_default=DEFAULT_LEAGUE,poe2_default=DEFAULT_POE2_VERSION)
-    finally:
-        c.close()
-    number_of_queries=len(config['poe2_search_queries'] if game=='poe2' else config['search_queries'])
-    await ctx.reply(f'⚙️ **Ustawienia v{VERSION}**\n'
-                    f'Gra: **{game_modes.game_label(game)}** (zmiana: `pGame poe1` / `pGame poe2`)\n'
-                    f'Wersja: **{league}** (zmiana: `pLeague {"1.0" if game=="poe2" else "3.31"}`)\n'
-                    f'Podsumowanie: **{DAILY_DIGEST_TIME} czasu polskiego** ({"włączone" if DAILY_DIGEST_ENABLED else "wyłączone"})\n'
-                    f'Automatyczny skan: co **{INTERVAL_H} h**\n'
-                    f'Frazy: **{number_of_queries}**\n'
-                    f'Wyniki na frazę: **{MAX_RESULTS}**\n'
-                    f'Odstęp wiadomości: **{SEND_DELAY:g} s**\n'
-                    f'Budżet: **{DAILY_SEARCH_BUDGET}** zapytań / dzień PT\n'
-                    f'Wiek filmu: **maksymalnie {MAX_VIDEO_AGE_HOURS} h**\n'
-                    f'Przechowywanie metadanych: **{CACHE_RETENTION_DAYS} dni**\n'
-                    'Zgoda na komendy: `pPrivacy`, `pAgree`, `pRevoke` (bez dodatkowej roli)\n'
-                    'Wiadomości Discord: pozostają na kanale; bot ich nie usuwa\n'
-                    f'Filtry: {game_modes.game_label(game)} / {league} / build, filtr 24h, odrzucanie starszych wersji.')
+    if not await require_consent(ctx):return
+    c=db()
+    try:values=runtime_settings.snapshot(c,SETTING_DEFAULTS)
+    finally:c.close()
+    view=SettingsView(ctx.author.id,ctx.guild.id)
+    message=await localized_reply(ctx,embed=settings_embed(values),view=view)
+    view.message=message
 
 
 @bot.command(name='Game')
@@ -1082,23 +1312,23 @@ async def game_command(ctx, *, selected: str=''):
         game=storage.current_game(c)
         version=storage.current_game_version(c,game,poe1_default=DEFAULT_LEAGUE,poe2_default=DEFAULT_POE2_VERSION)
         if not selected.strip():
-            await ctx.reply(f'🎮 Gra: **{game_modes.game_label(game)}**, wersja **{version}**.\n'
-                            'Przełącz: pGame poe2 lub pGame poe1.')
+            await localized_reply(ctx, f'🎮 Gra: **{game_modes.game_label(game)}**, wersja **{version}**.\n'
+                            'Przełącz: `pGame poe2` lub `pGame poe1`.')
             return
         new=game_modes.normalize_game(selected)
         if new is None:
-            await ctx.reply('Użycie: pGame poe1 lub pGame poe2.')
+            await localized_reply(ctx, 'Użycie: `pGame poe1` lub `pGame poe2`.')
             return
         if scan_lock.locked():
-            await ctx.reply('Skanowanie trwa. Zmień grę po zakończeniu bieżącego skanu.')
+            await localized_reply(ctx, 'Skanowanie trwa. Zmień grę po zakończeniu bieżącego skanu.')
             return
         if game==new:
-            await ctx.reply(f'🎮 **{game_modes.game_label(game)} {version}** jest już aktywne.')
+            await localized_reply(ctx, f'🎮 **{game_modes.game_label(game)} {version}** jest już aktywne.')
             return
         storage.set_game(c,new)
         new_version=storage.current_game_version(c,new,poe1_default=DEFAULT_LEAGUE,poe2_default=DEFAULT_POE2_VERSION)
-        await ctx.reply(f'✅ Przełączono grę na **{game_modes.game_label(new)} {new_version}**.\n'
-                        'Od teraz pScan, pSearch, automatyczne skanowanie i podsumowanie używają tej gry. '
+        await localized_reply(ctx, f'✅ Przełączono grę na **{game_modes.game_label(new)} {new_version}**.\n'
+                        'Od teraz `pScan`, `pSearch`, automatyczne skanowanie i podsumowanie używają tej gry. '
                         'Poprzednia wersja drugiej gry pozostaje zapamiętana. Restart nie jest wymagany.')
     finally:
         c.close()
@@ -1115,22 +1345,22 @@ async def league_command(ctx, *, version: str=''):
         new=version.strip()
         sample='1.0' if game=='poe2' else '3.31'
         if not new:
-            await ctx.reply(f'Gra: **{game_modes.game_label(game)}**. Aktualna wersja: **{current}**. '
-                            f'Zmiana: pLeague {sample}.')
+            await localized_reply(ctx, f'Gra: **{game_modes.game_label(game)}**. Aktualna wersja: **{current}**. '
+                            f'Zmiana: `pLeague {sample}`.')
             return
         valid=game_modes.valid_poe2_version(new) if game=='poe2' else features.league_valid(new)
         if not valid:
-            await ctx.reply(f'Niepoprawny numer wersji dla {game_modes.game_label(game)}. '
-                            f'Użyj np. pLeague {sample}.')
+            await localized_reply(ctx, f'Niepoprawny numer wersji dla {game_modes.game_label(game)}. '
+                            f'Użyj np. `pLeague {sample}`.')
             return
         if scan_lock.locked():
-            await ctx.reply('Skanowanie trwa. Zmień wersję po jego zakończeniu.')
+            await localized_reply(ctx, 'Skanowanie trwa. Zmień wersję po jego zakończeniu.')
             return
         if new==current:
-            await ctx.reply(f'Wersja **{new}** jest już aktywna.')
+            await localized_reply(ctx, f'Wersja **{new}** jest już aktywna.')
             return
         storage.set_game_version(c,game,new)
-        await ctx.reply(f'✅ {game_modes.game_label(game)}: wersja **{current}** → **{new}**.\n'
+        await localized_reply(ctx, f'✅ {game_modes.game_label(game)}: wersja **{current}** → **{new}**.\n'
                         'Wyszukiwanie i filtry już korzystają z nowej wersji. '
                         'Nie zmieniono ustawień drugiej gry ani historii wysłanych filmów.')
     finally:
@@ -1144,10 +1374,10 @@ async def digest_command(ctx):
         return
     try:
         message = await send_digest(manual=True)
-        await ctx.reply(message or 'Podsumowanie zostało wysłane.', allowed_mentions=discord.AllowedMentions.none())
+        await localized_reply(ctx, message or 'Podsumowanie zostało wysłane.', allowed_mentions=discord.AllowedMentions.none())
     except Exception:
         log.exception('Ręczne podsumowanie nie powiodło się')
-        await ctx.reply('Nie udało się wysłać podsumowania. Sprawdź logi bota.')
+        await localized_reply(ctx, 'Nie udało się wysłać podsumowania. Sprawdź logi bota.')
 
 
 @bot.command(name='BlockChannel')
@@ -1156,12 +1386,12 @@ async def block_channel_command(ctx, *, channel: str=''):
     if not await require_consent(ctx):return
     ident=enhancements.youtube_channel_id(channel)
     if not ident:
-        await ctx.reply('Podaj ID kanału YouTube: `pBlockChannel UCxxxxxxxxxxxxxxxxxxxxxx` (lub jego URL /channel/UC...).')
+        await localized_reply(ctx, 'Podaj ID kanału YouTube: `pBlockChannel UCxxxxxxxxxxxxxxxxxxxxxx` (lub jego URL /channel/UC...).')
         return
     c=db()
     try:storage.put_channel_rule(c,ident,'block')
     finally:c.close()
-    await ctx.reply(f'⛔ Zablokowano kanał YouTube `{ident}`. Nie będzie publikowany.')
+    await localized_reply(ctx, f'⛔ Zablokowano kanał YouTube `{ident}`. Nie będzie publikowany.')
 
 
 @bot.command(name='AllowChannel')
@@ -1170,12 +1400,12 @@ async def allow_channel_command(ctx, *, channel: str=''):
     if not await require_consent(ctx):return
     ident=enhancements.youtube_channel_id(channel)
     if not ident:
-        await ctx.reply('Podaj ID kanału YouTube: `pAllowChannel UCxxxxxxxxxxxxxxxxxxxxxx`.')
+        await localized_reply(ctx, 'Podaj ID kanału YouTube: `pAllowChannel UCxxxxxxxxxxxxxxxxxxxxxx`.')
         return
     c=db()
     try:storage.put_channel_rule(c,ident,'allow')
     finally:c.close()
-    await ctx.reply(f'✅ Zaufany kanał `{ident}`. Priorytet kolejności, ale wszystkie filtry nadal obowiązują.')
+    await localized_reply(ctx, f'✅ Zaufany kanał `{ident}`. Priorytet kolejności, ale wszystkie filtry nadal obowiązują.')
 
 
 @bot.command(name='UnlistChannel')
@@ -1184,12 +1414,12 @@ async def unlist_channel_command(ctx, *, channel: str=''):
     if not await require_consent(ctx):return
     ident=enhancements.youtube_channel_id(channel)
     if not ident:
-        await ctx.reply('Użycie: `pUnlistChannel UCxxxxxxxxxxxxxxxxxxxxxx`.')
+        await localized_reply(ctx, 'Użycie: `pUnlistChannel UCxxxxxxxxxxxxxxxxxxxxxx`.')
         return
     c=db()
     try:removed=storage.delete_channel_rule(c,ident)
     finally:c.close()
-    await ctx.reply('Usunięto regułę kanału.' if removed else 'Kanału nie było na żadnej liście.')
+    await localized_reply(ctx, 'Usunięto regułę kanału.' if removed else 'Kanału nie było na żadnej liście.')
 
 
 @bot.command(name='Whitelist')
@@ -1200,17 +1430,17 @@ async def whitelist_command(ctx, mode: str=''):
     try:
         if mode.casefold() in ('on','only'):
             if not any(r[1]=='allow' for r in storage.all_channel_rules(c)):
-                await ctx.reply('Najpierw dodaj zaufany kanał: `pAllowChannel UC...`.')
+                await localized_reply(ctx, 'Najpierw dodaj zaufany kanał: `pAllowChannel UC...`.')
                 return
             storage.set_setting(c,'allowlist_only','true')
         elif mode.casefold()=='off':
             storage.set_setting(c,'allowlist_only','false')
         elif mode:
-            await ctx.reply('Użycie: `pWhitelist on` (publikuj tylko zaufane kanały) lub `pWhitelist off`.')
+            await localized_reply(ctx, 'Użycie: `pWhitelist on` (publikuj tylko zaufane kanały) lub `pWhitelist off`.')
             return
         value=storage.get_setting(c,'allowlist_only','false')=='true'
     finally:c.close()
-    await ctx.reply('✅ Biała lista: **tylko zaufane kanały**.' if value else
+    await localized_reply(ctx, '✅ Biała lista: **tylko zaufane kanały**.' if value else
                     'ℹ️ Biała lista: **priorytet zaufanych, pozostałe dozwolone** (poza zablokowanymi).')
 
 
@@ -1222,7 +1452,7 @@ async def channel_rules_command(ctx):
     try:rules=storage.all_channel_rules(c)
     finally:c.close()
     lines=[f'{"✅ zaufany" if r[1]=="allow" else "⛔ zablokowany"}: `{r[0]}`' for r in rules[:35]]
-    await ctx.reply('📃 **Lista kanałów YouTube**\n'+('\n'.join(lines) if lines else 'Brak reguł.') +
+    await localized_reply(ctx, '📃 **Lista kanałów YouTube**\n'+('\n'.join(lines) if lines else 'Brak reguł.') +
                     ('\n… i kolejne.' if len(rules)>35 else ''),allowed_mentions=discord.AllowedMentions.none())
 
 
@@ -1234,7 +1464,7 @@ async def filters_command(ctx):
     try:f=storage.get_filters(c,storage.current_game(c))
     finally:c.close()
     values=', '.join(f'**{k}**: `{v}`' for k,v in f.items()) or 'brak (wszystkie zgodne buildy)'
-    await ctx.reply('🎯 **Filtry buildów**\n'+values+'\nPrzykłady: `pFilter skill Lightning Strike`, '
+    await localized_reply(ctx, '🎯 **Filtry buildów**\n'+values+'\nPrzykłady: `pFilter skill Lightning Strike`, '
                     '`pFilter ascendancy Deadeye`, `pFilter class Ranger`, '
                     '`pFilter mode SSF`, `pFilter stage starter`; `pFilter clear`.')
 
@@ -1248,7 +1478,7 @@ async def filter_command(ctx, field: str='', *, value: str=''):
         c=db()
         try:storage.set_filters(c,{},storage.current_game(c))
         finally:c.close()
-        await ctx.reply('✅ Wyczyszczono wszystkie rozszerzone filtry.')
+        await localized_reply(ctx, '✅ Wyczyszczono wszystkie rozszerzone filtry.')
         return
     c=db()
     try:active_game=storage.current_game(c)
@@ -1257,7 +1487,7 @@ async def filter_command(ctx, field: str='', *, value: str=''):
     available_asc=ASCENDANCIES+list(game_modes.POE2_ASCENDANCIES) if active_game=='poe2' else ASCENDANCIES
     try:canonical=enhancements.validate_filter(field,value,available_skills,available_asc)
     except ValueError:
-        await ctx.reply('Wybierz: `skill`, `ascendancy`, `class`, `mode` (SSF/HC/SC), '
+        await localized_reply(ctx, 'Wybierz: `skill`, `ascendancy`, `class`, `mode` (SSF/HC/SC), '
                         '`stage` (starter/endgame/leveling/build). Wpisz `all`, by usunąć wybrany filtr.')
         return
     c=db()
@@ -1267,19 +1497,19 @@ async def filter_command(ctx, field: str='', *, value: str=''):
         else:all_filters[field]=canonical
         storage.set_filters(c,all_filters,active_game)
     finally:c.close()
-    await ctx.reply(f'✅ Filtr `{field}`: `{canonical or "wszystkie"}`. Zmiana obowiązuje przy następnym skanie.')
+    await localized_reply(ctx, f'✅ Filtr `{field}`: `{canonical or "wszystkie"}`. Zmiana obowiązuje przy następnym skanie.')
 
 
 @bot.command(name='RefreshLinks')
 @commands.check(allowed)
 async def refresh_links_command(ctx):
     if not await require_consent(ctx):return
-    await ctx.reply('🔗 Sprawdzam linki w ostatnio opublikowanych filmach…')
+    await localized_reply(ctx, '🔗 Sprawdzam linki w ostatnio opublikowanych filmach…')
     try:reply=await refresh_post_links(manual=True)
     except Exception as exc:
         log.exception('Manual refresh error')
         reply=f'Nie udało się odświeżyć przycisków ({type(exc).__name__}).'
-    await ctx.reply(reply,allowed_mentions=discord.AllowedMentions.none())
+    await localized_reply(ctx, reply,allowed_mentions=discord.AllowedMentions.none())
 
 
 @bot.command(name='Backup')
@@ -1289,12 +1519,12 @@ async def backup_command(ctx):
     try:
         path,created=await asyncio.to_thread(backups.backup_database,DB_PATH,BACKUP_DIR,
                                              keep=BACKUP_KEEP_DAYS,now=utc_now())
-        await ctx.reply('💾 **Kopia SQLite**: '+('utworzona' if created else 'już istnieje dzisiaj')+
+        await localized_reply(ctx, '💾 **Kopia SQLite**: '+('utworzona' if created else 'już istnieje dzisiaj')+
                         f'. Folder: `{discord.utils.escape_mentions(str(path.parent))}`. '
                         'Plik nie jest publikowany na GitHubie.')
     except Exception as exc:
         log.exception('Manual backup error')
-        await ctx.reply(f'Błąd kopii zapasowej ({type(exc).__name__}). Sprawdź logi.')
+        await localized_reply(ctx, f'Błąd kopii zapasowej ({type(exc).__name__}). Sprawdź logi.')
 
 
 @bot.command(name='Version')
@@ -1308,7 +1538,7 @@ async def version_command(ctx):
         status=f'🆕 Dostępna aktualizacja **v{remote}**.'
     else:
         status=f'Aktualna publiczna wersja: **v{remote}**.'
-    await ctx.reply(f'📦 **PoE Build Notifier v{VERSION}**\n{status}\n'
+    await localized_reply(ctx, f'📦 **PoE Build Notifier v{VERSION}**\n{status}\n'
                     '📋 https://bollek231.github.io/poe-build-notifier-site/changelog.html\n'
                     'Bot sam nie pobiera ani nie instaluje aktualizacji.',allowed_mentions=discord.AllowedMentions.none())
 
@@ -1320,11 +1550,15 @@ async def on_command_error(ctx, error):
     if isinstance(error, commands.CommandNotFound):
         return
     log.error('Command error: %s', error)
-    await ctx.reply('Nie udało się wykonać komendy. Sprawdź logi bota.')
+    await localized_reply(ctx, 'Nie udało się wykonać komendy. Sprawdź logi bota.')
 
 
 if __name__ == '__main__':
     if not TOKEN or not API_KEY or not CHANNEL_ID:
         raise SystemExit('Uzupełnij DISCORD_TOKEN, YOUTUBE_API_KEY i DISCORD_CHANNEL_ID w .env')
-    db().close()
+    c=db()
+    try:
+        BOT_LANGUAGE=runtime_settings.get_language(c)
+        apply_runtime_values(runtime_settings.snapshot(c,SETTING_DEFAULTS))
+    finally:c.close()
     bot.run(TOKEN)

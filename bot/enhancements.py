@@ -1,4 +1,4 @@
-"""Independent helpers for v0.6.0. No credentials, network calls or Discord imports."""
+"""Independent helpers for v0.6.1. No credentials, network calls or Discord imports."""
 from __future__ import annotations
 
 import ipaddress
@@ -9,7 +9,7 @@ from pathlib import Path
 from urllib.parse import urlparse
 from zoneinfo import ZoneInfo
 
-VERSION = '0.6.0'
+VERSION = '0.6.1'
 PACIFIC = ZoneInfo('America/Los_Angeles')
 POLAND = ZoneInfo('Europe/Warsaw')
 CHANNEL_ID_RE = re.compile(r'UC[A-Za-z0-9_-]{22}\Z')
@@ -22,7 +22,7 @@ ASC_TO_CLASS = {
     'Necromancer':'Witch','Occultist':'Witch','Elementalist':'Witch',
     'Inquisitor':'Templar','Hierophant':'Templar','Guardian':'Templar',
     'Ascendant':'Scion',
-    # Path of Exile 2 ascendancies.
+    # Path of Exile 2 ascendancies; class labels are game-specific.
     'Titan':'Warrior','Warbringer':'Warrior','Smith of Kitava':'Warrior',
     'Stormweaver':'Sorceress','Chronomancer':'Sorceress','Disciple of Varashta':'Sorceress',
     'Gemling Legionnaire':'Mercenary','Witchhunter':'Mercenary','Tactician':'Mercenary',
