@@ -1197,7 +1197,10 @@ async def embed_style_command(ctx, mode: str='status'):
         return
     mode=mode.strip().casefold()
     if mode not in (*EMBED_STYLES,'status'):
-        await localized_reply(ctx, 'Użycie: `pEmbedStyle compact`, `pEmbedStyle expanded` lub `pEmbedStyle status`.')
+        await localized_reply(ctx, localization.choose(
+            'Użycie: `pEmbedStyle compact`, `pEmbedStyle expanded` lub `pEmbedStyle status`.',
+            'Usage: `pEmbedStyle compact`, `pEmbedStyle expanded`, or `pEmbedStyle status`.',
+            BOT_LANGUAGE))
         return
     c=db()
     try:
@@ -1206,9 +1209,10 @@ async def embed_style_command(ctx, mode: str='status'):
         selected=storage.get_setting(c,'embed_style','expanded')
     finally:
         c.close()
-    await localized_reply(ctx,
-        ('🎨 Styl nowych powiadomień: **' + selected + '**. ' +
-         'Zmieniasz układ nowych wiadomości; wcześniejsze pozostają bez zmian.'))
+    await localized_reply(ctx, localization.choose(
+        f'🎨 Styl nowych powiadomień: **{selected}**. Nowy układ dotyczy tylko przyszłych wiadomości.',
+        f'🎨 New notification style: **{selected}**. Existing messages stay unchanged.',
+        BOT_LANGUAGE))
 
 
 @bot.command(name='FarmScan')
