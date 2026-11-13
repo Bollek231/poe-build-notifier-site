@@ -75,8 +75,8 @@ class FeatureTests(unittest.TestCase):
         self.assertTrue(e.matches_filters(title+' HC','','Lightning Strike','Deadeye','League Starter',{'mode':'HC'}))
 
     def test_url_validation_no_ssrf(self):
-        good=['https://pobb.in/abc','https://mobalytics.gg/poe/builds/123','https://maxroll.gg/poe/build-guides/123']
-        bad=['http://pobb.in/a','https://pobb.in.evil.com/a','https://127.0.0.1/foo',
+        good=['https://pobb.in/abc','https://mobalytics.gg/poe/builds/123','https://maxroll.gg/poe/build-guides/123','https://poeplanner.com/a/example','https://www.poeplanner.com/atlas/valid']
+        bad=['http://pobb.in/a','http://poeplanner.com/a/abc','https://poeplanner.com.evil.example/a','https://user:pass@poeplanner.com/a', 'https://poeplanner.com:8443/a','https://evilpoeplanner.com/a','https://pobb.in.evil.com/a','https://127.0.0.1/foo',
              'https://localhost/private','file:///etc/passwd','https://user:pass@pobb.in/a',
              'https://evil.com','https://pobb.in:444/path']
         self.assertTrue(all(e.sane_external_url(x) for x in good))
