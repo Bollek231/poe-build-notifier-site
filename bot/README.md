@@ -1,10 +1,15 @@
-# PoE Build Notifier v0.6.4 — kod źródłowy / source code
+# PoE Build Notifier v0.6.4b — kod źródłowy / source code
 
 [🇵🇱 Polski](#polski) · [🇬🇧 English](#english) · [Strona / Website](https://bollek231.github.io/poe-build-notifier-site/) · [Lista zmian / Patch Notes](../CHANGELOG.md)
 
 ## Polski
 
-### Strategie farmienia waluty (v0.6.4)
+### Limit liczby filmów w ręcznym skanowaniu (v0.6.4b)
+
+`pScan` nadal wykonuje pełne ręczne wyszukiwanie buildów, a `pFarmScan` pełne ręczne wyszukiwanie strategii farmienia. Dodanie liczby **1–25** ogranicza liczbę nowych pasujących filmów opublikowanych na Discordzie lub zapisanych do kolejki ciszy nocnej: `pScan 1`, `pScan 2`, `pFarmScan 1`, `pFarmScan 2`. Liczba **nie** oznacza liczby zapytań do YouTube API. Gdy nie ma odpowiednich nowych filmów, wynik może być mniejszy od limitu.
+
+
+### Strategie farmienia waluty (v0.6.4b)
 
 - `pFarmScan`: jednorazowy skan najnowszych strategii farmienia waluty (maks. 3 zapytania).
 - `pFarmSearch essence`: wyszukiwanie określonej kategorii, np. `harvest`, `expedition`, `atlas`, `crafting` lub `trading`. Wszystkie kategorie: `pFarmTopics`.
@@ -33,7 +38,7 @@ Dwukrotnie kliknij `Start_PoE_Bot.bat` podczas pierwszego uruchomienia: tworzy `
 
 ### Instalacja na Windows
 
-1. Zainstaluj **Python 3.11 lub nowszy**. Pobierz [ZIP v0.6.4](https://bollek231.github.io/poe-build-notifier-site/downloads/PoE_Build_Notifier_v0.6.4.zip) i wypakuj wszystkie pliki bota do folderu, np. `D:\PoE-Bot`.
+1. Zainstaluj **Python 3.11 lub nowszy**. Pobierz [ZIP v0.6.4b](https://bollek231.github.io/poe-build-notifier-site/downloads/PoE_Build_Notifier_v0.6.4b.zip) i wypakuj wszystkie pliki bota do folderu, np. `D:\PoE-Bot`.
 2. Otwórz CMD:
 
 ```bat
@@ -56,7 +61,7 @@ notepad .env
 |---|---|
 | `pGame poe1` / `pGame poe2` | Przełączanie Path of Exile 1 / Path of Exile 2 |
 | `pLeague` / `pLeague 1.0` | Podgląd i zmiana wersji wybranej gry; PoE 2 domyślnie 1.0 |
-| `pScan` / `pSearch Spark` | Skanowanie i wyszukiwanie nowych buildów |
+| `pScan` / `pScan 1` / `pSearch Spark` | Pełny skan, limit nowych filmów lub wyszukiwanie buildów |
 | `pLanguage` | Menu wyboru języka: polski / angielski |
 | `pSettings` | Menu bezpiecznej edycji ustawień |
 | `pFilters` / `pFilter` | Filtry buildów |
@@ -75,13 +80,18 @@ Bot automatycznie skanuje YouTube (domyślnie co 2 godziny), przyjmuje tylko fil
 
 Na Railway/VPS ustaw trwały wolumin, np. `DB_PATH=/data/poe330_seen.sqlite3` i `BACKUP_DIR=/data/backups`. Nie udostępniaj swoich plików `.env`, bazy ani kopii zapasowych.
 
-[Pełna instrukcja](INSTRUKCJA_INSTALACJI_v0.6.4_PL_EN.md) · [Lista komend](https://bollek231.github.io/poe-build-notifier-site/komendy.html)
+[Pełna instrukcja](INSTRUKCJA_INSTALACJI_v0.6.4b_PL_EN.md) · [Lista komend](https://bollek231.github.io/poe-build-notifier-site/komendy.html)
 
 ---
 
 ## English
 
-### Currency farming strategy discovery (v0.6.4)
+### Optional manual scan video limit (v0.6.4b)
+
+`pScan` still performs the full manual build scan, and `pFarmScan` the full farming strategy scan. Add a number **1–25** to cap newly posted or quiet-hours queued matching videos: `pScan 1`, `pScan 2`, `pFarmScan 1`, `pFarmScan 2`. The number does **not** represent the number of YouTube API searches. Fewer results may appear when fewer eligible new videos are found.
+
+
+### Currency farming strategy discovery (v0.6.4b)
 
 - `pFarmScan`: run up to three queries for fresh currency farming guides.
 - `pFarmSearch essence`: search a category such as `harvest`, `expedition`, `atlas`, `crafting` or `trading`; `pFarmTopics` lists all options.
@@ -110,7 +120,7 @@ Double-click `Start_PoE_Bot.bat` for the initial environment setup, then `Start_
 
 ### Windows setup
 
-1. Install **Python 3.11+**. [Download v0.6.4](https://bollek231.github.io/poe-build-notifier-site/downloads/PoE_Build_Notifier_v0.6.4.zip) and extract the bot files to a directory such as `D:\PoE-Bot`.
+1. Install **Python 3.11+**. [Download v0.6.4b](https://bollek231.github.io/poe-build-notifier-site/downloads/PoE_Build_Notifier_v0.6.4b.zip) and extract the bot files to a directory such as `D:\PoE-Bot`.
 2. Open Command Prompt:
 
 ```bat
@@ -133,7 +143,7 @@ notepad .env
 |---|---|
 | `pGame poe1` / `pGame poe2` | Switch Path of Exile 1 / Path of Exile 2 |
 | `pLeague` / `pLeague 1.0` | View or select the active game's patch; PoE 2 defaults to 1.0 |
-| `pScan` / `pSearch Spark` | Scan or search build guides |
+| `pScan` / `pScan 1` / `pSearch Spark` | Full scan, limited results or search build guides |
 | `pLanguage` | Polish / English language dropdown |
 | `pSettings` | Interactive, validated settings |
 | `pFilters` / `pFilter` | Advanced build filters |
@@ -152,7 +162,7 @@ The default scan interval is 2 hours. Only videos published in the past 24 hours
 
 On Railway/VPS use persistent storage, for example `DB_PATH=/data/poe330_seen.sqlite3` and `BACKUP_DIR=/data/backups`. Never publish your `.env`, database or private backups.
 
-[Full setup guide](INSTRUKCJA_INSTALACJI_v0.6.4_PL_EN.md) · [Commands](https://bollek231.github.io/poe-build-notifier-site/komendy-en.html)
+[Full setup guide](INSTRUKCJA_INSTALACJI_v0.6.4b_PL_EN.md) · [Commands](https://bollek231.github.io/poe-build-notifier-site/komendy-en.html)
 
 ---
 
