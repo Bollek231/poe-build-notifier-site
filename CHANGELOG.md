@@ -1,12 +1,20 @@
 # PoE Build Notifier — Lista zmian / Patch Notes
 
-**Aktualna wersja / Current version:** `v0.6.4c`
+**Aktualna wersja / Current version:** `v0.6.4d`
 
 [🇵🇱 Lista zmian — strona](https://bollek231.github.io/poe-build-notifier-site/changelog.html) · [🇬🇧 Patch Notes — website](https://bollek231.github.io/poe-build-notifier-site/changelog-en.html)
 
 ---
 
 ## 🇵🇱 Polski
+
+### v0.6.4d — 13 listopada 2026
+- **Nowy wygląd powiadomień Discord:** fioletowe embedy dla buildów i złote dla strategii farmienia, czytelne nagłówki, kategorie, autorzy, wersje gry i miniatury.
+- **`pEmbedStyle compact` / `pEmbedStyle expanded` / `pEmbedStyle status`:** wybór kompaktowego lub rozszerzonego układu dla nowych powiadomień, zapisany w SQLite; domyślny to `expanded`.
+- Uporządkowano przyciski: **⭐ Zapisz, YouTube, PoB, Maxroll, Mobalytics i PoE Planner** (odnośniki tylko gdy są dostępne i poprawne). Nie ma już osobnego surowego URL nad embedem.
+- Usunięto zbędne dopiski typu „oznaczenie bota” i skrócono stopki. Naprawiono obsługę przycisku Zapisz również na osobnym kanale farmienia `FARM_CHANNEL_ID`.
+- Poprawiono bezpieczeństwo treści powiadomień (bez automatycznych wzmianek wszystkich użytkowników). Starsze wiadomości nie są automatycznie przerabiane.
+
 
 ### v0.6.4c — 13 listopada 2026
 - Dodano przycisk **PoE Planner** w powiadomieniach o strategiach farmienia, gdy opis filmu YouTube zawiera link do `https://poeplanner.com` lub `https://www.poeplanner.com`.
@@ -87,6 +95,14 @@
 ---
 
 ## 🇬🇧 English
+
+### v0.6.4d — November 13, 2026
+- **Redesigned Discord notifications:** purple build embeds and golden farming embeds with clearer headings, categories, authors, patch information, and video thumbnails.
+- **`pEmbedStyle compact` / `pEmbedStyle expanded` / `pEmbedStyle status`:** choose between compact and expanded layouts for new posts; persisted in SQLite; default is `expanded`.
+- Refined action buttons: **⭐ Save, YouTube, PoB, Maxroll, Mobalytics and PoE Planner** when valid links are available. Removed the redundant raw YouTube URL above the embed.
+- Simplified field labels and footers; enabled the Save button on dedicated farming channels via `FARM_CHANNEL_ID`.
+- Prevented unwanted mentions in new notifications. Existing messages are left unchanged.
+
 
 ### v0.6.4c — November 13, 2026
 - Added a **PoE Planner** button to currency-farming notifications when a YouTube video description links to `https://poeplanner.com` or `https://www.poeplanner.com`.
