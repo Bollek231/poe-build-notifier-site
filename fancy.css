@@ -127,3 +127,20 @@ body.docs-redesign .site-notice.site-notice--closing{opacity:0;transform:transla
 body.docs-redesign .site-notice[hidden]{display:none!important}
 @media(max-width:600px){body.docs-redesign .site-notice{font-size:12px;padding:14px 47px 14px 15px;margin-top:12px}}
 @media(prefers-reduced-motion:reduce){body.docs-redesign .site-notice{transition:none!important}}
+
+/* Keep the site navigation visible while scrolling, in both languages. */
+.fancy-home #app>header,
+body.docs-redesign>header{
+  position:sticky;
+  top:0;
+  z-index:100;
+  isolation:isolate;
+  -webkit-backdrop-filter:blur(18px);
+  backdrop-filter:blur(18px);
+}
+.fancy-home #app>header{background:rgba(11,14,22,.90)}
+.fancy-home.light #app>header{background:rgba(250,246,238,.92)}
+body.docs-redesign>header{background:rgba(10,14,24,.91)}
+body.docs-redesign.light>header{background:rgba(250,245,235,.93)}
+html{scroll-padding-top:95px}
+@media(max-width:760px){html{scroll-padding-top:85px}}
