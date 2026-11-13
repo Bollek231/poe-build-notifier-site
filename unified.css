@@ -1,0 +1,200 @@
+/* PoE Build Notifier — shared site design for all PL/EN pages.
+   v0.6.1 is the bot version; website-only visual updates do not increment it. */
+:root{--site-header-height:82px;--site-font:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif}
+body.fancy-home,body.docs-redesign{font-family:var(--site-font);font-synthesis:none;-webkit-font-smoothing:antialiased}
+body.fancy-home #app{padding-top:var(--site-header-height)}
+body.docs-redesign{padding-top:var(--site-header-height)}
+body.docs-redesign.dark{
+  --bg:#080a10;--background:#0d1019;--panel:#141925;--panel2:#1b2130;
+  --fg:#f4f0e9;--text:#f4f0e9;--muted:#aab0bf;--soft:#7d8699;
+  --gold:#dfad73;--accent:#dfad73;--accent-hi:#ffdfac;
+  --border:rgba(238,208,162,.15);--line:rgba(238,208,162,.15);
+  --line-hi:rgba(241,180,102,.34);--shadow:rgba(0,0,0,.28);
+  --halo:rgba(219,151,79,.16);background:var(--bg);color:var(--fg)
+}
+body.docs-redesign.light{
+  --bg:#f7f3ec;--background:#f9f6f1;--panel:#fffdf8;--panel2:#f2ede4;
+  --fg:#241f26;--text:#241f26;--muted:#655e6b;--soft:#7b7480;
+  --gold:#946124;--accent:#946124;--accent-hi:#6e4a20;
+  --border:rgba(85,60,47,.19);--line:rgba(85,60,47,.19);
+  --line-hi:rgba(162,104,40,.4);--shadow:rgba(92,57,44,.10);
+  --halo:rgba(195,139,69,.17);background:var(--bg);color:var(--fg)
+}
+
+/* A genuinely fixed header. Neither scroll containers nor nearby decorative
+   elements can prevent it from following the viewport. */
+body.fancy-home #app>header.unified-header,
+body.docs-redesign>header.unified-header{
+  position:fixed!important;top:0;left:0;right:0;width:100%;height:var(--site-header-height);
+  z-index:1000!important;border-bottom:1px solid var(--line);
+  background:rgba(11,14,22,.94);
+  -webkit-backdrop-filter:blur(18px);backdrop-filter:blur(18px);
+  box-shadow:0 8px 26px rgba(0,0,0,.09);
+  isolation:isolate
+}
+body.fancy-home.light #app>header.unified-header,
+body.docs-redesign.light>header.unified-header{background:rgba(250,246,238,.96)}
+.unified-header .header-inner{
+  width:min(1180px,calc(100% - 48px));max-width:1180px;
+  height:var(--site-header-height);min-height:var(--site-header-height);
+  margin:0 auto;padding:0;display:flex;align-items:center;
+  justify-content:space-between;gap:22px;flex-wrap:nowrap;position:relative
+}
+.unified-header .logo{display:flex;align-items:center;gap:12px;min-width:0;
+  color:var(--fg);text-decoration:none;white-space:nowrap;flex-shrink:0}
+.unified-header .logo-symbol{height:42px;width:42px;flex-shrink:0;
+  display:grid;place-items:center;border:1px solid var(--line-hi);
+  border-radius:12px;background:linear-gradient(145deg,rgba(224,168,87,.2),rgba(125,84,143,.08));
+  box-shadow:inset 0 0 22px rgba(234,177,99,.08);
+  font:30px Georgia,serif;color:var(--accent)}
+.unified-header .logo strong{display:block;font-size:14px;line-height:1.2;
+  font-family:var(--site-font);font-weight:780;letter-spacing:.035em;color:var(--fg)}
+.unified-header .logo small{display:block;margin-top:4px;
+  font:700 9px/1.4 var(--site-font);letter-spacing:.14em;color:var(--soft)}
+.unified-header .logo .site-version{display:inline-flex;font:750 10px/1.2 var(--site-font);
+  color:var(--accent);letter-spacing:.03em;border:1px solid var(--line-hi);
+  background:rgba(206,151,78,.12);padding:3px 6px;border-radius:30px;margin-left:4px}
+.unified-header #site-nav{display:flex;align-items:center;justify-content:center;
+  flex:1;min-width:0;gap:14px;position:static;padding:0;margin:0;
+  box-shadow:none;background:none;border:0;flex-wrap:nowrap}
+.unified-header #site-nav a{color:var(--muted);font:650 11px/1.4 var(--site-font);
+  text-decoration:none;white-space:nowrap;opacity:1;transition:color .18s}
+.unified-header #site-nav a:hover,
+.unified-header #site-nav a.active,
+.unified-header #site-nav a[aria-current="page"]{color:var(--accent-hi)}
+.unified-header .controls{display:flex;gap:7px;align-items:center;flex-shrink:0;margin:0}
+.unified-header .ctrl{height:39px;width:39px;min-width:39px;
+  display:grid;place-items:center;flex-shrink:0;cursor:pointer;
+  border:1px solid var(--line);border-radius:10px;
+  background:var(--panel);color:var(--fg);
+  font:inherit;font-size:17px;text-decoration:none;transition:transform .2s,border-color .2s}
+.unified-header .ctrl:hover{border-color:var(--line-hi);transform:translateY(-1px)}
+.unified-header .ctrl.selected{border-color:var(--accent);background:rgba(188,135,72,.15)}
+.unified-header .ctrl:focus-visible,.unified-header #site-nav a:focus-visible,
+.unified-header .logo:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
+.unified-header .menu-button{display:none}
+.unified-header .theme-button{margin:0}
+.unified-header .lang-flag-image{display:block;width:25px;height:18px}
+html{scroll-padding-top:calc(var(--site-header-height) + 18px)}
+
+/* Documentation uses the same font, scale, colors, cards and animated scene
+   as the main landing page, rather than the older standalone design. */
+body.docs-redesign .site-atmosphere{position:fixed;inset:0;z-index:0;pointer-events:none;
+  overflow:hidden;background:radial-gradient(ellipse 900px 500px at 70% 19%,rgba(105,73,147,.14),transparent 70%),
+  radial-gradient(ellipse 700px 430px at 9% 85%,rgba(150,82,56,.08),transparent 72%),
+  linear-gradient(180deg,var(--bg),var(--background) 70%,var(--bg))}
+body.docs-redesign .site-atmosphere::before{content:"";position:absolute;inset:0;
+  opacity:.4;background-image:radial-gradient(circle,rgba(215,178,132,.65) 1px,transparent 1px),
+    radial-gradient(circle,rgba(180,158,208,.35) 1px,transparent 1px);
+  background-size:133px 133px,191px 191px;
+  background-position:20px 7px,80px 58px;
+  mask-image:linear-gradient(transparent,black 15%,black 85%,transparent);
+  animation:constellation-drift 110s linear infinite}
+body.docs-redesign.light .site-atmosphere::before{opacity:.22}
+body.docs-redesign .site-atmosphere::after{opacity:.12}
+body.docs-redesign .site-spotlight{z-index:0}
+body.docs-redesign>main.content{width:min(1000px,calc(100% - 48px));max-width:1000px;
+  min-height:calc(100vh - var(--site-header-height) - 120px);
+  margin:0 auto;padding:55px 0 90px;font-family:var(--site-font)}
+body.docs-redesign .content h1{color:var(--fg);
+  font:500 clamp(43px,5vw,66px)/1.1 Georgia,"Times New Roman",serif;
+  letter-spacing:-.055em;margin:16px 0 25px}
+body.docs-redesign .content h2{color:var(--fg);
+  font:500 clamp(27px,3vw,36px)/1.2 Georgia,"Times New Roman",serif;
+  letter-spacing:-.035em;margin:42px 0 16px}
+body.docs-redesign .content h3{color:var(--accent-hi);
+  font:750 17px/1.4 var(--site-font);margin:25px 0 11px}
+body.docs-redesign .content p,body.docs-redesign .content li{
+  font:400 14px/1.85 var(--site-font);color:var(--muted);opacity:1}
+body.docs-redesign .content p{margin:13px 0 18px}
+body.docs-redesign .content li{margin-bottom:6px}
+body.docs-redesign .content strong{color:var(--fg);font-weight:750}
+body.docs-redesign .content .lead{color:var(--muted);font-size:16px;
+  line-height:1.8;max-width:770px}
+body.docs-redesign .content .pill{border:1px solid var(--line-hi);
+  border-radius:999px;color:var(--accent-hi);background:rgba(190,135,67,.07);
+  text-transform:uppercase;letter-spacing:.12em;font:800 10px/1.4 var(--site-font)}
+body.docs-redesign .content .note,
+body.docs-redesign .content .panel,
+body.docs-redesign .content .cards article,
+body.docs-redesign .content .release-entry{
+  background:linear-gradient(160deg,var(--panel),rgba(37,31,46,.055));
+  border:1px solid var(--line);border-radius:17px;
+  box-shadow:0 15px 40px var(--shadow);color:var(--fg);
+  backdrop-filter:blur(10px)}
+body.docs-redesign .content .cards article,
+body.docs-redesign .content .release-entry{position:relative}
+body.docs-redesign .content .cards article::before,
+body.docs-redesign .content .release-entry::before{content:"";position:absolute;
+  top:0;left:24px;width:68px;height:2px;
+  background:linear-gradient(90deg,var(--accent),transparent)}
+body.docs-redesign .content .cards article{transition:transform .22s,border-color .22s}
+body.docs-redesign .content .cards article:hover{transform:translateY(-4px);border-color:var(--line-hi)}
+body.docs-redesign .content .release-entry h2{font-size:25px;margin:0}
+body.docs-redesign .content .release-entry h3{font-size:16px;margin:15px 0}
+body.docs-redesign .content .release-date{color:var(--soft);font-size:12px}
+body.docs-redesign .content .note{padding:17px 22px;border-left:3px solid var(--accent)}
+body.docs-redesign .content .btn{display:inline-flex;align-items:center;justify-content:center;
+  min-height:43px;padding:11px 18px;margin-right:10px;
+  border-radius:11px;background:linear-gradient(120deg,#d49b5a,#ffe1aa);
+  color:#251708;border:1px solid #eac18b;
+  font:800 12px/1.4 var(--site-font);text-decoration:none;
+  transition:transform .18s,box-shadow .18s}
+body.docs-redesign .content .btn:hover{transform:translateY(-2px);box-shadow:0 8px 25px var(--shadow)}
+body.docs-redesign .content .btn.secondary{background:var(--panel);color:var(--fg);border-color:var(--line)}
+body.docs-redesign .content a:not(.btn){color:var(--accent-hi);text-underline-offset:3px}
+body.docs-redesign .content pre{background:#10131b;border:1px solid var(--line);
+  color:#dce3ee;border-radius:13px;font:13px/1.65 ui-monospace,SFMono-Regular,Consolas,monospace;
+  padding:18px 20px;overflow-x:auto;box-shadow:0 12px 30px var(--shadow)}
+body.docs-redesign .content pre code{background:none;color:inherit;padding:0}
+body.docs-redesign .content p code,body.docs-redesign .content li code,
+body.docs-redesign .content td code{color:var(--accent-hi);background:rgba(169,130,76,.12);
+  padding:2px 5px;border-radius:5px;font-size:.9em}
+body.docs-redesign .content .doc-table{font-size:13px}
+body.docs-redesign .content .doc-table td,body.docs-redesign .content .doc-table th{
+  border-color:var(--line);color:var(--muted)}
+body.docs-redesign .content .doc-table th{color:var(--accent-hi);background:var(--panel2)}
+body.docs-redesign .content .doc-table tr:nth-child(even){background:rgba(149,123,102,.045)}
+body.docs-redesign>footer{background:transparent;border-top:1px solid var(--line);
+  color:var(--soft);font:400 12px/1.7 var(--site-font)}
+body.docs-redesign>footer .foot{width:min(1180px,calc(100% - 48px))}
+body.docs-redesign>footer a{color:var(--accent);font-size:12px}
+body.docs-redesign .site-notice{font-family:var(--site-font);background:var(--panel);border-color:var(--line);border-left-color:var(--accent)}
+body.docs-redesign .site-notice strong{color:var(--accent-hi)}
+body.docs-redesign.light .site-notice{background:var(--panel)}
+
+@media(max-width:1150px){
+  .unified-header .menu-button{display:grid}
+  .unified-header #site-nav{display:none}
+  .unified-header #site-nav.menu-open{display:flex;position:absolute;left:0;right:0;
+    top:calc(100% - 1px);flex-direction:column;align-items:stretch;gap:5px;
+    background:var(--panel);border:1px solid var(--line-hi);
+    border-radius:0 0 14px 14px;box-shadow:0 16px 38px var(--shadow);
+    padding:15px 19px;z-index:1100}
+  .unified-header #site-nav.menu-open a{font-size:13px;padding:9px 6px}
+}
+@media(max-width:760px){
+  :root{--site-header-height:76px}
+  .unified-header .header-inner{width:min(100% - 28px,700px);gap:8px}
+  .unified-header .logo{gap:8px}
+  .unified-header .logo-symbol{width:34px;height:34px;font-size:24px}
+  .unified-header .logo strong{font-size:11px;letter-spacing:.01em}
+  .unified-header .logo small{font-size:7px;letter-spacing:.06em;margin-top:2px}
+  .unified-header .logo .site-version{font-size:8px;padding:2px 5px}
+  .unified-header .controls{gap:4px}
+  .unified-header .ctrl{min-width:33px;width:33px;height:35px;border-radius:9px;font-size:15px}
+  .unified-header .lang-flag-image{width:22px;height:16px}
+  body.docs-redesign>main.content{width:min(100% - 34px,700px);padding:38px 0 68px}
+  body.docs-redesign .content h1{font-size:clamp(38px,9vw,54px)}
+  body.docs-redesign .content h2{font-size:29px}
+  body.docs-redesign .content .cards{grid-template-columns:1fr}
+}
+@media(max-width:390px){
+  .unified-header .logo small{display:none}
+  .unified-header .logo strong{font-size:10px}
+  .unified-header .logo-symbol{width:30px;height:30px}
+}
+@media(prefers-reduced-motion:reduce){
+  body.docs-redesign .site-atmosphere::before{animation:none!important}
+  .unified-header *{transition:none!important}
+}
