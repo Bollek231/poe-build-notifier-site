@@ -1,4 +1,4 @@
-# PoE Build Notifier v0.6.2 — kod źródłowy / source code
+# PoE Build Notifier v0.6.2b — kod źródłowy / source code
 
 [🇵🇱 Polski](#polski) · [🇬🇧 English](#english) · [Strona / Website](https://bollek231.github.io/poe-build-notifier-site/) · [Lista zmian / Patch Notes](../CHANGELOG.md)
 
@@ -6,7 +6,7 @@
 
 Bot Discord do wyszukiwania nowych buildów **Path of Exile 1 i Path of Exile 2** na YouTube. Przykładowe pliki konfiguracyjne nie zawierają prawdziwych tokenów.
 
-### Nowe funkcje v0.6.2
+### Funkcje bota
 
 - **`pSetup`:** konfiguracja gry, wersji, języka i interwału skanowania z menu Discorda. Zapis dopiero po zatwierdzeniu.
 - **`pHelp`:** menu kategorii komend dostępne na kanale bota.
@@ -14,13 +14,13 @@ Bot Discord do wyszukiwania nowych buildów **Path of Exile 1 i Path of Exile 2*
 - **`pPause 6h` / `pResume`:** pauza tylko dla automatycznego wyszukiwania (1–24 h lub `forever`). Ręczne `pScan` pozostaje dostępne.
 - **`pSaved`:** przycisk zapisywania przy nowych buildach i prywatna lista zakładek wysyłana przez DM; `pSaved remove VIDEO_ID` i `pSaved clear` usuwają dane.
 - **`pTrending`:** popularność ostatnich filmów według przyrostu wyświetleń między pomiarami. Pierwsze wywołanie ustala punkt odniesienia; ponowne odczyty mają 15-minutową pamięć podręczną.
-- **`pTranslateTitles on/off`:** tłumaczenie zaakceptowanych tytułów na angielski (oryginał w oddzielnym polu). Wymaga własnego klucza **Google Cloud Translation Basic v2** i włączenia rozliczeń. Bez klucza lub w razie błędu bot pokazuje oryginał. Domyślnie wyłączone, limit 30 tłumaczeń/24 h.
+- **`pTranslateTitles`:** opcjonalne tłumaczenie tytułów na angielski przez **MyMemory (bez klucza i rozliczeń)** albo **Google Cloud Translation**. Wybór: `pTranslateTitles mymemory`, `pTranslateTitles google` lub `pSettings`; oryginał pozostaje w wiadomości. Błędy tłumaczenia nie blokują publikacji.
 
-**Tłumaczenia:** w prywatnym `.env` ustaw `TRANSLATION_API_KEY=...` i opcjonalnie `TRANSLATION_DAILY_LIMIT=30`, po czym użyj `pTranslateTitles on`. Nazwy skilli i wersje gry są rozpoznawane z oryginalnego tytułu; tłumaczenie wpływa tylko na wyświetlanie. **Bot nie używa `pTop`.**
+**Tłumaczenia:** wpisz `pTranslateTitles mymemory`, aby włączyć bezpłatne MyMemory. Możesz opcjonalnie ustawić `MYMEMORY_CONTACT_EMAIL=...` w prywatnym `.env` dla wyższego limitu. Aby wybrać Google, dodaj `TRANSLATION_API_KEY=...` i wpisz `pTranslateTitles google`. Parametr `TRANSLATION_DAILY_LIMIT=30` ogranicza liczbę zapytań. Automatyczne wykrywanie języka jest lokalne, a w razie błędu bot zachowa oryginalny tytuł.
 
 ### Instalacja na Windows
 
-1. Zainstaluj **Python 3.11 lub nowszy**. Pobierz [ZIP v0.6.2](https://bollek231.github.io/poe-build-notifier-site/downloads/PoE_Build_Notifier_v0.6.2.zip) i wypakuj wszystkie pliki bota do folderu, np. `D:\PoE-Bot`.
+1. Zainstaluj **Python 3.11 lub nowszy**. Pobierz [ZIP v0.6.2b](https://bollek231.github.io/poe-build-notifier-site/downloads/PoE_Build_Notifier_v0.6.2b.zip) i wypakuj wszystkie pliki bota do folderu, np. `D:\PoE-Bot`.
 2. Otwórz CMD:
 
 ```bat
@@ -62,7 +62,7 @@ Bot automatycznie skanuje YouTube (domyślnie co 2 godziny), przyjmuje tylko fil
 
 Na Railway/VPS ustaw trwały wolumin, np. `DB_PATH=/data/poe330_seen.sqlite3` i `BACKUP_DIR=/data/backups`. Nie udostępniaj swoich plików `.env`, bazy ani kopii zapasowych.
 
-[Pełna instrukcja](INSTRUKCJA_INSTALACJI_v0.6.2_PL_EN.md) · [Lista komend](https://bollek231.github.io/poe-build-notifier-site/komendy.html)
+[Pełna instrukcja](INSTRUKCJA_INSTALACJI_v0.6.2b_PL_EN.md) · [Lista komend](https://bollek231.github.io/poe-build-notifier-site/komendy.html)
 
 ---
 
@@ -70,7 +70,7 @@ Na Railway/VPS ustaw trwały wolumin, np. `DB_PATH=/data/poe330_seen.sqlite3` i 
 
 A Discord bot for fresh **Path of Exile 1 and Path of Exile 2** YouTube build guides. The public sample configuration contains no real credentials.
 
-### New in v0.6.2
+### Bot features
 
 - **`pSetup`:** choose game, patch, language and scan interval from a Discord menu; changes apply only after confirmation.
 - **`pHelp`:** interactive command categories.
@@ -78,13 +78,13 @@ A Discord bot for fresh **Path of Exile 1 and Path of Exile 2** YouTube build gu
 - **`pPause 6h` / `pResume`:** pause scheduled searches (1–24 hours or `forever`); manual `pScan` remains available.
 - **`pSaved`:** Save button on new build posts; private bookmarks sent via DM. Remove them with `pSaved remove VIDEO_ID` or `pSaved clear`.
 - **`pTrending`:** popularity based on sampled view growth of recently detected videos. The first reading establishes a baseline; results are cached for 15 minutes.
-- **`pTranslateTitles on/off`:** optionally translate accepted video titles into English and include the original. Requires a private **Google Cloud Translation Basic v2** API key and billing. On errors the original title is used. Disabled by default, limited to 30 translations per 24 hours.
+- **`pTranslateTitles`:** optional English title translation using **MyMemory (free, no key or billing)** or **Google Cloud Translation**. Select with `pTranslateTitles mymemory`, `pTranslateTitles google`, or `pSettings`. Original titles are shown and API failures do not block notifications.
 
-**Translation setup:** put `TRANSLATION_API_KEY=...` and optionally `TRANSLATION_DAILY_LIMIT=30` in your private `.env`, then use `pTranslateTitles on`. Classification and duplicate checks always use the original titles. **No `pTop` or voting feature is included.**
+**Translation setup:** use `pTranslateTitles mymemory` without an API key or billing. Optionally provide `MYMEMORY_CONTACT_EMAIL=...` to raise the free character quota. For Google, add your private `TRANSLATION_API_KEY=...` and select `pTranslateTitles google`. `TRANSLATION_DAILY_LIMIT=30` caps calls per 24 hours. Source language is detected locally when possible; failed translations fall back to original titles.
 
 ### Windows setup
 
-1. Install **Python 3.11+**. [Download v0.6.2](https://bollek231.github.io/poe-build-notifier-site/downloads/PoE_Build_Notifier_v0.6.2.zip) and extract the bot files to a directory such as `D:\PoE-Bot`.
+1. Install **Python 3.11+**. [Download v0.6.2b](https://bollek231.github.io/poe-build-notifier-site/downloads/PoE_Build_Notifier_v0.6.2b.zip) and extract the bot files to a directory such as `D:\PoE-Bot`.
 2. Open Command Prompt:
 
 ```bat
@@ -126,7 +126,7 @@ The default scan interval is 2 hours. Only videos published in the past 24 hours
 
 On Railway/VPS use persistent storage, for example `DB_PATH=/data/poe330_seen.sqlite3` and `BACKUP_DIR=/data/backups`. Never publish your `.env`, database or private backups.
 
-[Full setup guide](INSTRUKCJA_INSTALACJI_v0.6.2_PL_EN.md) · [Commands](https://bollek231.github.io/poe-build-notifier-site/komendy-en.html)
+[Full setup guide](INSTRUKCJA_INSTALACJI_v0.6.2b_PL_EN.md) · [Commands](https://bollek231.github.io/poe-build-notifier-site/komendy-en.html)
 
 ---
 
