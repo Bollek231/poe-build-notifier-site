@@ -11,7 +11,7 @@
     })
     .then(value => {
       const version = value.trim();
-      if (!/^\d+\.\d+\.\d+$/.test(version)) return;
+      if (!/^\d+\.\d+\.\d+[a-z]?$/i.test(version)) return;
       badges.forEach(el => { el.textContent = 'v' + version; });
     })
     .catch(() => { /* Keep bundled version if the network is unavailable. */ });
