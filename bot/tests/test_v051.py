@@ -91,7 +91,7 @@ class FeatureTests(unittest.TestCase):
 
     def test_main_code_non_destructive(self):
         code=(Path(__file__).resolve().parents[1]/'main.py').read_text()
-        self.assertIn('await message.edit(view=buttons_from_links(merged))',code)
+        self.assertIn('await message.edit(view=buttons_from_links(merged,vid))',code)
         self.assertNotIn('await message.delete(',code)
         self.assertIn("@bot.command(name='Version')",code)
         self.assertIn("@bot.command(name='Filter')",code)
