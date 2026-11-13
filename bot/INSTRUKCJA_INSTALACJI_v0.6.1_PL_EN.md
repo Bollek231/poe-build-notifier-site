@@ -1,63 +1,77 @@
-# PoE Build Notifier v0.6.1 — instalacja / installation
+# PoE Build Notifier v0.6.1 — Instalacja / Installation
 
-**Nowość v0.6.1: interaktywny język i ustawienia Discorda.** Funkcje PoE 1 / PoE 2 1.0 pozostają bez zmian. Wszystkie nowe preferencje zapisują się do lokalnej bazy SQLite.
+[🇵🇱 Polski](#polski) · [🇬🇧 English](#english) · [Strona główna / Homepage](https://bollek231.github.io/poe-build-notifier-site/)
 
-### Język powiadomień (`pLanguage`)
+## Polski
 
-- Wpisz **`pLanguage`**, a bot otworzy menu Discorda **Polski / English**.
-- Możesz również użyć **`pLanguage pl`** lub **`pLanguage en`**.
-- Wybrany język dotyczy odpowiedzi komend, nazw pól embedów, alertów i podsumowań. Oryginalne tytuły filmów YouTube i linki pozostają niezmienione.
-- Wybór jest wspólny dla jednego serwera/kanału obsługiwanego przez tego bota i zachowywany po restarcie. Wcześniej opublikowane wiadomości nie są tłumaczone wstecz.
+### Pierwsza instalacja na Windows
 
-### Edytowalne ustawienia (`pSettings`)
+1. Zainstaluj **Python 3.11+** i pobierz [aktualną paczkę ZIP](https://bollek231.github.io/poe-build-notifier-site/downloads/PoE_Build_Notifier_v0.6.1.zip).
+2. Wypakuj pliki bota do `D:\PoE-Bot`.
+3. Otwórz CMD i wykonaj:
 
-- **`pSettings`** otwiera panel z listą aktualnych parametrów i menu rozwijanym.
-- Wybór parametru liczbowego lub godziny otwiera **formularz Discord**. Opcje tak/nie przełączają się od razu.
-- Dostępne są: interwał skanowania (1–24 h), godzina podsumowania (HH:MM, Warszawa), włączenie podsumowania, wyniki na frazę (1–50), odstęp powiadomień (1–30 s), lokalny budżet dzienny (1–10000), rezerwa na ręczne komendy, wiek publikacji filmu (1–24 h), częstotliwość odświeżania linków (1–24 h), liczba odświeżanych filmów (1–50), kontrola linków, sprawdzanie aktualizacji i interwał GitHub (1–72 h).
-- Niedozwolone wartości nie są zapisywane. Rezerwa ręczna musi być mniejsza niż budżet dzienny. Maksymalny wiek filmu nadal **nie przekracza 24 godzin**.
-- Zmiany działają bez restartu; są zapamiętywane w tabeli `bot_settings`. `.env` pozostaje źródłem wartości domyślnych.
-- Panele może obsługiwać **wyłącznie administrator, który je otworzył**, na wybranym kanale Discorda po `pAgree`. Panel wygasa po 5 minutach.
-- Tokeny, klucze API, ID kanałów i lokalizacja bazy **nie są edytowalne** przez Discorda.
+```bat
+cd /d D:\PoE-Bot
+py -m venv .venv
+.venv\Scripts\activate
+python -m pip install -r requirements.txt
+copy .env.example .env
+notepad .env
+```
 
-### Bezpieczna aktualizacja z v0.6.0
+4. W `.env` wpisz własne `DISCORD_TOKEN`, `YOUTUBE_API_KEY` i `DISCORD_CHANNEL_ID`. Włącz **Message Content Intent** w ustawieniach aplikacji Discord.
+5. Uruchom `python main.py`, a potem na Discordzie `pPrivacy`, `pAgree`, `pHealth`.
 
-1. Wyłącz bota (`Ctrl + C`); utwórz **kopię folderu** oraz pliku SQLite `poe330_seen.sqlite3`.
-2. Rozpakuj ZIP v0.6.1. W istniejącym folderze wymień pliki Python, w tym **nowe `runtime_settings.py` i `localization.py`**, oraz `requirements.txt`.
-3. **Nie nadpisuj** swojego `.env`, istniejącej bazy SQLite, prywatnych kopii zapasowych ani własnego `search_config.json`.
-4. W aktywnym środowisku wykonaj `pip install -r requirements.txt`, a potem `python main.py`.
-5. Na kanale Discorda sprawdź `pVersion`, `pLanguage`, `pSettings` i `pHealth`.
+### Aktualizacja istniejącego bota
 
-> Ważne dla hostingu: plik SQLite musi być na **trwałym woluminie** (np. `DB_PATH=/data/poe330_seen.sqlite3` na Railway). Inaczej zapisane preferencje mogą zniknąć po wdrożeniu. Bot nie zmienia starej historii, zgód ani konfiguracji PoE 1/PoE 2.
+1. Zatrzymaj proces (`Ctrl+C`), zrób kopię folderu i pliku `poe330_seen.sqlite3`.
+2. Skopiuj z ZIP-a aktualne moduły Python, szczególnie `game_modes.py`, `localization.py`, `runtime_settings.py`, plik `VERSION` i `requirements.txt`.
+3. **Zachowaj** własny `.env`, bazę SQLite, `search_config.json` i folder prywatnych kopii zapasowych.
+4. Uruchom `python -m pip install -r requirements.txt` oraz `python main.py`.
+5. Na Discordzie przetestuj `pVersion`, `pGame`, `pLanguage` i `pSettings`.
 
+### Język i ustawienia
+
+`pLanguage` wyświetla menu **Polski / English**; dostępne są również `pLanguage pl` i `pLanguage en`.
+
+`pSettings` pozwala zmienić: interwał skanowania (1–24 h), godzinę i włączenie podsumowania, wyniki na frazę (1–50), odstęp wiadomości (1–30 s), lokalny budżet wyszukiwań (1–10000), rezerwę ręczną, wiek filmów (do 24 h), odświeżanie i weryfikację linków oraz sprawdzanie aktualizacji (1–72 h). Wartości są walidowane i przechowywane w SQLite. Menu edycji wymaga uprawnienia **Zarządzanie serwerem** i `pAgree`.
+
+**Hosting 24/7:** na Railway lub VPS przechowuj bazę na trwałym woluminie, np. `DB_PATH=/data/poe330_seen.sqlite3`, a kopie w `BACKUP_DIR=/data/backups`. Nie publikuj prywatnych plików ani kluczy API.
 
 ---
 
-**New in v0.6.1: interactive Discord language and settings controls.** All PoE 1 / PoE 2 1.0 features remain intact. Preferences persist in the existing local SQLite database.
+## English
 
-### Bot language (`pLanguage`)
+### First-time Windows setup
 
-- Type **`pLanguage`** to open a Discord dropdown for **Polski / English**.
-- Alternatively, use **`pLanguage pl`** or **`pLanguage en`**.
-- This switches command responses, embed field labels, alerts and digests. Original YouTube video titles and URLs are never translated.
-- One language is shared by the configured server/channel and saved across restarts. Previously posted Discord messages are not retroactively edited.
+1. Install **Python 3.11+** and [download the ZIP](https://bollek231.github.io/poe-build-notifier-site/downloads/PoE_Build_Notifier_v0.6.1.zip).
+2. Extract the bot files to `D:\PoE-Bot`.
+3. Open Command Prompt:
 
-### Editable settings (`pSettings`)
+```bat
+cd /d D:\PoE-Bot
+py -m venv .venv
+.venv\Scripts\activate
+python -m pip install -r requirements.txt
+copy .env.example .env
+notepad .env
+```
 
-- **`pSettings`** opens a Discord panel displaying current values and a dropdown of editable settings.
-- Numeric fields and time use Discord **modal forms**; on/off options toggle immediately.
-- Supported settings: scan interval (1–24 h), daily digest time (HH:MM Warsaw), digest on/off, results per query (1–50), notification delay (1–30 s), daily local budget (1–10000), reserve for manual searches, maximum video age (1–24 h), link refresh interval (1–24 h), posts per refresh (1–50), external-link verification on/off, version checks on/off, GitHub version-check interval (1–72 h).
-- Invalid values are rejected. The manual reserve must stay below the daily budget. The **24-hour maximum age filter** remains enforced.
-- Changes apply without restarting, are stored in `bot_settings`, and override the default settings loaded from `.env`.
-- Only the **administrator who opened the menu** can use it, on the configured Discord channel and after `pAgree`. Interactive panels expire after five minutes.
-- Tokens, API keys, channel IDs and database paths **cannot be changed** via Discord.
+4. Add `DISCORD_TOKEN`, `YOUTUBE_API_KEY` and `DISCORD_CHANNEL_ID` to your private `.env`, and enable Discord **Message Content Intent**.
+5. Run `python main.py` and use `pPrivacy`, `pAgree`, `pHealth` on Discord.
 
-### Safe upgrade from v0.6.0
+### Upgrading the bot
 
-1. Stop the bot (`Ctrl + C`) and **back up the bot folder and SQLite database** (`poe330_seen.sqlite3`).
-2. Extract v0.6.1 and replace the Python modules, including the **new `runtime_settings.py` and `localization.py`**, plus `requirements.txt`.
-3. **Do not overwrite** your own `.env`, SQLite database, private backups, or custom `search_config.json`.
-4. Activate your environment, run `pip install -r requirements.txt`, then `python main.py`.
-5. Test `pVersion`, `pLanguage`, `pSettings`, and `pHealth` on Discord.
+1. Stop the bot (`Ctrl+C`) and back up its folder and `poe330_seen.sqlite3` database.
+2. Copy the current Python modules from the archive, including `game_modes.py`, `localization.py`, `runtime_settings.py`, plus `VERSION` and `requirements.txt`.
+3. **Do not overwrite** your own `.env`, SQLite database, `search_config.json` or private backups.
+4. Run `python -m pip install -r requirements.txt` and `python main.py`.
+5. Test `pVersion`, `pGame`, `pLanguage` and `pSettings`.
 
-> Hosting: store the SQLite file on a **persistent volume** (for example `DB_PATH=/data/poe330_seen.sqlite3` on Railway) or settings may be lost on deployment. The migration preserves previous message history, privacy consent, and PoE 1 / PoE 2 preferences.
+### Language and settings
 
+`pLanguage` opens a **Polski / English** dropdown, or use `pLanguage pl` / `pLanguage en`.
+
+`pSettings` lets admins edit scan intervals (1–24 h), digest time and enablement, results per query (1–50), posting delay (1–30 s), local search budget (1–10000), manual reserve, video age (up to 24 h), link checks and refresh, and version checks (1–72 h). Changes are validated and stored in SQLite. Editing requires **Manage Server** and `pAgree`.
+
+**24/7 hosting:** store SQLite on a persistent volume, e.g. `DB_PATH=/data/poe330_seen.sqlite3`, and backups at `BACKUP_DIR=/data/backups`. Do not publish your credentials or private data.
