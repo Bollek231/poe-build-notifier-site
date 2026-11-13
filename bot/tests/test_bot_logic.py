@@ -9,14 +9,14 @@ from urllib.parse import urlparse
 from datetime import datetime, timezone
 from types import SimpleNamespace
 sys.path.insert(0,str(Path(__file__).resolve().parents[1]))
-import features,storage
+import features,storage,game_modes
 
 source=(Path(__file__).resolve().parents[1]/'main.py').read_text(encoding='utf8')
 tree=ast.parse(source)
 
 names={'norm','find_term','identify','classify','fingerprint','duplicate','extract_links','format_digest_pages'}
 functions=[node for node in tree.body if isinstance(node,(ast.FunctionDef,ast.AsyncFunctionDef)) and node.name in names]
-ns={'re':re,'urlparse':urlparse,'features':features,'SequenceMatcher':__import__('difflib').SequenceMatcher,'discord':None}
+ns={'re':re,'urlparse':urlparse,'features':features,'game_modes':game_modes,'SequenceMatcher':__import__('difflib').SequenceMatcher,'discord':None}
 for node in tree.body:
     if isinstance(node,ast.Assign) and len(node.targets)==1 and isinstance(node.targets[0],ast.Name):
         if node.targets[0].id in {'ASCENDANCIES','SKILLS','BUILD_SIGNALS'}:
