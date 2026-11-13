@@ -1,8 +1,11 @@
-# PoE Build Notifier — PL 🇵🇱 / EN 🇬🇧
+# PoE Build Notifier v0.5.0 — PL 🇵🇱 / EN 🇬🇧
 
 **Wybierz język / Choose language:** [🇵🇱 Polski](#polski) · [🇬🇧 English](#english)
 
 ## Polski
+
+**Aktualna wersja: v0.5.0. Następna aktualizacja: v0.5.1.**
+
 
 Niekomercyjny projekt bota Discord, który wyszukuje nowe buildy Path of Exile 1 przez YouTube Data API v3 i publikuje linki do oryginalnych filmów.
 
@@ -13,8 +16,9 @@ Niekomercyjny projekt bota Discord, który wyszukuje nowe buildy Path of Exile 1
 - 💬 **[Działanie i komendy](https://bollek231.github.io/poe-build-notifier-site/komendy.html)**
 - 🔒 **[Polityka prywatności](https://bollek231.github.io/poe-build-notifier-site/privacy.html)**
 - 📄 **[Warunki korzystania](https://bollek231.github.io/poe-build-notifier-site/terms.html)**
+- 📝 **[Lista zmian / Patch Notes](https://bollek231.github.io/poe-build-notifier-site/changelog.html)**
 
-## Pobierz bota
+## Pobierz PoE Build Notifier v0.5.0
 
 - 📦 **[Pobierz paczkę ZIP z kodem](https://bollek231.github.io/poe-build-notifier-site/downloads/PoE_Build_Notifier_BEZ_DANYCH.zip)**
 - 🐍 **[Przejrzyj kod źródłowy na GitHubie](https://github.com/Bollek231/poe-build-notifier-site/tree/main/bot)**
@@ -63,6 +67,9 @@ Projekt nie jest związany z Google, YouTube, Discord ani Grinding Gear Games. N
 
 ## English
 
+**Current version: v0.5.0. Next update: v0.5.1.**
+
+
 A non-commercial Discord bot that discovers fresh Path of Exile 1 builds using YouTube Data API v3 and posts links to the original videos.
 
 ### Website and documentation
@@ -72,8 +79,9 @@ A non-commercial Discord bot that discovers fresh Path of Exile 1 builds using Y
 - 💬 **[Features and commands](https://bollek231.github.io/poe-build-notifier-site/komendy-en.html)**
 - 🔒 **[Privacy Policy](https://bollek231.github.io/poe-build-notifier-site/privacy-en.html)**
 - 📄 **[Terms of Use](https://bollek231.github.io/poe-build-notifier-site/terms-en.html)**
+- 📝 **[Patch Notes / Changelog](https://bollek231.github.io/poe-build-notifier-site/changelog-en.html)**
 
-### Download the bot
+### Download PoE Build Notifier v0.5.0
 
 - 📦 **[Download the source ZIP](https://bollek231.github.io/poe-build-notifier-site/downloads/PoE_Build_Notifier_BEZ_DANYCH.zip)**
 - 🐍 **[Browse the source on GitHub](https://github.com/Bollek231/poe-build-notifier-site/tree/main/bot)**
