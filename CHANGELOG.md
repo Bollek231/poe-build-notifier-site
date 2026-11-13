@@ -1,12 +1,22 @@
 # PoE Build Notifier — Lista zmian / Patch Notes
 
-**Aktualna wersja / Current version:** `v0.6.1`
+**Aktualna wersja / Current version:** `v0.6.2`
 
 [🇵🇱 Lista zmian — strona](https://bollek231.github.io/poe-build-notifier-site/changelog.html) · [🇬🇧 Patch Notes — website](https://bollek231.github.io/poe-build-notifier-site/changelog-en.html)
 
 ---
 
 ## 🇵🇱 Polski
+
+### v0.6.2 — 13 listopada 2026
+- **`pSetup`:** kreator wyboru gry, wersji, języka i interwału z potwierdzeniem zmian.
+- **`pHelp`:** interaktywne menu kategorii komend Discorda.
+- **`pQuietHours`:** przedział ciszy według czasu Warszawa, kolejka nowych poradników i podsumowanie po zakończeniu.
+- **`pPause` / `pResume`:** czasowe lub bezterminowe zatrzymywanie automatycznych skanów.
+- **`pSaved`:** zapisywanie filmów przyciskiem i prywatna lista zakładek użytkownika.
+- **`pTrending`:** ranking ostatnich buildów według tempa przyrostu wyświetleń.
+- **`pTranslateTitles`:** opcjonalne angielskie tłumaczenia tytułów przez Google Cloud Translation Basic v2, z zachowaniem oryginału, limitem wywołań i pamięcią podręczną.
+
 
 ### v0.6.1 — 13 listopada 2026
 - **`pLanguage`:** wybór języka polskiego lub angielskiego w menu Discorda; również `pLanguage pl` i `pLanguage en`.
@@ -44,6 +54,16 @@
 ---
 
 ## 🇬🇧 English
+
+### v0.6.2 — November 13, 2026
+- **`pSetup`:** interactive setup of game, patch, language and scan interval with confirmation.
+- **`pHelp`:** interactive Discord command categories.
+- **`pQuietHours`:** Warsaw-time quiet window, deferred build queue and a digest after quiet hours.
+- **`pPause` / `pResume`:** temporary or indefinite pause for scheduled scanning.
+- **`pSaved`:** bookmark buttons and private, user-owned saved video links.
+- **`pTrending`:** recent build ranking by growth in YouTube views between observations.
+- **`pTranslateTitles`:** optional English title translation via Google Cloud Translation Basic v2, with originals, caching and request caps.
+
 
 ### v0.6.1 — November 13, 2026
 - **`pLanguage`:** Discord menu to switch between Polish and English; also `pLanguage pl` and `pLanguage en`.
