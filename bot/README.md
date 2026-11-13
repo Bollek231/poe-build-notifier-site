@@ -1,8 +1,11 @@
-# PoE Build Notifier — source code / kod źródłowy
+# PoE Build Notifier v0.5.0 — source code / kod źródłowy
 
 **Wybierz język / Choose language:** [🇵🇱 Polski](#polski) · [🇬🇧 English](#english)
 
 ## Polski
+
+**Wersja: v0.5.0 · Kolejna aktualizacja: v0.5.1.**
+
 
 Publiczna wersja niekomercyjnego bota Discord wyszukującego poradniki Path of Exile 1 przez YouTube Data API v3.
 
@@ -56,12 +59,16 @@ python -m unittest discover -s tests -v
 - [Komendy i działanie](https://bollek231.github.io/poe-build-notifier-site/komendy.html)
 - [Polityka prywatności](https://bollek231.github.io/poe-build-notifier-site/privacy.html)
 - [Warunki korzystania](https://bollek231.github.io/poe-build-notifier-site/terms.html)
+- [Lista zmian](https://bollek231.github.io/poe-build-notifier-site/changelog.html) · [CHANGELOG.md](../CHANGELOG.md)
 
 **Zastrzeżenie:** Bot wymaga uruchomienia na własnym komputerze/serwerze; GitHub Pages hostuje wyłącznie stronę, nie działającego bota. Zgodność z zasadami YouTube Data API wymaga odrębnej weryfikacji, w tym sposobu przechowywania danych w wiadomościach Discord.
 
 ---
 
 ## English
+
+**Version: v0.5.0 · Next update: v0.5.1.**
+
 
 Public source-code release of a non-commercial Discord bot that finds Path of Exile 1 build guides through YouTube Data API v3.
 
@@ -121,6 +128,7 @@ python -m unittest discover -s tests -v
 - [Features and commands](https://bollek231.github.io/poe-build-notifier-site/komendy-en.html)
 - [Privacy Policy](https://bollek231.github.io/poe-build-notifier-site/privacy-en.html)
 - [Terms of Use](https://bollek231.github.io/poe-build-notifier-site/terms-en.html)
+- [Patch Notes](https://bollek231.github.io/poe-build-notifier-site/changelog-en.html) · [CHANGELOG.md](../CHANGELOG.md)
 
 **Disclaimer:** This bot must run on your own machine or server. GitHub Pages hosts the documentation only. Compliance with YouTube API Services policies requires an independent review, including the handling of data retained in Discord messages.
 
