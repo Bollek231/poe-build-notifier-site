@@ -15,7 +15,7 @@ DEFAULTS={
  'results_per_query':25,'send_delay_seconds':3.,'daily_search_budget':96,
  'reserved_searches':24,'video_age_hours':24,'link_refresh_hours':6,
  'links_check_enabled':True,'version_check_enabled':True,
- 'version_check_hours':12,'link_refresh_limit':10,
+ 'version_check_hours':12,'link_refresh_limit':10,'translation_provider':'mymemory',
 }
 
 class Version061Tests(unittest.TestCase):
