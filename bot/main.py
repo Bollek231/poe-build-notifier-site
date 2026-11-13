@@ -24,6 +24,7 @@ import runtime_settings
 import localization
 import community
 import translation_providers
+import farming
 
 load_dotenv()
 logging.basicConfig(level=logging.INFO, format='%(asctime)s %(levelname)s %(message)s')
@@ -31,6 +32,7 @@ log = logging.getLogger('poe330')
 TOKEN = os.getenv('DISCORD_TOKEN', '').strip()
 API_KEY = os.getenv('YOUTUBE_API_KEY', '').strip()
 CHANNEL_ID = int(os.getenv('DISCORD_CHANNEL_ID', '0'))
+FARM_CHANNEL_ID = int(os.getenv('FARM_CHANNEL_ID', str(CHANNEL_ID))) or CHANNEL_ID
 DB_PATH = os.getenv('DB_PATH', 'poe330_seen.sqlite3')
 INTERVAL_H = max(1, int(os.getenv('CHECK_INTERVAL_HOURS', '2')))
 MAX_RESULTS = min(50, max(1, int(os.getenv('MAX_RESULTS_PER_QUERY', '25'))))
@@ -174,6 +176,8 @@ def db():
     community.cleanup(c,CACHE_RETENTION_DAYS)
     translation_providers.init(c)
     translation_providers.cleanup(c,CACHE_RETENTION_DAYS)
+    farming.initialize(c)
+    farming.cleanup(c,CACHE_RETENTION_DAYS)
     storage.cleanup(c, CACHE_RETENTION_DAYS)
     return c
 
@@ -506,7 +510,7 @@ async def notify_error(message):
 # Siedmiodniowy okres dotyczy wyłącznie lokalnych metadanych w SQLite.
 
 
-async def scan(kind='auto', custom_query=None):
+async def scan(kind='auto', custom_query=None, *, content_type='build'):
     if scan_lock.locked():
         return None
     if kind=='auto':
@@ -523,14 +527,16 @@ async def scan(kind='auto', custom_query=None):
             config = cfg()
             game = storage.current_game(c)
             league = storage.current_game_version(c,game,poe1_default=DEFAULT_LEAGUE,poe2_default=DEFAULT_POE2_VERSION)
-            query_pool = (game_modes.target_queries(league,config['poe2_search_queries']) if game=='poe2' else
+            query_pool = (farming.queries(game,league) if content_type=='farm' else
+                          game_modes.target_queries(league,config['poe2_search_queries']) if game=='poe2' else
                           features.rendered_queries(config['search_queries'],league))
             queries = [custom_query] if custom_query else query_pool
             pause = storage.quota_pause(c)
             if pause:
                 # Official quota is exhausted. No API calls until its PT reset.
                 return {'sent': 0, 'searched': 0, 'warning': quota_message(pause[0]), 'quota_exhausted': True}
-            channel = bot.get_channel(CHANNEL_ID) or await bot.fetch_channel(CHANNEL_ID)
+            destination_id = FARM_CHANNEL_ID if content_type=='farm' else CHANNEL_ID
+            channel = bot.get_channel(destination_id) or await bot.fetch_channel(destination_id)
             budget = remaining(c, kind)
             if budget == 0:
                 reset = storage.next_search_quota_reset()
@@ -543,12 +549,15 @@ async def scan(kind='auto', custom_query=None):
                 current_count=search_count(c)
                 quota_left=max(0,DAILY_SEARCH_BUDGET-current_count)
                 count=enhancements.auto_query_allocation(quota_left,RESERVED_SEARCHES,utc_now(),INTERVAL_H,len(queries))
-                try:cursor=int(storage.get_setting(c,'query_cursor_'+game,'0'))
+                if content_type=='farm':
+                    count=min(count,1)  # at most one extra YouTube search each scheduled interval
+                cursor_key='query_cursor_'+game+('_farm' if content_type=='farm' else '')
+                try:cursor=int(storage.get_setting(c,cursor_key,'0'))
                 except ValueError:cursor=0
                 queries,next_cursor=enhancements.rotate_queries(queries,min(budget,count),cursor)
-                storage.set_setting(c,'query_cursor_'+game,str(next_cursor))
+                storage.set_setting(c,cursor_key,str(next_cursor))
             else:
-                queries=queries[:budget]
+                queries=queries[:min(budget,3) if content_type=='farm' and custom_query is None else budget]
             filters=storage.get_filters(c,game)
             candidates = {}
             searched = 0
@@ -595,7 +604,8 @@ async def scan(kind='auto', custom_query=None):
             # search.list snippets may contain truncated descriptions.
             if candidates:
                 try:
-                    ids = [vid for vid in candidates if not c.execute('SELECT 1 FROM videos WHERE video_id=?', (vid,)).fetchone()]
+                    ids = [vid for vid in candidates if not c.execute('SELECT 1 FROM videos WHERE video_id=?', (vid,)).fetchone()
+                           and not (content_type=='farm' and farming.is_queued(c,vid))]
                     async with aiohttp.ClientSession() as detail_session:
                         details = await video_details(detail_session, ids)
                     candidates = {vid: info for vid, info in details.items() if vid in candidates}
@@ -618,32 +628,43 @@ async def scan(kind='auto', custom_query=None):
                     continue
                 if c.execute('SELECT 1 FROM videos WHERE video_id=?', (vid,)).fetchone():
                     continue
+                if content_type=='farm' and farming.is_queued(c,vid):
+                    continue
                 channel_id=info.get('channelId','')
                 channel_rule=storage.channel_rule(c,channel_id)
                 if channel_rule=='block' or (storage.get_setting(c,'allowlist_only','false')=='true' and channel_rule!='allow'):
                     continue
                 title = info.get('title', 'Film YouTube')
                 description = info.get('description', '')
-                result = classify(title, description, config['exclude_phrases'], league, game)
-                if result is None:
-                    continue
-                skill, asc, category = result
-                # Trust list prioritizes, but never bypasses league, age, PoE1 or user filters.
-                if not enhancements.matches_filters(title,description,skill,asc,category,filters):
-                    continue
-                fp = fingerprint(title, skill, asc, league)
-                if duplicate(c, fp, league):
-                    # Mark as seen to avoid rechecking it, but do not add a new build.
-                    c.execute('INSERT OR IGNORE INTO videos VALUES(?,?,?,?,?)',
-                              (vid, title, f'https://www.youtube.com/watch?v={vid}',
-                               info.get('publishedAt'), utc_now().isoformat()))
-                    c.commit()
-                    continue
+                if content_type=='farm':
+                    category=farming.classify(title, description, game, league)
+                    if category is None:
+                        continue
+                    skill,asc,fp=None,None,None
+                else:
+                    result = classify(title, description, config['exclude_phrases'], league, game)
+                    if result is None:
+                        continue
+                    skill, asc, category = result
+                    # Existing build filters do not apply to farming strategies.
+                    if not enhancements.matches_filters(title,description,skill,asc,category,filters):
+                        continue
+                    fp = fingerprint(title, skill, asc, league)
+                    if duplicate(c, fp, league):
+                        # Mark as seen to avoid rechecking it, but do not add a new build.
+                        c.execute('INSERT OR IGNORE INTO videos VALUES(?,?,?,?,?)',
+                                  (vid, title, f'https://www.youtube.com/watch?v={vid}',
+                                   info.get('publishedAt'), utc_now().isoformat()))
+                        c.commit()
+                        continue
                 # Quiet hours do not spend additional API units. Only metadata of
                 # accepted fresh videos is queued; a single digest is sent later.
                 qstart,qend=community.get_quiet(c)
                 if community.is_quiet(utc_now(),qstart,qend):
-                    community.queue_video(c,vid,game,league,title,info.get('publishedAt',''))
+                    if content_type=='farm':
+                        farming.queue(c,vid,game,league,category,title,info.get('publishedAt',''))
+                    else:
+                        community.queue_video(c,vid,game,league,title,info.get('publishedAt',''))
                     continue
                 url = f'https://www.youtube.com/watch?v={vid}'
                 translate_enabled=storage.get_setting(c,'translate_titles','false')=='true'
@@ -655,19 +676,31 @@ async def scan(kind='auto', custom_query=None):
                         contact_email=MYMEMORY_CONTACT_EMAIL,enabled=True,
                         max_daily=TRANSLATION_DAILY_LIMIT,
                         source_language=info.get('defaultLanguage') or info.get('defaultAudioLanguage'))
-                embed = discord.Embed(title=translated[:256], url=url, color=discord.Color.dark_purple())
-                if translated!=title:
-                    embed.add_field(name='Oryginalny tytuł / Original title',value=title[:1024],inline=False)
-                embed.add_field(name='Gra', value=game_modes.game_label(game), inline=True)
-                embed.add_field(name='Liga / wersja', value=league, inline=True)
-                embed.add_field(name='Twórca na YouTube', value=info.get('channelTitle', 'Nieznany')[:1024], inline=False)
-                embed.add_field(name='Umiejętność (oznaczenie bota)', value=skill or 'Nie rozpoznano', inline=True)
-                embed.add_field(name='Ascendancy (oznaczenie bota)', value=asc or 'Nie rozpoznano', inline=True)
-                embed.add_field(name='Kategoria (oznaczenie bota)', value=category, inline=True)
-                if published:
-                    stamp = int(published.timestamp())
-                    embed.add_field(name='Opublikowano na YouTube', value=f'<t:{stamp}:F>\n<t:{stamp}:R>', inline=False)
-                embed.add_field(name='Źródło', value='[Oryginalny film w YouTube](' + url + ')', inline=False)
+                if content_type=='farm':
+                    embed = discord.Embed(title=translated[:256],url=url,color=discord.Color.gold())
+                    if translated!=title:
+                        embed.add_field(name='Oryginalny tytuł / Original title',value=title[:1024],inline=False)
+                    embed.add_field(name='Rodzaj / Type',value='💰 Currency farming strategy',inline=False)
+                    embed.add_field(name='Gra / Game',value=game_modes.game_label(game),inline=True)
+                    embed.add_field(name='Liga / wersja',value=league,inline=True)
+                    embed.add_field(name='Kategoria / Category',value=category,inline=True)
+                    embed.add_field(name='Twórca / Creator',value=info.get('channelTitle','Nieznany')[:1024],inline=False)
+                    embed.add_field(name='Opublikowano / Published',value=f'<t:{int(published.timestamp())}:R>',inline=False)
+                    embed.set_footer(text='Źródło: YouTube • Kategoria wywnioskowana z tytułu • Zysk niezweryfikowany')
+                else:
+                    embed = discord.Embed(title=translated[:256], url=url, color=discord.Color.dark_purple())
+                    if translated!=title:
+                        embed.add_field(name='Oryginalny tytuł / Original title',value=title[:1024],inline=False)
+                    embed.add_field(name='Gra', value=game_modes.game_label(game), inline=True)
+                    embed.add_field(name='Liga / wersja', value=league, inline=True)
+                    embed.add_field(name='Twórca na YouTube', value=info.get('channelTitle', 'Nieznany')[:1024], inline=False)
+                    embed.add_field(name='Umiejętność (oznaczenie bota)', value=skill or 'Nie rozpoznano', inline=True)
+                    embed.add_field(name='Ascendancy (oznaczenie bota)', value=asc or 'Nie rozpoznano', inline=True)
+                    embed.add_field(name='Kategoria (oznaczenie bota)', value=category, inline=True)
+                    if published:
+                        stamp = int(published.timestamp())
+                        embed.add_field(name='Opublikowano na YouTube', value=f'<t:{stamp}:F>\n<t:{stamp}:R>', inline=False)
+                    embed.add_field(name='Źródło', value='[Oryginalny film w YouTube](' + url + ')', inline=False)
                 thumb = info.get('thumbnails', {}).get('high') or info.get('thumbnails', {}).get('medium')
                 if thumb and thumb.get('url'):
                     embed.set_thumbnail(url=thumb['url'])
@@ -681,14 +714,17 @@ async def scan(kind='auto', custom_query=None):
                     if sent:
                         await asyncio.sleep(SEND_DELAY)
                     posted_message=await channel.send(content=url, embed=localize_embed(embed), view=buttons_from_links(links,vid))
-                    c.execute('INSERT OR IGNORE INTO videos VALUES(?,?,?,?,?)',
-                              (vid, title, url, info.get('publishedAt'), utc_now().isoformat()))
-                    c.execute('INSERT OR IGNORE INTO builds(fingerprint,canonical_title,first_video_id,created_at,league) VALUES(?,?,?,?,?)',
-                              (fp, title, vid, utc_now().isoformat(), league))
-                    c.execute('INSERT OR REPLACE INTO video_metadata VALUES(?,?,?,?)',
-                              (vid, skill, asc, category))
-                    c.commit()
-                    # New posts only; previously sent Discord messages stay untouched.
+                    if content_type=='farm':
+                        farming.posted(c,vid,game,league,category,title,info.get('publishedAt'))
+                    else:
+                        c.execute('INSERT OR IGNORE INTO videos VALUES(?,?,?,?,?)',
+                                  (vid, title, url, info.get('publishedAt'), utc_now().isoformat()))
+                        c.execute('INSERT OR IGNORE INTO builds(fingerprint,canonical_title,first_video_id,created_at,league) VALUES(?,?,?,?,?)',
+                                  (fp, title, vid, utc_now().isoformat(), league))
+                        c.execute('INSERT OR REPLACE INTO video_metadata VALUES(?,?,?,?)',
+                                  (vid, skill, asc, category))
+                        c.commit()
+                    # Both notification types can gain new PoB/Maxroll/Mobalytics links.
                     storage.record_post(c,vid,channel.id,posted_message.id,links)
                     sent += 1
                 except discord.HTTPException as exc:
@@ -811,6 +847,13 @@ async def digest_wait_ready():
 async def automatic_scan():
     try:
         await scan('auto')
+        c=db()
+        try:
+            farm_auto=storage.get_setting(c,'farm_auto','false')=='true'
+        finally:
+            c.close()
+        if farm_auto:
+            await scan('auto',content_type='farm')
     except Exception as exc:
         log.exception('Automatic scan error')
         await notify_error(f'Automatyczne skanowanie: {exc}')
@@ -1020,7 +1063,7 @@ async def revoke_command(ctx):
     await localized_reply(ctx, message, allowed_mentions=discord.AllowedMentions.none())
 
 
-async def report_scan(ctx, custom=None):
+async def report_scan(ctx, custom=None, *, content_type='build'):
     if scan_lock.locked():
         await localized_reply(ctx, 'Skanowanie już trwa. Poczekaj na jego zakończenie.')
         return
@@ -1035,7 +1078,7 @@ async def report_scan(ctx, custom=None):
         return
     await localized_reply(ctx, '🔎 Rozpoczynam wyszukiwanie YouTube…')
     try:
-        result = await scan('manual', custom)
+        result = await scan('manual', custom, content_type=content_type)
         if result is None:
             await localized_reply(ctx, 'Skanowanie już trwa.')
         elif result.get('quota_exhausted') or result.get('budget_exhausted'):
@@ -1074,6 +1117,86 @@ async def search_command(ctx, *, query: str = ''):
         c.close()
     label = 'PoE 2' if game=='poe2' else 'PoE'
     await report_scan(ctx, f'{label} {league} {query} build')
+
+
+@bot.command(name='FarmScan')
+@commands.check(allowed)
+async def farm_scan_command(ctx):
+    """Search farming strategies for the selected game/version (max 3 queries)."""
+    if await require_consent(ctx):
+        await report_scan(ctx,content_type='farm')
+
+
+@bot.command(name='FarmSearch')
+@commands.check(allowed)
+async def farm_search_command(ctx, *, topic: str='general'):
+    if not await require_consent(ctx):
+        return
+    normalized=farming.normalize_topic(topic)
+    if normalized is None:
+        await localized_reply(ctx, 'Nieznana kategoria. Użyj `pFarmTopics` (np. `pFarmSearch essence`).')
+        return
+    c=db()
+    try:
+        game=storage.current_game(c)
+        version=storage.current_game_version(c,game,poe1_default=DEFAULT_LEAGUE,poe2_default=DEFAULT_POE2_VERSION)
+    finally:
+        c.close()
+    query=farming.queries(game,version,normalized)[0]
+    await report_scan(ctx,query,content_type='farm')
+
+
+@bot.command(name='FarmAuto')
+@commands.check(allowed)
+async def farm_auto_command(ctx, mode: str='status'):
+    if not await require_consent(ctx):
+        return
+    c=db()
+    try:
+        mode=mode.strip().lower()
+        if mode in ('on','off'):
+            storage.set_setting(c,'farm_auto','true' if mode=='on' else 'false')
+        enabled=storage.get_setting(c,'farm_auto','false')=='true'
+    finally:
+        c.close()
+    if mode not in ('status','on','off'):
+        await localized_reply(ctx,'Użycie: `pFarmAuto on`, `pFarmAuto off` lub `pFarmAuto status`.')
+        return
+    await localized_reply(ctx, ('💰 Automatyczne wyszukiwanie strategii: **włączone**.' if enabled else
+                                '💰 Automatyczne wyszukiwanie strategii: **wyłączone**.') +
+                           ' Maksymalnie 1 dodatkowe zapytanie YouTube na interwał, współdzielony budżet API.')
+
+
+@bot.command(name='FarmTopics')
+@commands.guild_only()
+async def farm_topics_command(ctx):
+    if ctx.channel.id!=CHANNEL_ID:
+        return
+    rows=[f'`{key}` — {label}' for key,(label,_) in farming.TOPICS.items()]
+    await localized_reply(ctx,'💰 **Kategorie strategii / Farming topics**\n'+
+                          '\n'.join(rows)+'\nPrzykład: `pFarmSearch essence`.',
+                          mention_author=False)
+
+
+@bot.command(name='FarmRecent')
+@commands.guild_only()
+async def farm_recent_command(ctx):
+    if ctx.channel.id!=CHANNEL_ID:
+        return
+    c=db()
+    try:
+        game=storage.current_game(c)
+        version=storage.current_game_version(c,game,poe1_default=DEFAULT_LEAGUE,poe2_default=DEFAULT_POE2_VERSION)
+        rows=farming.recent(c,game,version)
+    finally:
+        c.close()
+    if not rows:
+        await localized_reply(ctx,'Brak znalezionych strategii farmienia dla wybranej wersji gry.')
+        return
+    lines=[f'{i}. [{discord.utils.escape_markdown(row["title"][:80])}](https://youtu.be/{row["video_id"]}) — {row["category"]}'
+           for i,row in enumerate(rows,1)]
+    await localized_reply(ctx,'💰 **Strategie farmienia / Farming strategies**\n'+'\n'.join(lines),
+                          allowed_mentions=discord.AllowedMentions.none())
 
 
 @bot.command(name='Limit')
@@ -1408,9 +1531,9 @@ async def saved_command(ctx, action='', video_id=''):
 
 
 HELP_PAGES={
- 'scan':('🔎 Wyszukiwanie / Discovery', '`pScan` — ręczny skan\n`pSearch Spark` — wyszukiwanie skilla\n`pGame poe2` / `pGame poe1` — wybór gry\n`pLeague` — wersja gry'),
- 'config':('⚙️ Konfiguracja / Settings', '`pSetup` — kreator\n`pSettings` — panel ustawień\n`pLanguage` — język bota\n`pQuietHours 23:00 08:00` — godziny ciszy\n`pPause 6h` / `pResume` — pauza'),
- 'community':('⭐ Społeczność / Community','`pSaved` — zapisane buildy\n`pTrending` — popularność filmów\n`pTranslateTitles on/off/mymemory/google` — tłumaczenie tytułów'),
+ 'scan':('🔎 Wyszukiwanie / Discovery', '`pScan` — ręczny skan\n`pSearch Spark` — wyszukiwanie skilla\n`pGame poe2` / `pGame poe1` — wybór gry\n`pLeague` — wersja gry\n`pFarmScan`, `pFarmSearch essence` — strategie farmienia'),
+ 'config':('⚙️ Konfiguracja / Settings', '`pSetup` — kreator\n`pSettings` — panel ustawień\n`pLanguage` — język bota\n`pQuietHours 23:00 08:00` — godziny ciszy\n`pPause 6h` / `pResume` — pauza\n`pFarmAuto on/off` — monitoring farmienia'),
+ 'community':('⭐ Społeczność / Community','`pSaved` — zapisane buildy\n`pTrending` — popularność filmów\n`pFarmRecent`, `pFarmTopics` — strategie farmienia\n`pTranslateTitles on/off/mymemory/google` — tłumaczenie tytułów'),
  'admin':('🛠️ Administracja / Admin', '`pHealth`, `pLimit`, `pVersion` — stan i API\n`pBackup` — kopie danych\n`pFilters`, `pChannelRules` — reguły\n`pPrivacy` / `pAgree` — zasady')}
 
 
@@ -1709,16 +1832,28 @@ async def automatic_quiet_flush():
         start,end=community.get_quiet(c)
         if community.is_quiet(utc_now(),start,end):return
         rows=community.queued(c,limit=25)
-        if not rows:return
-        # Queue entries correspond to videos that passed the freshness filter
-        # when discovered. A single digest keeps the channel noise low.
-        valid=[r for r in rows if community.VIDEO_ID.fullmatch(r['video_id'])]
-        lines=[f'• [{discord.utils.escape_markdown(r["title"][:85])}](https://youtu.be/{r["video_id"]}) · {r["game"]} {r["league"]}' for r in valid]
-        msg=discord.Embed(title='🌙 Buildy z godzin ciszy / Quiet-hours digest',
-            description='\n'.join(lines)[:3900],color=discord.Color.dark_purple())
-        channel=bot.get_channel(CHANNEL_ID) or await bot.fetch_channel(CHANNEL_ID)
-        await channel.send(embed=msg,allowed_mentions=discord.AllowedMentions.none())
-        community.finish_queue(c,rows)
+        if rows:
+            # Keep original build digest semantics; no deleted Discord messages.
+            valid=[r for r in rows if community.VIDEO_ID.fullmatch(r['video_id'])]
+            lines=[f'• [{discord.utils.escape_markdown(r["title"][:85])}](https://youtu.be/{r["video_id"]}) · {r["game"]} {r["league"]}' for r in valid]
+            if lines:
+                msg=discord.Embed(title='🌙 Buildy z godzin ciszy / Quiet-hours digest',
+                    description='\n'.join(lines)[:3900],color=discord.Color.dark_purple())
+                channel=bot.get_channel(CHANNEL_ID) or await bot.fetch_channel(CHANNEL_ID)
+                await channel.send(embed=msg,allowed_mentions=discord.AllowedMentions.none())
+            community.finish_queue(c,rows)
+        strategies=farming.queued(c,limit=25)
+        if strategies:
+            valid=[r for r in strategies if community.VIDEO_ID.fullmatch(r['video_id'])]
+            lines=[f'• [{discord.utils.escape_markdown(r["title"][:85])}](https://youtu.be/{r["video_id"]}) · {r["category"]} · {r["game"]} {r["version"]}' for r in valid]
+            if lines:
+                msg=discord.Embed(title='💰 Strategie z godzin ciszy / Farming digest',
+                    description='\n'.join(lines)[:3900],color=discord.Color.gold())
+                channel=bot.get_channel(FARM_CHANNEL_ID) or await bot.fetch_channel(FARM_CHANNEL_ID)
+                await channel.send(embed=msg,allowed_mentions=discord.AllowedMentions.none())
+                for row in valid:
+                    farming.posted(c,row['video_id'],row['game'],row['version'],row['category'],
+                                   row['title'],row['published_at'])
     except Exception:
         log.exception('Quiet hours queue delivery failed, will retry')
     finally:c.close()
@@ -1967,7 +2102,7 @@ async def version_command(ctx):
         status=f'Aktualna publiczna wersja: **v{remote}**.'
     await localized_reply(ctx, f'📦 **PoE Build Notifier v{VERSION}**\n{status}\n'
                     '📋 https://bollek231.github.io/poe-build-notifier-site/changelog.html\n'
-                    'Bot sam nie pobiera ani nie instaluje aktualizacji.',allowed_mentions=discord.AllowedMentions.none())
+                    'Automatyczne aktualizacje są dostępne przez launcher Windows.',allowed_mentions=discord.AllowedMentions.none())
 
 
 @bot.event
