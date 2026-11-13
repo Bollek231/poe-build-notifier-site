@@ -1,15 +1,33 @@
-# PoE Build Notifier v0.5.2 — 🇵🇱 Polski / 🇬🇧 English
+# PoE Build Notifier v0.6.0 — 🇵🇱 Polski / 🇬🇧 English
 
 [🇵🇱 Polski](#polski) · [🇬🇧 English](#english) · [Lista zmian / Patch Notes](https://bollek231.github.io/poe-build-notifier-site/changelog.html)
 
 ## Polski
 
-Niekomercyjny bot Discord wyszukujący **aktualne buildy Path of Exile 1** na YouTube. Wersja **v0.5.2** zachowuje funkcje v0.5.1 i zmienia wygląd strony, zachowując dotychczasowe komendy i 24-godzinny limit wieku filmów.
+### Nowość v0.6.0 — PoE 1 / PoE 2
+
+Bot obsługuje teraz **Path of Exile 1** i **Path of Exile 2**. PoE 2 domyślnie filtruje **wersję 1.0** (premiera planowana na 11 grudnia 2026 PST), bez pobierania starych filmów o 0.3/0.5.
+
+| Komenda | Działanie |
+|---|---|
+| \`pGame\` | Pokazuje aktualną grę i wersję |
+| \`pGame poe2\` | Przełącza na **PoE 2 1.0** |
+| \`pGame poe1\` | Wraca do **PoE 1** i zapamiętanej ligi |
+| \`pLeague 1.0\` | Ustawia wersję PoE 2 na **1.0** |
+| \`pScan\` | Skanuje YouTube dla wybranej gry |
+| \`pSearch Spark\` | Wyszukiwanie skilla w wybranej grze |
+
+Weryfikacja PoE 2 wymaga oznaczenia PoE 2 i 1.0 w tytule lub początku opisu oraz wskazania, że film jest poradnikiem/buildem. Niezależnie obowiązuje **24-godzinny limit wieku publikacji**. Wersje i dodatkowe filtry dla obu gier są zapisywane oddzielnie. Obsługiwane są również linki \`mobalytics.gg/poe-2/\`.
+
+Przy aktualizacji **skopiuj też nowy plik \`game_modes.py\`**, ale zachowaj dotychczasowy \`.env\`, \`search_config.json\` i \`poe330_seen.sqlite3\`. PoE 2 nie wymaga nowych kluczy API.
+
+
+Niekomercyjny bot Discord wyszukujący **aktualne buildy Path of Exile 1** na YouTube. Wersja **v0.6.0** zachowuje funkcje v0.5.1 i zmienia wygląd strony, zachowując dotychczasowe komendy i 24-godzinny limit wieku filmów.
 
 ### Instalacja / aktualizacja (Windows)
 
 1. **Zatrzymaj lokalnego bota** (`Ctrl + C`) i zrób kopię folderu `D:\PoE-Bot`.
-2. Rozpakuj ZIP v0.5.2. Do istniejącego folderu skopiuj **`main.py`, `storage.py`, `features.py`, `enhancements.py`, `services.py`, `backups.py`, `requirements.txt` i `VERSION`**.
+2. Rozpakuj ZIP v0.6.0. Do istniejącego folderu skopiuj **`main.py`, `storage.py`, `features.py`, `enhancements.py`, `services.py`, `backups.py`, `requirements.txt` i `VERSION`**.
 3. **Nie nadpisuj** swoich plików `.env`, `search_config.json`, `poe330_seen.sqlite3` ani prywatnych kopii bazy.
 4. W CMD wpisz:
 
@@ -79,12 +97,30 @@ Na hostingu typu Railway używaj trwałego woluminu: np. `DB_PATH=/data/poe330_s
 
 ## English
 
-Non-commercial Discord bot that discovers fresh **Path of Exile 1 builds** using YouTube Data API v3. **v0.5.2** retains the v0.5.1 improvements while retaining the previous v0.5.0 functionality.
+### New in v0.6.0 — PoE 1 / PoE 2
+
+The bot now supports **Path of Exile 1** and **Path of Exile 2**. PoE 2 defaults to **patch 1.0**, ahead of the announced December 11, 2026 PST release. Old 0.3/0.5 build videos are rejected.
+
+| Command | Purpose |
+|---|---|
+| \`pGame\` | Show the active game and patch |
+| \`pGame poe2\` | Switch to **PoE 2 1.0** |
+| \`pGame poe1\` | Return to **PoE 1** and its saved league |
+| \`pLeague 1.0\` | Select **PoE 2 version 1.0** |
+| \`pScan\` | Scan YouTube for the selected game |
+| \`pSearch Spark\` | Search builds for the selected game |
+
+PoE 2 filtering requires explicit game and 1.0 evidence near the start of the video metadata, plus a build/guide title. The independent **24-hour publication-age limit** remains enforced. Each game has its own saved patch and filters. PoE 2 Mobalytics links (\`/poe-2/\`) are supported.
+
+During upgrades, **copy the new \`game_modes.py\` file** alongside the existing source modules. Preserve your own \`.env\`, \`search_config.json\`, and \`poe330_seen.sqlite3\`. No new API keys are required.
+
+
+Non-commercial Discord bot that discovers fresh **Path of Exile 1 builds** using YouTube Data API v3. **v0.6.0** retains the v0.5.1 improvements while retaining the previous v0.5.0 functionality.
 
 ### Windows installation / update
 
 1. Stop the running bot with `Ctrl + C` and back up `D:\PoE-Bot`.
-2. Extract v0.5.2 ZIP. Copy **`main.py`, `storage.py`, `features.py`, `enhancements.py`, `services.py`, `backups.py`, `requirements.txt`, and `VERSION`** into the existing bot directory.
+2. Extract v0.6.0 ZIP. Copy **`main.py`, `storage.py`, `features.py`, `enhancements.py`, `services.py`, `backups.py`, `requirements.txt`, and `VERSION`** into the existing bot directory.
 3. **Keep your original** `.env`, `search_config.json`, `poe330_seen.sqlite3`, and any private database backups.
 4. Run:
 
@@ -145,8 +181,8 @@ Offline tests: `python -m unittest discover -s tests -v`.
 [🇵🇱 Lista zmian](https://bollek231.github.io/poe-build-notifier-site/changelog.html) · [🇬🇧 Patch Notes](https://bollek231.github.io/poe-build-notifier-site/changelog-en.html) · [GitHub source](https://github.com/Bollek231/poe-build-notifier-site/tree/main/bot)
 
 
-## Website redesign v0.5.2 / Nowy projekt strony
+## Website redesign v0.6.0 / Nowy projekt strony
 
-🇵🇱 Wersja v0.5.2 dodaje nowy wygląd GitHub Pages z animowanym tłem, poświatą pod kursorem, przełącznikiem jasnego/ciemnego motywu i odświeżoną dokumentacją. Działanie bota pozostaje identyczne z v0.5.1; zmienia się numer wersji.
+🇵🇱 Wersja v0.6.0 dodaje nowy wygląd GitHub Pages z animowanym tłem, poświatą pod kursorem, przełącznikiem jasnego/ciemnego motywu i odświeżoną dokumentacją. Działanie bota pozostaje identyczne z v0.5.1; zmienia się numer wersji.
 
-🇬🇧 v0.5.2 introduces the GitHub Pages animated redesign, cursor glow, light/dark mode, and refreshed bilingual documentation. The bot's operational behavior is unchanged from v0.5.1; its version number has been updated.
+🇬🇧 v0.6.0 introduces the GitHub Pages animated redesign, cursor glow, light/dark mode, and refreshed bilingual documentation. The bot's operational behavior is unchanged from v0.5.1; its version number has been updated.
