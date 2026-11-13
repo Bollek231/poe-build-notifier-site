@@ -1,12 +1,17 @@
 # PoE Build Notifier — Lista zmian / Patch Notes
 
-**Aktualna wersja / Current version:** `v0.6.4b`
+**Aktualna wersja / Current version:** `v0.6.4c`
 
 [🇵🇱 Lista zmian — strona](https://bollek231.github.io/poe-build-notifier-site/changelog.html) · [🇬🇧 Patch Notes — website](https://bollek231.github.io/poe-build-notifier-site/changelog-en.html)
 
 ---
 
 ## 🇵🇱 Polski
+
+### v0.6.4c — 13 listopada 2026
+- Dodano przycisk **PoE Planner** w powiadomieniach o strategiach farmienia, gdy opis filmu YouTube zawiera link do `https://poeplanner.com` lub `https://www.poeplanner.com`.
+- Rozszerzono weryfikację bezpiecznych odnośników i automatyczne odświeżanie przycisków o domenę PoE Planner; odrzucone są podszywające się domeny i niebezpieczne adresy.
+
 
 ### v0.6.4b — 13 listopada 2026
 - `pScan` oraz `pFarmScan`: dodano opcjonalną liczbę nowych filmów do opublikowania, np. `pScan 1`, `pScan 2`, `pFarmScan 1` lub `pFarmScan 2`.
@@ -82,6 +87,11 @@
 ---
 
 ## 🇬🇧 English
+
+### v0.6.4c — November 13, 2026
+- Added a **PoE Planner** button to currency-farming notifications when a YouTube video description links to `https://poeplanner.com` or `https://www.poeplanner.com`.
+- Extended safe-link validation and automatic button refresh to PoE Planner, rejecting lookalike domains and unsafe URLs.
+
 
 ### v0.6.4b — November 13, 2026
 - `pScan` and `pFarmScan` now accept an optional cap on newly posted videos, such as `pScan 1`, `pScan 2`, `pFarmScan 1`, or `pFarmScan 2`.
