@@ -538,6 +538,146 @@ intents.message_content = True
 bot = commands.Bot(command_prefix='p', intents=intents, case_insensitive=True, help_command=None)
 scan_lock = asyncio.Lock()
 digest_lock = asyncio.Lock()
+# A new process always begins in waiting mode, regardless of the last run.
+# Only an authorized click on the startup panel selects this session's scan mode.
+bot._startup_choice = None
+
+
+def startup_panel_embed(mode=None, *, status='waiting', result=None):
+    """One reusable, persistent Discord message; no videos are sent on startup."""
+    en = BOT_LANGUAGE == 'en'
+    if mode is None:
+        title = '⚔️ What should we search for?' if en else '⚔️ Czego mamy dziś szukać?'
+        body = ('The bot is online. Choose **Builds** or **Farm Strat** to start searching. '
+                'No automatic scans run before you choose.' if en else
+                'Bot jest online. Wybierz **Buildy** lub **Farm Strat**, aby rozpocząć '
+                'wyszukiwanie. Do tego czasu skanowanie automatyczne jest wstrzymane.')
+    else:
+        label = ('Builds' if en else 'Buildy') if mode == 'build' else 'Farm Strat'
+        title = ('✅ Selected: ' if status != 'error' else '⚠️ Selected: ') + label
+        if status == 'searching':
+            body = ('🔎 Searching YouTube now…' if en else
+                    '🔎 Trwa wyszukiwanie filmów na YouTube…')
+        elif status == 'error':
+            body = ('The scan failed; check bot logs. Scheduled scans still follow '
+                    'the selected mode.' if en else
+                    'Skan zakończył się błędem. Sprawdź logi bota; harmonogram nadal '
+                    'uwzględnia wybrany rodzaj poradników.')
+        else:
+            sent = (result or {}).get('sent', 0)
+            queued = (result or {}).get('queued', 0)
+            searched = (result or {}).get('searched', 0)
+            body = (f'✅ New videos: **{sent}** · queued: **{queued}** · '
+                    f'YouTube searches: **{searched}**.' if en else
+                    f'✅ Nowe filmy: **{sent}** · do kolejki: **{queued}** · '
+                    f'wyszukiwania YouTube: **{searched}**.')
+            if result and result.get('warning'):
+                body += '\n' + discord.utils.escape_mentions(str(result['warning'])[:500])
+        body += ('\n\nAutomatic build searches follow the schedule. Farming searches '
+                 'run on schedule only when `pFarmAuto on` is enabled. '
+                 'Restart the bot to choose again.' if en else
+                 '\n\nAutomatyczne skany buildów działają według harmonogramu. '
+                 'Automatyczne skany farmienia wymagają `pFarmAuto on`. '
+                 'Aby ponownie wybrać tryb, uruchom bota od nowa.')
+    return discord.Embed(title=title, description=body,
+        color=discord.Color.gold() if mode == 'farm' else discord.Color.from_rgb(170, 93, 235))
+
+
+class StartupScanView(discord.ui.View):
+    """Persistent two-button selector; only a consented server manager can choose."""
+    def __init__(self, *, disabled=False):
+        super().__init__(timeout=None)
+        for item in self.children:
+            item.disabled = disabled
+
+    async def select(self, interaction: discord.Interaction, mode: str):
+        if (interaction.guild is None or interaction.channel_id != CHANNEL_ID or
+                not getattr(interaction.user.guild_permissions, 'manage_guild', False)):
+            await interaction.response.send_message(
+                'Tylko administrator serwera może uruchomić skan. / Server managers only.',
+                ephemeral=True)
+            return
+        connection = db()
+        try:
+            accepted = storage.has_consent(connection, interaction.guild.id,
+                                           interaction.user.id, POLICY_VERSION)
+        finally:
+            connection.close()
+        if not accepted:
+            await interaction.response.send_message(
+                'Najpierw zaakceptuj zasady: `pPrivacy` / Please accept `pPrivacy` first.',
+                ephemeral=True)
+            return
+        if bot._startup_choice is not None:
+            await interaction.response.send_message(
+                'Tryb został już wybrany. / Search mode already selected.',
+                ephemeral=True)
+            return
+        if scan_lock.locked():
+            await interaction.response.send_message(
+                'Trwa już skanowanie. Spróbuj ponownie później. / A scan is already running.',
+                ephemeral=True)
+            return
+        # No await between checking and setting the mode: concurrent clicks cannot win twice.
+        bot._startup_choice = mode
+        try:
+            await interaction.response.edit_message(
+                embed=startup_panel_embed(mode, status='searching'),
+                view=StartupScanView(disabled=True))
+        except discord.HTTPException:
+            bot._startup_choice = None
+            raise
+        try:
+            result = await scan('manual', content_type=mode)
+            await interaction.message.edit(
+                embed=startup_panel_embed(mode, status='done', result=result),
+                view=StartupScanView(disabled=True))
+        except Exception as exc:
+            log.exception('Startup panel scan failed')
+            await notify_error(f'Skan z panelu startowego: {exc}')
+            try:
+                await interaction.message.edit(
+                    embed=startup_panel_embed(mode, status='error'),
+                    view=StartupScanView(disabled=True))
+            except discord.HTTPException:
+                log.warning('Could not refresh startup panel after scan failure')
+
+    @discord.ui.button(label='Buildy', emoji='⚔️', style=discord.ButtonStyle.primary,
+                       custom_id='poe_startup_select_build')
+    async def builds(self, interaction: discord.Interaction, button: discord.ui.Button):
+        await self.select(interaction, 'build')
+
+    @discord.ui.button(label='Farm Strat', emoji='💰', style=discord.ButtonStyle.secondary,
+                       custom_id='poe_startup_select_farm')
+    async def farms(self, interaction: discord.Interaction, button: discord.ui.Button):
+        await self.select(interaction, 'farm')
+
+
+async def show_startup_panel():
+    """Refresh the last panel instead of posting another message on every restart."""
+    channel = bot.get_channel(CHANNEL_ID) or await bot.fetch_channel(CHANNEL_ID)
+    connection = db()
+    try:
+        message_id = storage.get_setting(connection, 'startup_panel_message_id', '')
+        if message_id.isdecimal():
+            try:
+                message = await channel.fetch_message(int(message_id))
+                await message.edit(embed=startup_panel_embed(),
+                                   view=StartupScanView(),
+                                   allowed_mentions=discord.AllowedMentions.none())
+                return message
+            except discord.NotFound:
+                # The panel was manually removed. Create exactly one replacement.
+                pass
+        message = await channel.send(embed=startup_panel_embed(),
+                                     view=StartupScanView(),
+                                     allowed_mentions=discord.AllowedMentions.none())
+        storage.set_setting(connection, 'startup_panel_message_id', str(message.id))
+        return message
+    finally:
+        connection.close()
+
+
 
 
 async def search_youtube(session, query):
@@ -587,6 +727,9 @@ async def notify_error(message):
 
 
 async def scan(kind='auto', custom_query=None, *, content_type='build', max_videos=None):
+    if kind == 'auto' and (bot._startup_choice is None or
+                           content_type != bot._startup_choice):
+        return {'sent': 0, 'searched': 0, 'warning': 'Waiting for startup selection.'}
     if scan_lock.locked():
         return None
     if kind=='auto':
@@ -875,6 +1018,8 @@ async def send_digest(*, manual=False):
 
 @tasks.loop(minutes=1)
 async def automatic_digest():
+    if bot._startup_choice is None:
+        return
     c_quiet=db()
     try:
         quiet_start,quiet_end=community.get_quiet(c_quiet)
@@ -908,15 +1053,20 @@ async def digest_wait_ready():
 
 @tasks.loop(hours=INTERVAL_H)
 async def automatic_scan():
+    mode = bot._startup_choice
+    if mode is None:
+        return
     try:
-        await scan('auto')
-        c=db()
-        try:
-            farm_auto=storage.get_setting(c,'farm_auto','false')=='true'
-        finally:
-            c.close()
-        if farm_auto:
-            await scan('auto',content_type='farm')
+        if mode == 'build':
+            await scan('auto',content_type='build')
+        elif mode == 'farm':
+            c=db()
+            try:
+                farm_auto=storage.get_setting(c,'farm_auto','false')=='true'
+            finally:
+                c.close()
+            if farm_auto:
+                await scan('auto',content_type='farm')
     except Exception as exc:
         log.exception('Automatic scan error')
         await notify_error(f'Automatyczne skanowanie: {exc}')
@@ -1064,15 +1214,20 @@ async def on_ready():
     first_ready=not getattr(bot,'_first_connection_reported',False)
     if first_ready:
         bot._first_connection_reported=True
-        await alert_admin('service_started','✅ **PoE Build Notifier v'+VERSION+' działa.** '
-                          'Bot uruchomiony lub ponownie uruchomiony.',cooldown_minutes=10)
     elif _health_disconnect_at is not None:
         _health_disconnect_at=None
         await alert_admin('connection_restored','✅ **PoE Bot: połączenie z Discordem odzyskane.**',cooldown_minutes=10)
     if not getattr(bot, '_privacy_view_registered', False):
         bot.add_view(ConsentView())
         bot.add_dynamic_items(SaveBuildButton)
+        bot.add_view(StartupScanView())
         bot._privacy_view_registered = True
+    if first_ready:
+        try:
+            await show_startup_panel()
+        except (discord.HTTPException, OSError, ValueError):
+            # Fail closed: never launch an automatic scan without a visible choice.
+            log.exception('Unable to display the startup choice panel')
     if not automatic_scan.is_running():
         automatic_scan.start()
     if not automatic_digest.is_running():
@@ -1928,7 +2083,7 @@ async def trending_command(ctx):
 
 @tasks.loop(minutes=1)
 async def automatic_quiet_flush():
-    if scan_lock.locked():return
+    if bot._startup_choice is None or scan_lock.locked():return
     c=db()
     try:
         start,end=community.get_quiet(c)
