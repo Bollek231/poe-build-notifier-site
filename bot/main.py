@@ -1018,7 +1018,7 @@ async def send_digest(*, manual=False):
 
 @tasks.loop(minutes=1)
 async def automatic_digest():
-    if bot._startup_choice is None:
+    if bot._startup_choice != 'build':
         return
     c_quiet=db()
     try:
@@ -2088,7 +2088,7 @@ async def automatic_quiet_flush():
     try:
         start,end=community.get_quiet(c)
         if community.is_quiet(utc_now(),start,end):return
-        rows=community.queued(c,limit=25)
+        rows=community.queued(c,limit=25) if bot._startup_choice == 'build' else []
         if rows:
             # Keep original build digest semantics; no deleted Discord messages.
             valid=[r for r in rows if community.VIDEO_ID.fullmatch(r['video_id'])]
@@ -2099,7 +2099,7 @@ async def automatic_quiet_flush():
                 channel=bot.get_channel(CHANNEL_ID) or await bot.fetch_channel(CHANNEL_ID)
                 await channel.send(embed=msg,allowed_mentions=discord.AllowedMentions.none())
             community.finish_queue(c,rows)
-        strategies=farming.queued(c,limit=25)
+        strategies=farming.queued(c,limit=25) if bot._startup_choice == 'farm' else []
         if strategies:
             valid=[r for r in strategies if community.VIDEO_ID.fullmatch(r['video_id'])]
             lines=[f'• [{discord.utils.escape_markdown(r["title"][:85])}](https://youtu.be/{r["video_id"]}) · {r["category"]} · {r["game"]} {r["version"]}' for r in valid]
