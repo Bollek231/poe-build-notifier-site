@@ -1,12 +1,20 @@
 # PoE Build Notifier — Lista zmian / Patch Notes
 
-**Aktualna wersja / Current version:** `v0.6.4d`
+**Aktualna wersja / Current version:** `v0.6.5`
 
 [🇵🇱 Lista zmian — strona](https://bollek231.github.io/poe-build-notifier-site/changelog.html) · [🇬🇧 Patch Notes — website](https://bollek231.github.io/poe-build-notifier-site/changelog-en.html)
 
 ---
 
 ## 🇵🇱 Polski
+
+### v0.6.5 — 14 listopada 2026
+- **Interaktywny panel startowy Discord:** po połączeniu z Discordem bot pyta na kanale powiadomień, czy wyszukiwać **Buildy** czy **Farm Strat**, zamiast natychmiast publikować buildy.
+- Przycisk uruchamia ręczny skan wybranej kategorii i wyświetla jego wynik w tym samym panelu. Wybór może zatwierdzić administrator z uprawnieniem zarządzania serwerem po zaakceptowaniu zasad.
+- **Do czasu wyboru** skany automatyczne, automatyczne podsumowania oraz wysyłka kolejki z godzin ciszy są wstrzymane; bot nie zużywa limitu YouTube API na skanowanie w tle.
+- Po wyborze automatyczne skanowanie dotyczy tylko wybranej kategorii: buildy według harmonogramu lub farming po wcześniejszym włączeniu `pFarmAuto on`. Komendy ręczne nadal działają niezależnie.
+- Panel zapamiętuje identyfikator wiadomości w SQLite i po restarcie **odświeża tę samą wiadomość**, zamiast dodawać kolejną. Wybór resetuje się przy każdym ponownym uruchomieniu bota.
+
 
 ### v0.6.4d — 13 listopada 2026
 - **Nowy wygląd powiadomień Discord:** fioletowe embedy dla buildów i złote dla strategii farmienia, czytelne nagłówki, kategorie, autorzy, wersje gry i miniatury.
@@ -95,6 +103,14 @@
 ---
 
 ## 🇬🇧 English
+
+### v0.6.5 — November 14, 2026
+- **Interactive Discord startup panel:** after coming online, the bot asks in its notification channel whether to search **Buildy (Builds)** or **Farm Strat**, instead of automatically posting builds.
+- Clicking a button starts one manual scan of the selected category and reports the result in the panel. Only server managers who accepted the privacy policy can choose.
+- **Until a mode is selected**, scheduled scans, automatic digests, and quiet-hours queue delivery are suspended; no background YouTube search quota is consumed.
+- Scheduled searches then follow only the selected category: builds as configured, or farming when `pFarmAuto on` is enabled. Existing manual commands remain available.
+- The panel's Discord message ID is stored in SQLite and **the same message is refreshed on restart**. The choice resets each time the bot starts.
+
 
 ### v0.6.4d — November 13, 2026
 - **Redesigned Discord notifications:** purple build embeds and golden farming embeds with clearer headings, categories, authors, patch information, and video thumbnails.
