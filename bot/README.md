@@ -1,8 +1,15 @@
-# PoE Build Notifier v0.6.4d — kod źródłowy / source code
+# PoE Build Notifier v0.6.5 — kod źródłowy / source code
 
 [🇵🇱 Polski](#polski) · [🇬🇧 English](#english) · [Strona / Website](https://bollek231.github.io/poe-build-notifier-site/) · [Lista zmian / Patch Notes](../CHANGELOG.md)
 
 ## Polski
+
+### Wybór wyszukiwania po starcie (v0.6.5)
+
+Po każdym uruchomieniu bot po uzyskaniu statusu online **nie rozpoczyna automatycznego skanowania**. Zamiast tego pokazuje na kanale `DISCORD_CHANNEL_ID` jeden panel z przyciskami **Buildy** i **Farm Strat**. Administrator z uprawnieniem zarządzania serwerem, który zaakceptował zasady (`pPrivacy` / `pAgree`), wybiera kategorię. Kliknięcie uruchamia ręczny skan wybranej kategorii i aktualizuje panel o wynik. Tylko wybrana kategoria może być później automatycznie skanowana: buildy zgodnie z harmonogramem, farming gdy aktywne jest `pFarmAuto on`. Przed wyborem nie są publikowane automatyczne podsumowania ani kolejki z godzin ciszy; komendy skanów ręcznych nadal działają.
+
+Bot zapamiętuje ID wiadomości panelu w bazie SQLite, dlatego po restarcie edytuje istniejący panel zamiast wysyłać następny. Wybór kategorii resetuje się przy **każdym uruchomieniu procesu** — nigdy nie jest przywracany automatycznie z poprzedniej sesji.
+
 
 ### Nowy wygląd powiadomień Discord (v0.6.4d)
 
@@ -54,7 +61,7 @@ Dwukrotnie kliknij `Start_PoE_Bot.bat` podczas pierwszego uruchomienia: tworzy `
 
 ### Instalacja na Windows
 
-1. Zainstaluj **Python 3.11 lub nowszy**. Pobierz [ZIP v0.6.4b](https://bollek231.github.io/poe-build-notifier-site/downloads/PoE_Build_Notifier_v0.6.4d.zip) i wypakuj wszystkie pliki bota do folderu, np. `D:\PoE-Bot`.
+1. Zainstaluj **Python 3.11 lub nowszy**. Pobierz [ZIP v0.6.5](https://bollek231.github.io/poe-build-notifier-site/downloads/PoE_Build_Notifier_v0.6.5.zip) i wypakuj wszystkie pliki bota do folderu, np. `D:\PoE-Bot`.
 2. Otwórz CMD:
 
 ```bat
@@ -96,11 +103,18 @@ Bot automatycznie skanuje YouTube (domyślnie co 2 godziny), przyjmuje tylko fil
 
 Na Railway/VPS ustaw trwały wolumin, np. `DB_PATH=/data/poe330_seen.sqlite3` i `BACKUP_DIR=/data/backups`. Nie udostępniaj swoich plików `.env`, bazy ani kopii zapasowych.
 
-[Pełna instrukcja](INSTRUKCJA_INSTALACJI_v0.6.4d_PL_EN.md) · [Lista komend](https://bollek231.github.io/poe-build-notifier-site/komendy.html)
+[Pełna instrukcja](INSTRUKCJA_INSTALACJI_v0.6.5_PL_EN.md) · [Lista komend](https://bollek231.github.io/poe-build-notifier-site/komendy.html)
 
 ---
 
 ## English
+
+### Startup search choice (v0.6.5)
+
+Every time the bot comes online, **scheduled searches wait** for an administrator to choose **Buildy (Builds)** or **Farm Strat** in a two-button panel in `DISCORD_CHANNEL_ID`. A server manager who has accepted the policy (`pPrivacy` / `pAgree`) can click a button, which starts a manual scan for that category and updates the same panel with the result. Only the selected category is then eligible for scheduled searches: builds as configured, farming when `pFarmAuto on` is enabled. Scheduled digests and quiet-hours delivery are held until a choice is made, while existing manual scan commands remain available.
+
+The panel message ID is saved to SQLite, so a restart **refreshes the existing message** instead of posting another. Each fresh bot process starts without a selected category; it never silently restores the previous choice.
+
 
 ### Redesigned Discord notifications (v0.6.4d)
 
@@ -152,7 +166,7 @@ Double-click `Start_PoE_Bot.bat` for the initial environment setup, then `Start_
 
 ### Windows setup
 
-1. Install **Python 3.11+**. [Download v0.6.4b](https://bollek231.github.io/poe-build-notifier-site/downloads/PoE_Build_Notifier_v0.6.4d.zip) and extract the bot files to a directory such as `D:\PoE-Bot`.
+1. Install **Python 3.11+**. [Download v0.6.5](https://bollek231.github.io/poe-build-notifier-site/downloads/PoE_Build_Notifier_v0.6.5.zip) and extract the bot files to a directory such as `D:\PoE-Bot`.
 2. Open Command Prompt:
 
 ```bat
@@ -194,7 +208,7 @@ The default scan interval is 2 hours. Only videos published in the past 24 hours
 
 On Railway/VPS use persistent storage, for example `DB_PATH=/data/poe330_seen.sqlite3` and `BACKUP_DIR=/data/backups`. Never publish your `.env`, database or private backups.
 
-[Full setup guide](INSTRUKCJA_INSTALACJI_v0.6.4d_PL_EN.md) · [Commands](https://bollek231.github.io/poe-build-notifier-site/komendy-en.html)
+[Full setup guide](INSTRUKCJA_INSTALACJI_v0.6.5_PL_EN.md) · [Commands](https://bollek231.github.io/poe-build-notifier-site/komendy-en.html)
 
 ---
 
