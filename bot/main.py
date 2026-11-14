@@ -1222,11 +1222,12 @@ async def on_ready():
         bot.add_dynamic_items(SaveBuildButton)
         bot.add_view(StartupScanView())
         bot._privacy_view_registered = True
-    if first_ready:
+    if not getattr(bot, '_startup_panel_ready', False):
         try:
             await show_startup_panel()
+            bot._startup_panel_ready = True
         except (discord.HTTPException, OSError, ValueError):
-            # Fail closed: never launch an automatic scan without a visible choice.
+            # Retry on the next reconnect, but never scan automatically without consent.
             log.exception('Unable to display the startup choice panel')
     if not automatic_scan.is_running():
         automatic_scan.start()
