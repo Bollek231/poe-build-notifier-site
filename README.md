@@ -1,4 +1,4 @@
-# PoE Build Notifier · v0.6.5
+# PoE Build Notifier · v0.6.5a
 
 **Discord bot for Path of Exile 1 & Path of Exile 2 · 🇵🇱 Polski / 🇬🇧 English**
 
@@ -7,6 +7,13 @@
 ---
 
 ## Polski
+
+### Naprawa kopii zapasowych Windows (v0.6.5a)
+
+Naprawiono błąd `PermissionError: [WinError 32]` przy automatycznym zapisywaniu backupu SQLite. Bot jawnie zamyka połączenia do bazy i pliku tymczasowego przed jego przeniesieniem. Krótkotrwałe blokady plików są obsługiwane ograniczonymi ponowieniami. Nie usuwaj ani nie nadpisuj swojego `.env`, `search_config.json`, bazy `.sqlite3` ani katalogu `backups/`.
+
+Po uruchomieniu bot nadal czeka na wybór **Buildy** lub **Farm Strat** (funkcja z v0.6.5). Ostrzeżenia o `PyNaCl` i `davey` oznaczają tylko brak opcjonalnej obsługi głosowej Discorda.
+
 
 ### Wybór wyszukiwania po starcie (v0.6.5)
 
@@ -87,7 +94,7 @@ W folderze bota uruchom `Start_PoE_Bot.bat` (pierwszy raz tworzy `.venv` i insta
 
 ### Instalacja na Windows — krok po kroku
 
-**1. Pobierz pliki.** Zainstaluj [Python 3.11 lub nowszy](https://www.python.org/downloads/) i pobierz **[PoE Build Notifier v0.6.5 (ZIP)](https://bollek231.github.io/poe-build-notifier-site/downloads/PoE_Build_Notifier_v0.6.5.zip)**. Wypakuj pliki tak, aby w folderze `D:\PoE-Bot` znajdowały się m.in. `main.py` i `requirements.txt`.
+**1. Pobierz pliki.** Zainstaluj [Python 3.11 lub nowszy](https://www.python.org/downloads/) i pobierz **[PoE Build Notifier v0.6.5a (ZIP)](https://bollek231.github.io/poe-build-notifier-site/downloads/PoE_Build_Notifier_v0.6.5a.zip)**. Wypakuj pliki tak, aby w folderze `D:\PoE-Bot` znajdowały się m.in. `main.py` i `requirements.txt`.
 
 **2. Przygotuj środowisko Pythona.** Otwórz **Wiersz polecenia (CMD)** i wykonaj po kolei:
 
@@ -131,7 +138,7 @@ Na skonfigurowanym kanale Discorda użyj `pPrivacy`, `pAgree` i `pHealth`. Wybra
 
 **Aktualizacja istniejącego bota:** zatrzymaj go (`Ctrl + C`), wykonaj kopię folderu i pliku SQLite, a następnie podmień pliki Pythona, `VERSION` i `requirements.txt` z aktualnego ZIP-a. **Nie nadpisuj** własnego `.env`, `search_config.json`, bazy `.sqlite3` ani kopii zapasowych. Po aktualizacji uruchom ponownie `python -m pip install -r requirements.txt` i `python main.py`.
 
-[Pełny poradnik instalacji (PL/EN)](bot/INSTRUKCJA_INSTALACJI_v0.6.5_PL_EN.md) · [Instalacja na GitHub Pages](https://bollek231.github.io/poe-build-notifier-site/instalacja.html) · [Kod źródłowy](bot/) · [Lista zmian](CHANGELOG.md)
+[Pełny poradnik instalacji (PL/EN)](bot/INSTRUKCJA_INSTALACJI_v0.6.5a_PL_EN.md) · [Instalacja na GitHub Pages](https://bollek231.github.io/poe-build-notifier-site/instalacja.html) · [Kod źródłowy](bot/) · [Lista zmian](CHANGELOG.md)
 
 ### Dokumentacja
 
@@ -140,6 +147,13 @@ Na skonfigurowanym kanale Discorda użyj `pPrivacy`, `pAgree` i `pHealth`. Wybra
 ---
 
 ## English
+
+### Windows backup hotfix (v0.6.5a)
+
+Fixed `PermissionError: [WinError 32]` while creating automatic SQLite snapshots. Both SQLite connections are explicitly closed before moving the temporary backup, and brief external file locks get bounded retries. Keep your local `.env`, `search_config.json`, SQLite database and `backups/` intact.
+
+The **Buildy / Farm Strat** selector from v0.6.5 is unchanged. The `PyNaCl` and `davey` warnings relate only to optional Discord voice support.
+
 
 ### Startup search choice (v0.6.5)
 
@@ -220,7 +234,7 @@ Run `Start_PoE_Bot.bat` once from the bot folder to create `.venv` and install d
 
 ### Windows installation — step by step
 
-**1. Download the bot.** Install [Python 3.11+](https://www.python.org/downloads/) and **[download PoE Build Notifier v0.6.5 (ZIP)](https://bollek231.github.io/poe-build-notifier-site/downloads/PoE_Build_Notifier_v0.6.5.zip)**. Extract the bot files so that `D:\PoE-Bot` contains `main.py` and `requirements.txt`.
+**1. Download the bot.** Install [Python 3.11+](https://www.python.org/downloads/) and **[download PoE Build Notifier v0.6.5a (ZIP)](https://bollek231.github.io/poe-build-notifier-site/downloads/PoE_Build_Notifier_v0.6.5a.zip)**. Extract the bot files so that `D:\PoE-Bot` contains `main.py` and `requirements.txt`.
 
 **2. Set up Python.** Open **Windows Command Prompt (CMD)** and run:
 
@@ -264,7 +278,7 @@ On the configured Discord channel run `pPrivacy`, `pAgree` and `pHealth`. Use `p
 
 **Upgrading an existing bot:** stop it (`Ctrl + C`), back up the folder and SQLite database, then replace the Python modules, `VERSION`, and `requirements.txt` from the newest ZIP. **Keep** your private `.env`, custom `search_config.json`, `.sqlite3` database and backups. Run `python -m pip install -r requirements.txt`, then `python main.py`.
 
-[Complete installation guide (PL/EN)](bot/INSTRUKCJA_INSTALACJI_v0.6.5_PL_EN.md) · [Installation on GitHub Pages](https://bollek231.github.io/poe-build-notifier-site/instalacja-en.html) · [Source code](bot/) · [Patch Notes](CHANGELOG.md)
+[Complete installation guide (PL/EN)](bot/INSTRUKCJA_INSTALACJI_v0.6.5a_PL_EN.md) · [Installation on GitHub Pages](https://bollek231.github.io/poe-build-notifier-site/instalacja-en.html) · [Source code](bot/) · [Patch Notes](CHANGELOG.md)
 
 ### Documentation
 
