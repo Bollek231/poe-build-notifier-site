@@ -1,8 +1,15 @@
-# PoE Build Notifier v0.6.5 — kod źródłowy / source code
+# PoE Build Notifier v0.6.5a — kod źródłowy / source code
 
 [🇵🇱 Polski](#polski) · [🇬🇧 English](#english) · [Strona / Website](https://bollek231.github.io/poe-build-notifier-site/) · [Lista zmian / Patch Notes](../CHANGELOG.md)
 
 ## Polski
+
+### Naprawa kopii zapasowych Windows (v0.6.5a)
+
+Naprawiono błąd `PermissionError: [WinError 32]` przy automatycznym zapisywaniu backupu SQLite. Bot jawnie zamyka połączenia do bazy i pliku tymczasowego przed jego przeniesieniem. Krótkotrwałe blokady plików są obsługiwane ograniczonymi ponowieniami. Nie usuwaj ani nie nadpisuj swojego `.env`, `search_config.json`, bazy `.sqlite3` ani katalogu `backups/`.
+
+Po uruchomieniu bot nadal czeka na wybór **Buildy** lub **Farm Strat** (funkcja z v0.6.5). Ostrzeżenia o `PyNaCl` i `davey` oznaczają tylko brak opcjonalnej obsługi głosowej Discorda.
+
 
 ### Wybór wyszukiwania po starcie (v0.6.5)
 
@@ -61,7 +68,7 @@ Dwukrotnie kliknij `Start_PoE_Bot.bat` podczas pierwszego uruchomienia: tworzy `
 
 ### Instalacja na Windows
 
-1. Zainstaluj **Python 3.11 lub nowszy**. Pobierz [ZIP v0.6.5](https://bollek231.github.io/poe-build-notifier-site/downloads/PoE_Build_Notifier_v0.6.5.zip) i wypakuj wszystkie pliki bota do folderu, np. `D:\PoE-Bot`.
+1. Zainstaluj **Python 3.11 lub nowszy**. Pobierz [ZIP v0.6.5a](https://bollek231.github.io/poe-build-notifier-site/downloads/PoE_Build_Notifier_v0.6.5a.zip) i wypakuj wszystkie pliki bota do folderu, np. `D:\PoE-Bot`.
 2. Otwórz CMD:
 
 ```bat
@@ -103,11 +110,18 @@ Bot automatycznie skanuje YouTube (domyślnie co 2 godziny), przyjmuje tylko fil
 
 Na Railway/VPS ustaw trwały wolumin, np. `DB_PATH=/data/poe330_seen.sqlite3` i `BACKUP_DIR=/data/backups`. Nie udostępniaj swoich plików `.env`, bazy ani kopii zapasowych.
 
-[Pełna instrukcja](INSTRUKCJA_INSTALACJI_v0.6.5_PL_EN.md) · [Lista komend](https://bollek231.github.io/poe-build-notifier-site/komendy.html)
+[Pełna instrukcja](INSTRUKCJA_INSTALACJI_v0.6.5a_PL_EN.md) · [Lista komend](https://bollek231.github.io/poe-build-notifier-site/komendy.html)
 
 ---
 
 ## English
+
+### Windows backup hotfix (v0.6.5a)
+
+Fixed `PermissionError: [WinError 32]` while creating automatic SQLite snapshots. Both SQLite connections are explicitly closed before moving the temporary backup, and brief external file locks get bounded retries. Keep your local `.env`, `search_config.json`, SQLite database and `backups/` intact.
+
+The **Buildy / Farm Strat** selector from v0.6.5 is unchanged. The `PyNaCl` and `davey` warnings relate only to optional Discord voice support.
+
 
 ### Startup search choice (v0.6.5)
 
@@ -166,7 +180,7 @@ Double-click `Start_PoE_Bot.bat` for the initial environment setup, then `Start_
 
 ### Windows setup
 
-1. Install **Python 3.11+**. [Download v0.6.5](https://bollek231.github.io/poe-build-notifier-site/downloads/PoE_Build_Notifier_v0.6.5.zip) and extract the bot files to a directory such as `D:\PoE-Bot`.
+1. Install **Python 3.11+**. [Download v0.6.5a](https://bollek231.github.io/poe-build-notifier-site/downloads/PoE_Build_Notifier_v0.6.5a.zip) and extract the bot files to a directory such as `D:\PoE-Bot`.
 2. Open Command Prompt:
 
 ```bat
@@ -208,7 +222,7 @@ The default scan interval is 2 hours. Only videos published in the past 24 hours
 
 On Railway/VPS use persistent storage, for example `DB_PATH=/data/poe330_seen.sqlite3` and `BACKUP_DIR=/data/backups`. Never publish your `.env`, database or private backups.
 
-[Full setup guide](INSTRUKCJA_INSTALACJI_v0.6.5_PL_EN.md) · [Commands](https://bollek231.github.io/poe-build-notifier-site/komendy-en.html)
+[Full setup guide](INSTRUKCJA_INSTALACJI_v0.6.5a_PL_EN.md) · [Commands](https://bollek231.github.io/poe-build-notifier-site/komendy-en.html)
 
 ---
 
