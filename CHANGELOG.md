@@ -1,12 +1,18 @@
 # PoE Build Notifier — Lista zmian / Patch Notes
 
-**Aktualna wersja / Current version:** `v0.6.5`
+**Aktualna wersja / Current version:** `v0.6.5a`
 
 [🇵🇱 Lista zmian — strona](https://bollek231.github.io/poe-build-notifier-site/changelog.html) · [🇬🇧 Patch Notes — website](https://bollek231.github.io/poe-build-notifier-site/changelog-en.html)
 
 ---
 
 ## 🇵🇱 Polski
+
+### v0.6.5a — 16 listopada 2026
+- **Naprawiono automatyczne kopie zapasowe SQLite na Windows:** połączenia z bazą i tymczasowym backupem są jawnie zamykane przed przeniesieniem pliku, co zapobiega błędowi `PermissionError: [WinError 32]`.
+- Pliki tymczasowe kopii mają teraz unikalne nazwy; krótkotrwałe blokady przez Windows mogą zostać ponowione bez nadpisywania prywatnej bazy. Dodano testy zamykania plików i obsługi błędów.
+- **Nie zmieniono** panelu wyboru Buildy / Farm Strat ani innych funkcji z v0.6.5.
+
 
 ### v0.6.5 — 14 listopada 2026
 - **Interaktywny panel startowy Discord:** po połączeniu z Discordem bot pyta na kanale powiadomień, czy wyszukiwać **Buildy** czy **Farm Strat**, zamiast natychmiast publikować buildy.
@@ -103,6 +109,12 @@
 ---
 
 ## 🇬🇧 English
+
+### v0.6.5a — November 16, 2026
+- **Fixed automatic SQLite backups on Windows:** database and temporary snapshot connections now close explicitly before publishing the backup, preventing `PermissionError: [WinError 32]`.
+- Backup temp files have unique names; brief Windows file locks receive bounded retries. Added regression tests ensuring file handles close and the live database remains intact.
+- **No changes** to the v0.6.5 Builds / Farm Strat startup panel or other functionality.
+
 
 ### v0.6.5 — November 14, 2026
 - **Interactive Discord startup panel:** after coming online, the bot asks in its notification channel whether to search **Buildy (Builds)** or **Farm Strat**, instead of automatically posting builds.
